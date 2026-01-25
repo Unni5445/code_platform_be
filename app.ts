@@ -7,11 +7,11 @@ import cookieParser from "cookie-parser";
 import errorHandler from "./src/middlewares/errorHandler";
 import { pageNotFound } from "./src/middlewares/pageNotFound";
 import userRoute from "./src/routes/user.routes";
-import studentRoute from "./src/routes/student.routes";
-import collegeRoute from "./src/routes/college.routes";
+import organisationRoute from "./src/routes/organisation.routes";
 import questionRoute from "./src/routes/question.routes";
 import mocktestRoute from "./src/routes/mocktest.routes";
 import mockTestSubmissionRoute from "./src/routes/mockTestSubmission.routes";
+import leaderboardRoute from "./src/routes/leaderboard.routes";
 
 
 dotenv.config();
@@ -47,11 +47,11 @@ app.use(cookieParser());
 app.use(
   "/api/v1",
   userRoute,
-  studentRoute,
-  collegeRoute,
+  organisationRoute,
   questionRoute,
   mocktestRoute,
-  mockTestSubmissionRoute
+  mockTestSubmissionRoute,
+  leaderboardRoute
 );
 // Database Connection
 mongoose

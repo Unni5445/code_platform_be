@@ -1,60 +1,142 @@
-import mongoose, { Schema, Types } from "mongoose";
-import bcrypt from 'bcrypt'
+import mongoose, { Document, Schema } from "mongoose";
+import bcrypt from "bcrypt";
 
-const userSchema = new Schema(
+/**
+ * User Roles
+ */
+export type UserRole = "STUDENT" | "ADMIN" | "SUPER_ADMIN";
+
+/**
+ * User Interface
+ */
+export interface IUser extends Document {
+  name?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+
+  role: UserRole;
+
+  googleId?: string;
+  otp?: string;
+  otpExpiry?: Date;
+
+  organisation?: mongoose.Types.ObjectId;
+  batch?: mongoose.Types.ObjectId;
+  enrolledCourses?: mongoose.Types.ObjectId[];
+
+  points: number;
+  streak: number;
+  isActive: boolean;
+  isDeleted : boolean;
+
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+/**
+ * User Schema
+ */
+const userSchema = new Schema<IUser>(
   {
     name: {
       type: String,
-      required: true,
+      trim: true,
     },
+
     email: {
       type: String,
       unique: true,
-      required: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
     },
+
+    phone: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
     password: {
       type: String,
-      required: true,
+      select: false, // IMPORTANT
     },
-    role:{
+
+    role: {
       type: String,
-      enum : ['super-admin','admin','mentor'],
-      default:"mentor"
+      enum: ["STUDENT", "ADMIN", "SUPER_ADMIN"],
+      default: "STUDENT",
     },
+
+    googleId: {
+      type: String,
+    },
+
+    otp: {
+      type: String,
+    },
+
+    otpExpiry: {
+      type: Date,
+    },
+
+    organisation: {
+      type: Schema.Types.ObjectId,
+      ref: "Organisation",
+    },
+
+    batch: {
+      type: Schema.Types.ObjectId,
+      ref: "Batch",
+    },
+
+    enrolledCourses: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Course",
+      },
+    ],
+
+    points: {
+      type: Number,
+      default: 0,
+    },
+
+    streak: {
+      type: Number,
+      default: 0,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
     isDeleted: {
       type: Boolean,
-      default : false
-    }
+      default: false,
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
-  const user = this;
-
-  if (!user.isModified("password")) return next();
+userSchema.pre<IUser>("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(user.password, salt);
-    user.password = hashedPassword;
+    this.password = await bcrypt.hash(this.password as string, salt);
     next();
-  } catch (error:unknown) {
-    next((error as Error));
+  } catch (error) {
+    next(error as Error);
   }
 });
 
-userSchema.methods.comparePassword = async function (candidatePassword:string) {
-  try {
-    const isMatch = await bcrypt.compare(candidatePassword, this.password);
-    return isMatch;
-  } catch (error) {
-    throw error;
-  }
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password as string);
 };
 
-const User = mongoose.model("User", userSchema);
-
+const User = mongoose.model<IUser>("User", userSchema);
 export default User;

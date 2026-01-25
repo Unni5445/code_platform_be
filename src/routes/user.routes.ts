@@ -1,19 +1,51 @@
 import express from "express";
 import UserController from "../controllers/user.controller";
-import UserAuthController from "../controllers/userAuth.controller";
-import { protect } from "../middlewares/authProtect";
+import { protect, authorize } from "../middlewares/authProtect";
 
 const router = express.Router();
 
+/**
+ * ================= AUTH ROUTES
+ */
+router.post("/sign-in", UserController.signinUser);
+router.post("/sign-out", protect, UserController.signOut);
+router.get("/me", protect, UserController.getUserByToken);
+
+/**
+ * ================= USER CRUD ROUTES
+ */
 router
   .route("/users")
-  .get(UserController.getAllUser)
-  .post(UserController.createUser);
-router.route("/sign-in").post(UserAuthController.signinUser);
-router.route("/sign-out").post(UserAuthController.signOut);
+  .get(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.getAllUsers)
+  .post(protect, authorize("SUPER_ADMIN"), UserController.createUser);
+
 router
-  .route("/reset-password")
-  .patch(protect, UserAuthController.resetPassword);
-router.route("/get-user").post(protect, UserAuthController.getUserByToken);
+  .route("/users/:id")
+  .get(protect, UserController.getUserById)
+  .put(protect, UserController.updateUser)
+  .delete(
+    protect,
+    authorize("SUPER_ADMIN"),
+    UserController.deleteUser
+  );
+
+/**
+ * ================= USER BY ROLE
+ */
+router.get(
+  "/users/role/:role",
+  protect,
+  authorize("ADMIN", "SUPER_ADMIN"),
+  UserController.getAllUsersByRole
+);
+
+/**
+ * ================= DROPDOWN
+ */
+router.get(
+  "/users-dropdown",
+  protect,
+  UserController.getUsersForDropdown
+);
 
 export default router;
