@@ -12,6 +12,8 @@ import questionRoute from "./src/routes/question.routes";
 import mocktestRoute from "./src/routes/mocktest.routes";
 import mockTestSubmissionRoute from "./src/routes/mockTestSubmission.routes";
 import leaderboardRoute from "./src/routes/leaderboard.routes";
+import courseRoute from "./src/routes/course.routes";
+import batchRoute from "./src/routes/batch.routes";
 
 
 dotenv.config();
@@ -51,7 +53,9 @@ app.use(
   questionRoute,
   mocktestRoute,
   mockTestSubmissionRoute,
-  leaderboardRoute
+  leaderboardRoute,
+  courseRoute,
+  batchRoute
 );
 // Database Connection
 mongoose

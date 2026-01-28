@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IOrganisation extends Document {
   name: string;
   address?: string;
+  type : "COLLEGE" | "ORGANISATION";
   admins: mongoose.Types.ObjectId[];
   isDeleted : boolean;
 }
@@ -18,6 +19,12 @@ const organisationSchema = new Schema<IOrganisation>(
     address: {
       type: String,
       trim: true,
+    },
+
+    type: {
+      type: String,
+      enum : ["COLLEGE" , "ORGANISATION"],
+      default : "ORGANISATION"
     },
 
     admins: [
