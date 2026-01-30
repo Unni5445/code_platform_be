@@ -62,6 +62,24 @@ const mockTestSchema = new mongoose.Schema(
       ref: "User",
     },
 
+    // Batch and Course associations for test generation
+    batch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Batch",
+    },
+
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+    },
+
+    // Test generation type: 'general', 'batch', 'course'
+    testType: {
+      type: String,
+      enum: ['general', 'batch', 'course'],
+      default: 'general',
+    },
+
     isDeleted:{
         type: Boolean,
         default :false

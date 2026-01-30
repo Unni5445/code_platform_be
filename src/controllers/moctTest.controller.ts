@@ -3,6 +3,7 @@ import asyncHandler from "../utils/asyncHandler"
 import MockTest from "../models/mocktest.model"
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
+import mongoose from "mongoose";
 
 class MockTestController  {
     static createMockTest = asyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
@@ -17,7 +18,10 @@ class MockTestController  {
 
     static getMockTest = asyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
         const {id} = req.params
-        const exitingMockTest = await MockTest.findById(id).populate('questions.question')
+        const exitingMockTest = await MockTest.findById(id)
+            .populate('questions.question')
+            .populate('batch', 'name course')
+            .populate('course', 'title description')
         if(!exitingMockTest){
             return next(new ErrorResponse('Mock Test not found',404))
         }
@@ -32,14 +36,37 @@ class MockTestController  {
         // Get search parameter from query
         const search = req.query.search as string;
 
+        // Get batch and course filters from query
+        const batchId = req.query.batchId as string;
+        const courseId = req.query.courseId as string;
+        const testType = req.query.testType as string;
+
         // Define the search filter
-        let filter = {};
+        let filter: any = {};
+        
+        // Add isDeleted filter
+        filter.isDeleted = false;
+
         if (search) {
-            filter = {
-                $or: [
-                    { name: { $regex: search, $options: "i" } },
-                ]
-            };
+            filter.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        // Add batch filter
+        if (batchId && mongoose.Types.ObjectId.isValid(batchId)) {
+            filter.batch = batchId;
+        }
+
+        // Add course filter
+        if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+            filter.course = courseId;
+        }
+
+        // Add testType filter
+        if (testType && ['general', 'batch', 'course'].includes(testType)) {
+            filter.testType = testType;
         }
 
         // Calculate the skip value for pagination
@@ -48,6 +75,8 @@ class MockTestController  {
         // Fetch MockTests with pagination and search
         const mockTests = await MockTest.find(filter)
             .populate('questions.question')
+            .populate('batch', 'name')
+            .populate('course', 'title')
             .skip(skip)
             .limit(limit);
 
@@ -90,7 +119,58 @@ class MockTestController  {
         const MockTests = await MockTest.find().select('_id title');
         res.status(200).json(new ApiResponse(200, MockTests, "Mock Tests retrieved successfully for dropdown"));
     });
-    
+
+    // Get mock tests by batch ID
+    static getMockTestsByBatch = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        const { batchId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(batchId)) {
+            return next(new ErrorResponse('Invalid batch ID', 400));
+        }
+
+        const mockTests = await MockTest.find({ batch: batchId, isDeleted: false })
+            .populate('questions.question')
+            .populate('batch', 'name course')
+            .populate('course', 'title description')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(new ApiResponse(200, mockTests, "Mock Tests retrieved successfully for batch"));
+    });
+
+    // Get mock tests by course ID
+    static getMockTestsByCourse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        const { courseId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(courseId)) {
+            return next(new ErrorResponse('Invalid course ID', 400));
+        }
+
+        const mockTests = await MockTest.find({ course: courseId, isDeleted: false })
+            .populate('questions.question')
+            .populate('batch', 'name course')
+            .populate('course', 'title description')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(new ApiResponse(200, mockTests, "Mock Tests retrieved successfully for course"));
+    });
+
+    // Get mock tests by test type (general, batch, course)
+    static getMockTestsByType = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        const { testType } = req.params;
+
+        if (!['general', 'batch', 'course'].includes(testType)) {
+            return next(new ErrorResponse('Invalid test type. Must be general, batch, or course', 400));
+        }
+
+        const mockTests = await MockTest.find({ testType: testType, isDeleted: false })
+            .populate('questions.question')
+            .populate('batch', 'name course')
+            .populate('course', 'title description')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(new ApiResponse(200, mockTests, `Mock Tests retrieved successfully for type: ${testType}`));
+    });
+
 }
 
 export default MockTestController
