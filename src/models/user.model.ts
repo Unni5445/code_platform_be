@@ -25,6 +25,11 @@ export interface IUser extends Document {
   batch?: mongoose.Types.ObjectId;
   enrolledCourses?: mongoose.Types.ObjectId[];
 
+  department?: string;
+  college?: mongoose.Types.ObjectId;
+  dob?: Date;
+  gender?: string;
+
   points: number;
   streak: number;
   isActive: boolean;
@@ -96,6 +101,25 @@ const userSchema = new Schema<IUser>(
         ref: "Course",
       },
     ],
+
+    department: {
+      type: String,
+      trim: true,
+    },
+
+    college: {
+      type: Schema.Types.ObjectId,
+      ref: "Organisation",
+    },
+
+    dob: {
+      type: Date,
+    },
+
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+    },
 
     points: {
       type: Number,

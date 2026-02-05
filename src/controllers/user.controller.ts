@@ -67,6 +67,7 @@ class UserController {
       const skip = (page - 1) * limit;
 
       const users = await User.find(filter)
+        .populate('college organisation')
         .select("-password")
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -102,7 +103,7 @@ class UserController {
       const users = await User.find({
         role: role as UserRole,
         isDeleted: false,
-      }).select("-password");
+      }).select("-password").populate('college organisation');
 
       res.status(200).json(
         new ApiResponse(
