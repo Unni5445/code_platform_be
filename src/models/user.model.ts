@@ -32,8 +32,14 @@ export interface IUser extends Document {
 
   points: number;
   streak: number;
+  maxStreak: number;
+  activityLog: { date: Date; count: number }[];
   isActive: boolean;
   isDeleted : boolean;
+
+  // Timestamps (automatically added by Mongoose with { timestamps: true })
+  createdAt: Date;
+  updatedAt: Date;
 
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -130,6 +136,24 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+
+    maxStreak: {
+      type: Number,
+      default: 0,
+    },
+
+    activityLog: [
+      {
+        date: {
+          type: Date,
+          required: true,
+        },
+        count: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
 
     isActive: {
       type: Boolean,

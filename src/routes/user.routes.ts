@@ -48,4 +48,25 @@ router.get(
   UserController.getUsersForDropdown
 );
 
+/**
+ * ================= STREAK ROUTES
+ */
+router.get(
+  "/users/:id/streak",
+  protect,
+  UserController.getUserStreakData
+);
+
+router.post(
+  "/users/:id/activity",
+  protect,
+  UserController.updateUserActivity
+);
+
+router.get(
+  "/users/:id/activity-log",
+  protect,
+  UserController.getUserActivityLog
+);
+
 export default router;

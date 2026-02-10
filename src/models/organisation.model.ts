@@ -6,6 +6,10 @@ export interface IOrganisation extends Document {
   type : "COLLEGE" | "ORGANISATION";
   admins: mongoose.Types.ObjectId[];
   isDeleted : boolean;
+
+  // Timestamps (automatically added by Mongoose with { timestamps: true })
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const organisationSchema = new Schema<IOrganisation>(

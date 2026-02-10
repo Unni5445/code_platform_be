@@ -4,6 +4,10 @@ export interface IBatch extends Document {
   name: string;
   course: mongoose.Types.ObjectId;
   students: mongoose.Types.ObjectId[];
+
+  // Timestamps (automatically added by Mongoose with { timestamps: true })
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const batchSchema = new Schema<IBatch>(

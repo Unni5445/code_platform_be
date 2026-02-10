@@ -85,23 +85,23 @@ export interface IQuestion extends mongoose.Document {
   difficulty: DifficultyLevel;
   marks: number;
   course: mongoose.Types.ObjectId;
-  
+
   // Problem Content (LeetCode style)
   description: string; // Rich text problem description
   examples?: ProblemExample[];
   constraints?: string[];
   followUp?: string; // Follow-up question
-  
+
   // Topics/Tags (e.g., Array, Dynamic Programming, Tree)
   topics?: string[];
-  
+
   // Companies (e.g., Google, Amazon, Microsoft)
   companies?: CompanyTag[];
-  
+
   // MCQ fields (for single_choice_mcq and multi_choice_mcq)
   options?: MCQOption[];
   correctOption?: number[];
-  
+
   // Coding fields
   inputFormat?: string;
   outputFormat?: string;
@@ -110,27 +110,31 @@ export interface IQuestion extends mongoose.Document {
   allowedLanguages?: string[];
   timeLimit?: number;
   memoryLimit?: number;
-  
+
   // Hints for users
   hints?: ProblemHint[];
-  
+
   // Editorial/Solution
   editorial?: string;
-  
+
   // Similar problems
   similarProblems?: SimilarProblem[];
-  
+
   // Statistics
   acceptanceRate?: number; // Percentage
   submissionsCount?: number;
   acceptedCount?: number;
   discussionCount?: number;
-  
+
   // Metadata
   createdBy: mongoose.Types.ObjectId;
   isDeleted: boolean;
   isPremium?: boolean; // Premium problems
   isLocked?: boolean; // Locked for certain users
+
+  // Timestamps (automatically added by Mongoose with { timestamps: true })
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const questionSchema = new mongoose.Schema<IQuestion>(

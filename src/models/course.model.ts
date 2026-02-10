@@ -5,6 +5,10 @@ export interface ICourse extends Document {
   description: string;
   roadmap: string[];
   isActive: boolean;
+
+  // Timestamps (automatically added by Mongoose with { timestamps: true })
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const courseSchema = new Schema<ICourse>(

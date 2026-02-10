@@ -227,7 +227,7 @@ class UserController {
   // ================= GET USER FROM TOKEN =================
   static getUserByToken = asyncHandler(
     async (req: Request, res: Response) => {
-      const { _id, email, name, role } = req.user!;
+      const { _id, email, name, role, points, streak, maxStreak, organisation, batch, enrolledCourses, isActive, isDeleted, createdAt, updatedAt } = req.user!;
 
       res.json(
         new ApiResponse(200, {
@@ -235,10 +235,207 @@ class UserController {
           email,
           name,
           role,
+          points,
+          streak,
+          maxStreak,
+          organisation,
+          batch,
+          enrolledCourses,
+          isActive,
+          isDeleted,
+          createdAt,
+          updatedAt,
         })
       );
     }
   );
+
+  // ================= GET USER STREAK DATA =================
+  static getUserStreakData = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id } = req.params;
+
+      const user = await User.findOne({ _id: id, isDeleted: false }).select(
+        "streak maxStreak activityLog"
+      );
+
+      if (!user) {
+        return next(new ErrorResponse("User not found", 404));
+      }
+
+      res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            currentStreak: user.streak,
+            maxStreak: user.maxStreak,
+            activityLog: user.activityLog,
+          },
+          "Streak data retrieved successfully"
+        )
+      );
+    }
+  );
+
+  // ================= UPDATE USER ACTIVITY =================
+  static updateUserActivity = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id } = req.params;
+      const { date, count } = req.body;
+
+      if (!date || typeof count !== "number") {
+        return next(new ErrorResponse("Invalid activity data", 400));
+      }
+
+      const user = await User.findOne({ _id: id, isDeleted: false });
+
+      if (!user) {
+        return next(new ErrorResponse("User not found", 404));
+      }
+
+      const activityDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      activityDate.setHours(0, 0, 0, 0);
+
+      // Find existing activity log entry for the date
+      const existingEntryIndex = user.activityLog.findIndex(
+        (entry) => {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0, 0, 0, 0);
+          return entryDate.getTime() === activityDate.getTime();
+        }
+      );
+
+      if (existingEntryIndex >= 0) {
+        // Update existing entry
+        user.activityLog[existingEntryIndex].count += count;
+      } else {
+        // Add new entry
+        user.activityLog.push({ date: activityDate, count });
+      }
+
+      // Calculate streak
+      await this.calculateStreak(user);
+
+      await user.save();
+
+      res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            currentStreak: user.streak,
+            maxStreak: user.maxStreak,
+            activityLog: user.activityLog,
+          },
+          "Activity updated successfully"
+        )
+      );
+    }
+  );
+
+  // ================= GET USER ACTIVITY LOG =================
+  static getUserActivityLog = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id } = req.params;
+      const { startDate, endDate } = req.query;
+
+      const user = await User.findOne({ _id: id, isDeleted: false }).select(
+        "activityLog"
+      );
+
+      if (!user) {
+        return next(new ErrorResponse("User not found", 404));
+      }
+
+      let filteredActivity = user.activityLog;
+
+      if (startDate || endDate) {
+        const start = startDate ? new Date(startDate as string) : new Date(0);
+        const end = endDate ? new Date(endDate as string) : new Date();
+
+        filteredActivity = user.activityLog.filter((entry) => {
+          const entryDate = new Date(entry.date);
+          return entryDate >= start && entryDate <= end;
+        });
+      }
+
+      // Format activity log for frontend
+      const formattedActivity = filteredActivity.map((entry) => ({
+        date: new Date(entry.date).toISOString().split("T")[0],
+        count: entry.count,
+      }));
+
+      res.status(200).json(
+        new ApiResponse(
+          200,
+          formattedActivity,
+          "Activity log retrieved successfully"
+        )
+      );
+    }
+  );
+
+  // ================= CALCULATE STREAK (HELPER) =================
+  private static calculateStreak = async (user: any) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Sort activity log by date (descending)
+    const sortedActivities = [...user.activityLog].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    // Find the most recent activity date
+    const mostRecentActivity = sortedActivities[0];
+    if (!mostRecentActivity) {
+      user.streak = 0;
+      return;
+    }
+
+    const mostRecentDate = new Date(mostRecentActivity.date);
+    mostRecentDate.setHours(0, 0, 0, 0);
+
+    // Calculate days difference
+    const daysDiff = Math.floor(
+      (today.getTime() - mostRecentDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // If the most recent activity was yesterday or today, start counting streak
+    if (daysDiff <= 1) {
+      let streak = 1;
+      let currentDate = new Date(mostRecentDate);
+
+      for (let i = 1; i < sortedActivities.length; i++) {
+        const prevDate = new Date(currentDate);
+        prevDate.setDate(prevDate.getDate() - 1);
+        prevDate.setHours(0, 0, 0, 0);
+
+        const hasActivity = sortedActivities.some((entry) => {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0, 0, 0, 0);
+          return entryDate.getTime() === prevDate.getTime();
+        });
+
+        if (hasActivity) {
+          streak++;
+          currentDate = prevDate;
+        } else {
+          break;
+        }
+      }
+
+      user.streak = streak;
+
+      // Update max streak if current streak is higher
+      if (streak > user.maxStreak) {
+        user.maxStreak = streak;
+      }
+    } else {
+      // Streak broken
+      user.streak = 0;
+    }
+  };
 }
 
 export default UserController;

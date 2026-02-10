@@ -8,6 +8,10 @@ export interface ILeaderboardRanking {
 export interface ILeaderboard extends Document {
   batch: mongoose.Types.ObjectId;
   rankings: ILeaderboardRanking[];
+
+  // Timestamps (automatically added by Mongoose with { timestamps: true })
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const leaderboardSchema = new Schema<ILeaderboard>(
