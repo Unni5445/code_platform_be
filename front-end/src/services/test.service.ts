@@ -16,7 +16,7 @@ export interface PaginatedQuestions {
 }
 
 export const testService = {
-  getTests: (params?: { page?: number; limit?: number; search?: string; course?: string; isActive?: string }) =>
+  getTests: (params?: { page?: number; limit?: number; search?: string; course?: string; module?: string; isActive?: string }) =>
     api.get<ApiResponse<PaginatedTests>>("/tests", { params }),
 
   getTestById: (id: string) =>
@@ -33,7 +33,7 @@ export const testService = {
 };
 
 export const questionService = {
-  getQuestions: (params?: { page?: number; limit?: number; search?: string; type?: string; difficulty?: string; course?: string; tag?: string }) =>
+  getQuestions: (params?: { page?: number; limit?: number; search?: string; type?: string; difficulty?: string; course?: string; module?: string; tag?: string }) =>
     api.get<ApiResponse<PaginatedQuestions>>("/questions", { params }),
 
   getQuestionById: (id: string) =>

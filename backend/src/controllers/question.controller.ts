@@ -19,13 +19,25 @@ class QuestionController {
     const typeFilter = req.query.type as string;
     const difficultyFilter = req.query.difficulty as string;
     const courseFilter = req.query.course as string;
+    const moduleFilter = req.query.module as string;
     const tagFilter = req.query.tag as string;
 
     const filter: any = {};
     if (search) filter.title = { $regex: search, $options: "i" };
     if (typeFilter) filter.type = typeFilter;
     if (difficultyFilter) filter.difficulty = difficultyFilter;
-    if (courseFilter) filter.course = courseFilter;
+    if (courseFilter === "none") {
+      if (!filter.$and) filter.$and = [];
+      filter.$and.push({ $or: [{ course: { $exists: false } }, { course: null }] });
+    } else if (courseFilter) {
+      filter.course = courseFilter;
+    }
+    if (moduleFilter === "none") {
+      if (!filter.$and) filter.$and = [];
+      filter.$and.push({ $or: [{ module: { $exists: false } }, { module: null }] });
+    } else if (moduleFilter) {
+      filter.module = moduleFilter;
+    }
     if (tagFilter) filter.tags = { $in: [tagFilter] };
 
     const skip = (page - 1) * limit;

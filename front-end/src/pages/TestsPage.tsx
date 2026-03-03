@@ -49,7 +49,7 @@ export default function TestsPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchTests = useCallback(
-    () => testService.getTests({ search: debouncedSearch || undefined }),
+    () => testService.getTests({ search: debouncedSearch || undefined, course: "none", module: "none" }),
     [debouncedSearch]
   );
 
@@ -58,6 +58,8 @@ export default function TestsPage() {
       search: debouncedSearch || undefined,
       type: typeFilter || undefined,
       difficulty: diffFilter || undefined,
+      course: "none",
+      module: "none",
     }),
     [debouncedSearch, typeFilter, diffFilter]
   );

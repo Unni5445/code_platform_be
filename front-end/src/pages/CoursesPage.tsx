@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { Plus, Edit, Trash2, Users, BookOpen, LayoutGrid, List } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Edit, Trash2, Users, BookOpen, LayoutGrid, List, Eye, Globe } from "lucide-react";
 import { courseService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
@@ -11,6 +12,7 @@ import toast from "react-hot-toast";
 const PAGE_SIZE = 9;
 
 export default function CoursesPage() {
+  const navigate = useNavigate();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +25,7 @@ export default function CoursesPage() {
 
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
+  const [formIsGlobal, setFormIsGlobal] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -40,18 +43,20 @@ export default function CoursesPage() {
     setSelectedCourse(course);
     setFormTitle(course.title);
     setFormDesc(course.description || "");
+    setFormIsGlobal(course.isGlobal);
     editModal.open();
   };
 
   const openAdd = () => {
     setFormTitle("");
     setFormDesc("");
+    setFormIsGlobal(false);
     addModal.open();
   };
 
   const handleCreate = async () => {
     try {
-      await courseService.createCourse({ title: formTitle, description: formDesc });
+      await courseService.createCourse({ title: formTitle, description: formDesc, isGlobal: formIsGlobal });
       addModal.close();
       toast.success("Course created successfully");
       refetch();
@@ -63,7 +68,7 @@ export default function CoursesPage() {
   const handleUpdate = async () => {
     if (!selectedCourse) return;
     try {
-      await courseService.updateCourse(selectedCourse._id, { title: formTitle, description: formDesc });
+      await courseService.updateCourse(selectedCourse._id, { title: formTitle, description: formDesc, isGlobal: formIsGlobal });
       editModal.close();
       setSelectedCourse(null);
       toast.success("Course updated successfully");
@@ -129,9 +134,9 @@ export default function CoursesPage() {
                 <div className="p-2.5 bg-primary-100 rounded-xl">
                   <BookOpen className="h-5 w-5 text-primary-600" />
                 </div>
-                <Badge variant="success">Active</Badge>
+                {course.isGlobal ? <Badge variant="warning"><Globe className="h-3 w-3 inline mr-1" />Global</Badge> : <Badge variant="success">Org</Badge>}
               </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1">{course.title}</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-1 cursor-pointer hover:text-primary-600 transition-colors" onClick={() => navigate(`/courses/${course._id}`)}>{course.title}</h3>
               <p className="text-sm text-gray-500 line-clamp-2 mb-4">{course.description}</p>
               <div className="flex items-center justify-between pt-4 border-t border-surface-border">
                 <div className="flex items-center gap-1.5 text-sm text-gray-500">
@@ -139,6 +144,9 @@ export default function CoursesPage() {
                   {getStudentCount(course)} students
                 </div>
                 <div className="flex gap-1">
+                  <button onClick={() => navigate(`/courses/${course._id}`)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                    <Eye className="h-4 w-4" />
+                  </button>
                   <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
                     <Edit className="h-4 w-4" />
                   </button>
@@ -157,6 +165,7 @@ export default function CoursesPage() {
               <tr className="bg-surface-secondary border-b border-surface-border">
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Course</th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Description</th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Scope</th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Students</th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Created</th>
                 <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -176,6 +185,9 @@ export default function CoursesPage() {
                   <td className="px-6 py-4 hidden md:table-cell">
                     <span className="text-sm text-gray-500 line-clamp-1">{course.description}</span>
                   </td>
+                  <td className="px-6 py-4 hidden sm:table-cell">
+                    {course.isGlobal ? <Badge variant="warning">Global</Badge> : <Badge variant="default">Org</Badge>}
+                  </td>
                   <td className="px-6 py-4">
                     <Badge variant="info">{getStudentCount(course)} enrolled</Badge>
                   </td>
@@ -184,6 +196,9 @@ export default function CoursesPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-1">
+                      <button onClick={() => navigate(`/courses/${course._id}`)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                        <Eye className="h-4 w-4" />
+                      </button>
                       <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
                         <Edit className="h-4 w-4" />
                       </button>
@@ -230,6 +245,13 @@ export default function CoursesPage() {
               placeholder="Course description..."
             />
           </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={formIsGlobal} onChange={(e) => setFormIsGlobal(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <div>
+              <span className="text-sm font-medium text-gray-700">Global Course</span>
+              <p className="text-xs text-gray-500">Available to all organisations</p>
+            </div>
+          </label>
         </div>
       </Modal>
 
@@ -256,6 +278,13 @@ export default function CoursesPage() {
               className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400 hover:border-gray-400 transition-colors"
             />
           </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" checked={formIsGlobal} onChange={(e) => setFormIsGlobal(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <div>
+              <span className="text-sm font-medium text-gray-700">Global Course</span>
+              <p className="text-xs text-gray-500">Available to all organisations</p>
+            </div>
+          </label>
         </div>
       </Modal>
 

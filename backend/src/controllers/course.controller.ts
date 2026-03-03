@@ -9,8 +9,13 @@ class CourseController {
   static createCourse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
 
-    const existingCourse = await Course.findOne({ title: data.titlen });
+    const existingCourse = await Course.findOne({ title: data.title });
     if (existingCourse) return next(new ErrorResponse("Course with this title already exists", 400));
+
+    // If marked global, clear organisation
+    if (data.isGlobal) {
+      data.organisation = undefined;
+    }
 
     const course = await Course.create(data);
     res.status(201).json(new ApiResponse(201, course, "Course created successfully"));
@@ -24,14 +29,23 @@ class CourseController {
 
     const filter: any = {};
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
+      filter.$and = [
+        { $or: [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ]}
       ];
     }
 
-    // Admin can only see their org courses
-    if (req.user?.role === "ADMIN") filter.organisation = req.user.organisation;
+    // Admin sees global courses + their org's courses
+    if (req.user?.role === "ADMIN") {
+      const orgFilter = { $or: [{ isGlobal: true }, { organisation: req.user.organisation }] };
+      if (filter.$and) {
+        filter.$and.push(orgFilter);
+      } else {
+        Object.assign(filter, orgFilter);
+      }
+    }
 
     const skip = (page - 1) * limit;
     const courses = await Course.find(filter)

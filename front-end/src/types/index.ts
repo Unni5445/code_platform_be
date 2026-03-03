@@ -8,3 +8,5 @@ export type { IQuestion, QuestionType, Difficulty, QuestionStatus, TestCase } fr
 export type { IStudentSubmission, IStudentTestSubmission } from "./submission.types";
 export type { ICertificate } from "./certificate.types";
 export type { ILeaderboard } from "./leaderboard.types";
+export type { IModule, ISubmodule } from "./module.types";
+export type { IEnrollment, EnrollmentStatus, ModuleProgressStatus, IModuleProgress } from "./enrollment.types";

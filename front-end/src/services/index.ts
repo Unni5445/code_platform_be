@@ -13,3 +13,5 @@ export type {
   LeaderboardItem,
   ActivityItem,
 } from "./dashboard.service";
+export { moduleService, submoduleService } from "./module.service";
+export { enrollmentService } from "./enrollment.service";

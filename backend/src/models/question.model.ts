@@ -40,6 +40,7 @@ export interface IQuestion extends Document {
   allowPartial: boolean;
   difficulty: "Easy" | "Medium" | "Hard";
   course: mongoose.Types.ObjectId;
+  module?: mongoose.Types.ObjectId;
   company?: string;
   tags?: string[];
   version: number;
@@ -128,7 +129,12 @@ const questionSchema = new Schema<IQuestion>(
     course: {
       type: Schema.Types.ObjectId,
       ref: "Course",
-      required: true,
+      index: true,
+    },
+
+    module: {
+      type: Schema.Types.ObjectId,
+      ref: "Module",
       index: true,
     },
 

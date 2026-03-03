@@ -26,6 +26,7 @@ export interface IQuestion {
   allowPartial?: boolean;
   difficulty: Difficulty;
   course: string;
+  module?: string;
   company?: string;
   tags?: string[];
   version?: number;

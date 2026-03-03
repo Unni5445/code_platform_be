@@ -3,6 +3,7 @@ export interface ITest {
   title: string;
   description?: string;
   course: string;
+  module?: string;
   questions: string[];
   totalPoints?: number;
   duration?: number;

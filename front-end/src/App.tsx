@@ -12,6 +12,7 @@ import TestsPage from "@/pages/TestsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import CertificatesPage from "@/pages/CertificatesPage";
 import SystemPage from "@/pages/SystemPage";
+import CourseDetailPage from "@/pages/CourseDetailPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/users" element={<UsersPage />} />
               <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/certificates" element={<CertificatesPage />} />

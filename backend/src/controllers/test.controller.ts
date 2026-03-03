@@ -1,6 +1,7 @@
 import { NextFunction, Response, Request } from "express";
 import asyncHandler from "../utils/asyncHandler";
 import Test from "../models/test.model";
+import Module from "../models/module.model";
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
 
@@ -8,6 +9,12 @@ class TestController {
   // ================= CREATE TEST =================
   static createTest = asyncHandler(async (req: Request, res: Response) => {
     const test = await Test.create(req.body);
+
+    // If module is provided, link the test to the module
+    if (req.body.module) {
+      await Module.findByIdAndUpdate(req.body.module, { test: test._id });
+    }
+
     res.status(201).json(new ApiResponse(201, test, "Test created successfully"));
   });
 
@@ -17,6 +24,7 @@ class TestController {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const search = req.query.search as string;
     const courseFilter = req.query.course as string;
+    const moduleFilter = req.query.module as string;
     const activeFilter = req.query.isActive as string;
 
     const filter: any = {};
@@ -26,7 +34,18 @@ class TestController {
         { description: { $regex: search, $options: "i" } },
       ];
     }
-    if (courseFilter) filter.course = courseFilter;
+    if (courseFilter === "none") {
+      if (!filter.$and) filter.$and = [];
+      filter.$and.push({ $or: [{ course: { $exists: false } }, { course: null }] });
+    } else if (courseFilter) {
+      filter.course = courseFilter;
+    }
+    if (moduleFilter === "none") {
+      if (!filter.$and) filter.$and = [];
+      filter.$and.push({ $or: [{ module: { $exists: false } }, { module: null }] });
+    } else if (moduleFilter) {
+      filter.module = moduleFilter;
+    }
     if (activeFilter !== undefined) filter.isActive = activeFilter === "true";
 
     const skip = (page - 1) * limit;

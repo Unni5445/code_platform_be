@@ -14,6 +14,9 @@ import certificateRoute from "./src/routes/certificate.routes";
 import batchRoute from "./src/routes/batch.routes";
 import organisationRoute from "./src/routes/organisation.routes";
 import dashboardRoute from "./src/routes/dashboard.routes";
+import moduleRoute from "./src/routes/module.routes";
+import submoduleRoute from "./src/routes/submodule.routes";
+import enrollmentRoute from "./src/routes/enrollment.routes";
 
 
 dotenv.config();
@@ -54,6 +57,9 @@ app.use("/api/v1", certificateRoute);
 app.use("/api/v1", batchRoute);
 app.use("/api/v1", organisationRoute);
 app.use("/api/v1", dashboardRoute);
+app.use("/api/v1", moduleRoute);
+app.use("/api/v1", submoduleRoute);
+app.use("/api/v1", enrollmentRoute);
 // Database Connection
 mongoose
   .connect(process.env.MONGO_DB!,)
