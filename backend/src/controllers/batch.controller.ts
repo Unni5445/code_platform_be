@@ -1,6 +1,6 @@
 import { NextFunction, Response, Request } from "express";
 import asyncHandler from "../utils/asyncHandler";
-import Batch from "../models/batch.model";
+import Batch, { BATCH_DURATIONS } from "../models/batch.model";
 import Organisation from "../models/organisation.model";
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
@@ -8,11 +8,17 @@ import ErrorResponse from "../utils/errorResponse";
 class BatchController {
   // ================= CREATE BATCH =================
   static createBatch = asyncHandler(async (req: Request, res: Response, next:NextFunction) => {
-    const { name, organisation } = req.body;
+    const { name, organisation, duration, startDate, endDate } = req.body;
 
-    // Validate organisation is provided
+    // Validate required fields
     if (!organisation) {
       return next(new ErrorResponse("Organisation ID is required", 400));
+    }
+    if (!duration || !BATCH_DURATIONS.includes(duration)) {
+      return next(new ErrorResponse(`Duration is required and must be one of: ${BATCH_DURATIONS.join(", ")}`, 400));
+    }
+    if (!startDate || !endDate) {
+      return next(new ErrorResponse("Start date and end date are required", 400));
     }
 
     // Validate organisation exists
@@ -39,7 +45,6 @@ class BatchController {
 
     const batches = await Batch.find(filter)
       .populate("organisation", "name")
-      .populate("students", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json(new ApiResponse(200, batches, "Batches retrieved successfully"));
@@ -50,8 +55,7 @@ class BatchController {
     const { id } = req.params;
 
     const batch = await Batch.findById(id)
-      .populate("organisation", "name")
-      .populate("students", "name email points streak");
+      .populate("organisation", "name");
 
     if (!batch) return next(new ErrorResponse("Batch not found", 404));
 
@@ -116,22 +120,6 @@ class BatchController {
     res.status(200).json(new ApiResponse(200, { updatedCount: result.modifiedCount }, "Batches updated successfully"));
   });
 
-  // ================= ADD STUDENTS TO BATCH =================
-  static addStudents = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const { studentIds } = req.body;
-
-    const batch = await Batch.findById(id);
-    if (!batch) return next(new ErrorResponse("Batch not found", 404));
-
-    const newStudents = studentIds.filter(
-      (sid: string) => !batch.students.map(String).includes(sid)
-    );
-    batch.students.push(...newStudents);
-    await batch.save();
-
-    res.status(200).json(new ApiResponse(200, batch, "Students added to batch successfully"));
-  });
 }
 
 export default BatchController;

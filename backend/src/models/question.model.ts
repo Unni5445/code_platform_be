@@ -39,6 +39,7 @@ export interface IQuestion extends Document {
   points: number;
   allowPartial: boolean;
   difficulty: "Easy" | "Medium" | "Hard";
+  test?: mongoose.Types.ObjectId;
   course: mongoose.Types.ObjectId;
   module?: mongoose.Types.ObjectId;
   company?: string;
@@ -124,6 +125,12 @@ const questionSchema = new Schema<IQuestion>(
       type: String,
       enum: ["Easy", "Medium", "Hard"],
       default: "Medium",
+    },
+
+    test: {
+      type: Schema.Types.ObjectId,
+      ref: "Test",
+      index: true,
     },
 
     course: {

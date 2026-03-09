@@ -94,6 +94,53 @@ class TestController {
     res.status(200).json(new ApiResponse(200, test, "Test updated successfully"));
   });
 
+  // ================= ADD EXISTING QUESTIONS TO TEST =================
+  static addQuestions = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { questionIds } = req.body;
+
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
+      return next(new ErrorResponse("Please provide an array of questionIds", 400));
+    }
+
+    const test = await Test.findById(id);
+    if (!test) return next(new ErrorResponse("Test not found", 404));
+
+    // Add questions to the test's questions array
+    await Test.findByIdAndUpdate(id, {
+      $addToSet: { questions: { $each: questionIds } },
+    });
+
+    // Update each question's test field
+    const Question = require("../models/question.model").default;
+    await Question.updateMany(
+      { _id: { $in: questionIds } },
+      { $set: { test: id, module: test.module, course: test.course } }
+    );
+
+    const updated = await Test.findById(id).populate("questions");
+    res.status(200).json(new ApiResponse(200, updated, "Questions added to test successfully"));
+  });
+
+  // ================= REMOVE QUESTION FROM TEST =================
+  static removeQuestion = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { id, questionId } = req.params;
+
+    const test = await Test.findById(id);
+    if (!test) return next(new ErrorResponse("Test not found", 404));
+
+    await Test.findByIdAndUpdate(id, {
+      $pull: { questions: questionId },
+    });
+
+    const Question = require("../models/question.model").default;
+    await Question.findByIdAndUpdate(questionId, {
+      $unset: { test: 1 },
+    });
+
+    res.status(200).json(new ApiResponse(200, {}, "Question removed from test"));
+  });
+
   // ================= DELETE TEST =================
   static deleteTest = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;

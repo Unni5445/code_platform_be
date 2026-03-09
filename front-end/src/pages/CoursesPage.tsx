@@ -7,11 +7,14 @@ import { useDebounce } from "@/hooks";
 import { Button, Card, Badge, Modal, Input, ConfirmDialog, EmptyState, SearchInput, Spinner, Pagination } from "@/components/ui";
 import { useModal } from "@/hooks";
 import type { ICourse } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
 const PAGE_SIZE = 9;
 
 export default function CoursesPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const navigate = useNavigate();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
@@ -91,7 +94,7 @@ export default function CoursesPage() {
     }
   };
 
-  const getStudentCount = (course: ICourse) => course.enrolledStudents?.length ?? 0;
+  const getStudentCount = (course: ICourse) => course.enrolledCount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -116,7 +119,7 @@ export default function CoursesPage() {
             </button>
           </div>
         </div>
-        <Button leftIcon={<Plus className="h-4 w-4" />} onClick={openAdd}>Add Course</Button>
+        {!isAdmin && <Button leftIcon={<Plus className="h-4 w-4" />} onClick={openAdd}>Add Course</Button>}
       </div>
 
       {/* Loading */}
@@ -147,12 +150,16 @@ export default function CoursesPage() {
                   <button onClick={() => navigate(`/courses/${course._id}`)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
                     <Eye className="h-4 w-4" />
                   </button>
-                  <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => { setCourseToDelete(course); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {!isAdmin && (
+                    <>
+                      <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => { setCourseToDelete(course); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>
@@ -199,12 +206,16 @@ export default function CoursesPage() {
                       <button onClick={() => navigate(`/courses/${course._id}`)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => { setCourseToDelete(course); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {!isAdmin && (
+                        <>
+                          <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => { setCourseToDelete(course); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

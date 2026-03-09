@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/dashboard/stats", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getStats);
 router.get("/dashboard/user-growth", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getUserGrowth);
 router.get("/dashboard/test-performance", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getTestPerformance);
-router.get("/dashboard/leaderboard", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getLeaderboard);
+router.get("/dashboard/leaderboard", protect, DashboardController.getLeaderboard);
 router.get("/dashboard/recent-activity", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getRecentActivity);
 
 export default router;

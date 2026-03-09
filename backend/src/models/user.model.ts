@@ -23,11 +23,8 @@ export interface IUser extends Document {
   otpExpiry?: Date;
 
   organisation?: mongoose.Types.ObjectId;
-  batch?: mongoose.Types.ObjectId;
-  enrolledCourses?: mongoose.Types.ObjectId[];
 
   department?: string;
-  college?: mongoose.Types.ObjectId;
   dob?: Date;
   gender?: "Male" | "Female" | "Other";
   passoutYear?: number;
@@ -63,11 +60,8 @@ const userSchema = new Schema<IUser>(
     otpExpiry: { type: Date },
 
     organisation: { type: Schema.Types.ObjectId, ref: "Organisation" },
-    batch: { type: Schema.Types.ObjectId, ref: "Batch" },
-    enrolledCourses: [{ type: Schema.Types.ObjectId, ref: "Course" }],
 
     department: { type: String, trim: true },
-    college: { type: Schema.Types.ObjectId, ref: "Organisation" },
     dob: { type: Date },
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     passoutYear: { type: Number },

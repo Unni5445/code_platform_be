@@ -9,6 +9,7 @@ import { UserFilters } from "@/components/users/UserFilters";
 import { UserForm } from "@/components/users/UserForm";
 import { useModal } from "@/hooks";
 import type { IUser, UserRole } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
 const roleBadgeVariant: Record<UserRole, "primary" | "secondary" | "info"> = {
@@ -20,6 +21,8 @@ const roleBadgeVariant: Record<UserRole, "primary" | "secondary" | "info"> = {
 const PAGE_SIZE = 8;
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
@@ -47,9 +50,9 @@ export default function UsersPage() {
         page: currentPage,
         limit: PAGE_SIZE,
         search: debouncedSearch || undefined,
-        role: roleFilter || undefined,
+        role: isAdmin ? "STUDENT" : (roleFilter || undefined),
       }),
-    [currentPage, debouncedSearch, roleFilter]
+    [currentPage, debouncedSearch, roleFilter, isAdmin]
   );
 
   const { data, loading, refetch } = useApi(fetchUsers, [currentPage, debouncedSearch, roleFilter]);
@@ -106,15 +109,22 @@ export default function UsersPage() {
         <UserFilters
           search={search}
           onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
-          roleFilter={roleFilter}
-          onRoleFilterChange={(val) => { setRoleFilter(val); setCurrentPage(1); }}
+          roleFilter={isAdmin ? "STUDENT" : roleFilter}
+          onRoleFilterChange={isAdmin ? () => {} : (val) => { setRoleFilter(val); setCurrentPage(1); }}
           statusFilter={statusFilter}
           onStatusFilterChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+          hideRoleFilter={isAdmin}
         />
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" leftIcon={<Download className="h-4 w-4" />}>Export</Button>
-          <Button variant="outline" size="sm" leftIcon={<Upload className="h-4 w-4" />}>Import</Button>
-          <Button size="sm" leftIcon={<UserPlus className="h-4 w-4" />} onClick={addModal.open}>Add User</Button>
+          {!isAdmin && (
+            <>
+              <Button variant="outline" size="sm" leftIcon={<Download className="h-4 w-4" />}>Export</Button>
+              <Button variant="outline" size="sm" leftIcon={<Upload className="h-4 w-4" />}>Import</Button>
+            </>
+          )}
+          <Button size="sm" leftIcon={<UserPlus className="h-4 w-4" />} onClick={addModal.open}>
+            {isAdmin ? "Add Student" : "Add User"}
+          </Button>
         </div>
       </div>
 
@@ -170,8 +180,8 @@ export default function UsersPage() {
                       <Dropdown
                         items={[
                           { label: "View Details", icon: <Eye className="h-4 w-4" />, onClick: () => { setSelectedUser(user); viewModal.open(); } },
-                          { label: "Edit User", icon: <Edit className="h-4 w-4" />, onClick: () => { setSelectedUser(user); editModal.open(); } },
-                          { label: "Delete User", icon: <Trash2 className="h-4 w-4" />, onClick: () => { setUserToDelete(user); deleteModal.open(); }, danger: true },
+                          { label: isAdmin ? "Edit Student" : "Edit User", icon: <Edit className="h-4 w-4" />, onClick: () => { setSelectedUser(user); editModal.open(); } },
+                          { label: isAdmin ? "Delete Student" : "Delete User", icon: <Trash2 className="h-4 w-4" />, onClick: () => { setUserToDelete(user); deleteModal.open(); }, danger: true },
                         ]}
                       />
                     </td>
@@ -191,8 +201,8 @@ export default function UsersPage() {
         )}
       </div>
 
-      <Modal isOpen={addModal.isOpen} onClose={addModal.close} title="Add New User" size="lg">
-        <UserForm onSubmit={handleCreateUser} onCancel={addModal.close} />
+      <Modal isOpen={addModal.isOpen} onClose={addModal.close} title={isAdmin ? "Add New Student" : roleFilter === "ADMIN" ? "Add New Admin" : "Add New User"} size="lg">
+        <UserForm onSubmit={handleCreateUser} onCancel={addModal.close} forceStudentRole={isAdmin} defaultRole={roleFilter === "ADMIN" ? "ADMIN" : undefined} />
       </Modal>
 
       <Modal isOpen={editModal.isOpen} onClose={editModal.close} title="Edit User" size="lg">

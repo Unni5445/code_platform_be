@@ -19,7 +19,8 @@ export default function AnalyticsPage() {
   const { data: stats, loading: statsLoading } = useApi(() => dashboardService.getStats(), []);
   const { data: userGrowth, loading: growthLoading } = useApi(() => dashboardService.getUserGrowth(), []);
   const { data: testPerformance, loading: perfLoading } = useApi(() => dashboardService.getTestPerformance(), []);
-  const { data: leaderboard, loading: leaderLoading } = useApi(() => dashboardService.getLeaderboard({ limit: 20 }), []);
+  const { data: leaderboardData, loading: leaderLoading } = useApi(() => dashboardService.getLeaderboard({ limit: 20 }), []);
+  const leaderboard = (leaderboardData as any)?.leaderboard || leaderboardData || [];
 
   const isLoading = statsLoading || growthLoading || perfLoading;
 
@@ -137,7 +138,7 @@ export default function AnalyticsPage() {
         <Card header={
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-gray-900">Platform Leaderboard</h3>
-            <Badge variant="primary">{leaderboard?.length ?? 0} Students</Badge>
+            <Badge variant="primary">{Array.isArray(leaderboard) ? leaderboard.length : 0} Students</Badge>
           </div>
         } noPadding>
           {leaderLoading ? (
@@ -152,36 +153,40 @@ export default function AnalyticsPage() {
                   <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Student</th>
                   <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Points</th>
                   <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Streak</th>
-                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Courses</th>
+                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Max Streak</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border">
-                {(leaderboard || []).map((entry) => (
-                  <tr key={entry._id} className="hover:bg-primary-50/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        entry.rank === 1 ? "bg-secondary-100 text-secondary-700" :
-                        entry.rank === 2 ? "bg-gray-200 text-gray-700" :
-                        entry.rank === 3 ? "bg-orange-100 text-orange-700" :
-                        "bg-gray-100 text-gray-500"
-                      }`}>
-                        {entry.rank}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-gray-900">{entry.name}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-primary-600">{entry.points} pts</span>
-                    </td>
-                    <td className="px-6 py-4 hidden md:table-cell">
-                      <span className="text-sm text-gray-600">{entry.streak} days</span>
-                    </td>
-                    <td className="px-6 py-4 hidden lg:table-cell">
-                      <Badge variant="gray">{entry.courses} courses</Badge>
-                    </td>
-                  </tr>
-                ))}
+                {(Array.isArray(leaderboard) ? leaderboard : []).map((entry: any, index: number) => {
+                  const rank = index + 1;
+                  const name = entry.student?.name || entry.name || "Unknown";
+                  return (
+                    <tr key={entry._id} className="hover:bg-primary-50/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          rank === 1 ? "bg-secondary-100 text-secondary-700" :
+                          rank === 2 ? "bg-gray-200 text-gray-700" :
+                          rank === 3 ? "bg-orange-100 text-orange-700" :
+                          "bg-gray-100 text-gray-500"
+                        }`}>
+                          {rank}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-medium text-gray-900">{name}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-primary-600">{entry.points} pts</span>
+                      </td>
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        <span className="text-sm text-gray-600">{entry.streak} days</span>
+                      </td>
+                      <td className="px-6 py-4 hidden lg:table-cell">
+                        <Badge variant="gray">{entry.maxStreak} days</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

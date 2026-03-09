@@ -7,6 +7,7 @@ interface UserFiltersProps {
   onRoleFilterChange: (value: string) => void;
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
+  hideRoleFilter?: boolean;
 }
 
 export function UserFilters({
@@ -16,6 +17,7 @@ export function UserFilters({
   onRoleFilterChange,
   statusFilter,
   onStatusFilterChange,
+  hideRoleFilter,
 }: UserFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-3">
@@ -26,17 +28,19 @@ export function UserFilters({
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
-      <Select
-        options={[
-          { value: "", label: "All Roles" },
-          { value: "STUDENT", label: "Student" },
-          { value: "ADMIN", label: "Admin" },
-          { value: "SUPER_ADMIN", label: "Super Admin" },
-        ]}
-        value={roleFilter}
-        onChange={(e) => onRoleFilterChange(e.target.value)}
-        className="w-full sm:w-40"
-      />
+      {!hideRoleFilter && (
+        <Select
+          options={[
+            { value: "", label: "All Roles" },
+            { value: "STUDENT", label: "Student" },
+            { value: "ADMIN", label: "Admin" },
+            { value: "SUPER_ADMIN", label: "Super Admin" },
+          ]}
+          value={roleFilter}
+          onChange={(e) => onRoleFilterChange(e.target.value)}
+          className="w-full sm:w-40"
+        />
+      )}
       <Select
         options={[
           { value: "", label: "All Status" },

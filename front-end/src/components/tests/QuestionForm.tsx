@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Button, Input, Select, Badge, RichTextEditor } from "@/components/ui";
-import { courseService } from "@/services";
+import { courseService, testService } from "@/services";
 import { useApi } from "@/hooks/useApi";
-import type { IQuestion, QuestionType, Difficulty, TestCase } from "@/types";
+import type { IQuestion, ITest, QuestionType, Difficulty, TestCase } from "@/types";
 
 interface QuestionFormProps {
   question?: IQuestion | null;
   onSubmit: (data: Partial<IQuestion>) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  /** Pre-set these to hide the corresponding dropdowns */
+  fixedCourseId?: string;
+  fixedTestId?: string;
 }
 
 const ALLOWED_LANGUAGES = [
@@ -22,14 +25,15 @@ const ALLOWED_LANGUAGES = [
   { value: "ruby", label: "Ruby" },
 ];
 
-export function QuestionForm({ question, onSubmit, onCancel, isLoading }: QuestionFormProps) {
+export function QuestionForm({ question, onSubmit, onCancel, isLoading, fixedCourseId, fixedTestId }: QuestionFormProps) {
   // Basic fields
   const [title, setTitle] = useState(question?.title || "");
   const [description, setDescription] = useState(question?.description || "");
   const [type, setType] = useState<QuestionType>(question?.type || "SINGLE_CHOICE");
   const [difficulty, setDifficulty] = useState<Difficulty>(question?.difficulty || "Medium");
   const [points, setPoints] = useState(question?.points?.toString() || "10");
-  const [course, setCourse] = useState(question?.course || "");
+  const [testId, setTestId] = useState(fixedTestId || question?.test || "");
+  const [course, setCourse] = useState(fixedCourseId || question?.course || "");
   const [company, setCompany] = useState(question?.company || "");
   const [status, setStatus] = useState(question?.status || "DRAFT");
   const [tagInput, setTagInput] = useState("");
@@ -51,8 +55,11 @@ export function QuestionForm({ question, onSubmit, onCancel, isLoading }: Questi
   const [maxExecutionTime, setMaxExecutionTime] = useState(question?.maxExecutionTime?.toString() || "2");
   const [maxMemory, setMaxMemory] = useState(question?.maxMemory?.toString() || "128");
 
-  const { data: coursesData } = useApi(() => courseService.getCourses({ limit: 100 }), []);
+  const { data: coursesData } = useApi(() => fixedCourseId ? Promise.resolve(null) : courseService.getCourses({ limit: 100 }), [fixedCourseId]);
   const coursesList = coursesData?.courses ?? [];
+
+  const { data: testsData } = useApi(() => fixedTestId ? Promise.resolve(null) : testService.getTests({ limit: 100 }), [fixedTestId]);
+  const testsList: ITest[] = testsData?.tests ?? [];
 
   const isChoiceType = type === "SINGLE_CHOICE" || type === "MULTIPLE_CHOICE";
   const isCodingType = type === "CODING";
@@ -130,6 +137,7 @@ export function QuestionForm({ question, onSubmit, onCancel, isLoading }: Questi
       type,
       difficulty,
       points: Number(points) || 0,
+      test: testId || undefined,
       course: course || undefined,
       company: company || undefined,
       tags: tags.length > 0 ? tags : undefined,
@@ -225,23 +233,38 @@ export function QuestionForm({ question, onSubmit, onCancel, isLoading }: Questi
             placeholder="5"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Select
-            label="Course *"
-            options={[
-              { value: "", label: "Select Course" },
-              ...coursesList.map((c) => ({ value: c._id, label: c.title })),
-            ]}
-            value={course}
-            onChange={(e) => setCourse(e.target.value)}
-          />
-          <Input
-            label="Company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            placeholder="e.g., Google, Amazon"
-          />
-        </div>
+        {/* {(!fixedTestId || !fixedCourseId) && (
+          <div className="grid grid-cols-2 gap-4">
+            {!fixedTestId && (
+              <Select
+                label="Test"
+                options={[
+                  { value: "", label: "No Test (Question Bank)" },
+                  ...testsList.map((t) => ({ value: t._id, label: t.title })),
+                ]}
+                value={testId}
+                onChange={(e) => setTestId(e.target.value)}
+              />
+            )}
+            {!fixedCourseId && (
+              <Select
+                label="Course *"
+                options={[
+                  { value: "", label: "Select Course" },
+                  ...coursesList.map((c) => ({ value: c._id, label: c.title })),
+                ]}
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+              />
+            )}
+          </div>
+        )} */}
+        <Input
+          label="Company"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          placeholder="e.g., Google, Amazon"
+        />
       </div>
 
       {/* ── Section: Choice Options ── */}

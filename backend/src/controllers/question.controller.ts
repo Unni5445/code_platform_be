@@ -1,6 +1,7 @@
 import { NextFunction, Response, Request } from "express";
 import asyncHandler from "../utils/asyncHandler";
 import Question from "../models/question.model";
+import Test from "../models/test.model";
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
 
@@ -8,6 +9,14 @@ class QuestionController {
   // ================= CREATE QUESTION =================
   static createQuestion = asyncHandler(async (req: Request, res: Response) => {
     const question = await Question.create(req.body);
+
+    // If test is provided, add question to the test's questions array
+    if (req.body.test) {
+      await Test.findByIdAndUpdate(req.body.test, {
+        $addToSet: { questions: question._id },
+      });
+    }
+
     res.status(201).json(new ApiResponse(201, question, "Question created successfully"));
   });
 
@@ -20,12 +29,19 @@ class QuestionController {
     const difficultyFilter = req.query.difficulty as string;
     const courseFilter = req.query.course as string;
     const moduleFilter = req.query.module as string;
+    const testFilter = req.query.test as string;
     const tagFilter = req.query.tag as string;
 
     const filter: any = {};
     if (search) filter.title = { $regex: search, $options: "i" };
     if (typeFilter) filter.type = typeFilter;
     if (difficultyFilter) filter.difficulty = difficultyFilter;
+    if (testFilter === "none") {
+      if (!filter.$and) filter.$and = [];
+      filter.$and.push({ $or: [{ test: { $exists: false } }, { test: null }] });
+    } else if (testFilter) {
+      filter.test = testFilter;
+    }
     if (courseFilter === "none") {
       if (!filter.$and) filter.$and = [];
       filter.$and.push({ $or: [{ course: { $exists: false } }, { course: null }] });
@@ -114,6 +130,13 @@ class QuestionController {
 
     const question = await Question.findById(id);
     if (!question) return next(new ErrorResponse("Question not found", 404));
+
+    // Remove question from its test's questions array
+    if (question.test) {
+      await Test.findByIdAndUpdate(question.test, {
+        $pull: { questions: question._id },
+      });
+    }
 
     await Question.findByIdAndDelete(id);
     res.status(200).json(new ApiResponse(200, {}, "Question deleted successfully"));

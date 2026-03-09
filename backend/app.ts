@@ -17,6 +17,7 @@ import dashboardRoute from "./src/routes/dashboard.routes";
 import moduleRoute from "./src/routes/module.routes";
 import submoduleRoute from "./src/routes/submodule.routes";
 import enrollmentRoute from "./src/routes/enrollment.routes";
+import studentRoute from "./src/routes/student.routes";
 
 
 dotenv.config();
@@ -60,6 +61,7 @@ app.use("/api/v1", dashboardRoute);
 app.use("/api/v1", moduleRoute);
 app.use("/api/v1", submoduleRoute);
 app.use("/api/v1", enrollmentRoute);
+app.use("/api/v1", studentRoute);
 // Database Connection
 mongoose
   .connect(process.env.MONGO_DB!,)

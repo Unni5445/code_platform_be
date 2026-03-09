@@ -3,8 +3,8 @@ export interface IOrganisation {
   name: string;
   address?: string;
   admin?: string;
-  students?: string[];
-  courses?: string[];
+  studentCount?: number;
+  batchCount?: number;
   createdAt: string;
   updatedAt: string;
 }

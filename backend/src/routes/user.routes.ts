@@ -8,6 +8,11 @@ const router = express.Router();
  * ================= AUTH ROUTES
  */
 router.post("/sign-in", UserController.signinUser);
+router.post("/sign-up", UserController.signupUser);
+router.post("/google-auth", UserController.googleAuth);
+router.post("/forgot-password", UserController.forgotPassword);
+router.post("/verify-otp", UserController.verifyOtp);
+router.post("/reset-password", UserController.resetPassword);
 router.post("/sign-out", protect, UserController.signOut);
 router.get("/me", protect, UserController.getUserByToken);
 
@@ -17,7 +22,7 @@ router.get("/me", protect, UserController.getUserByToken);
 router
   .route("/users")
   .get(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.getUsers)
-  .post(protect, authorize("SUPER_ADMIN"), UserController.createUser);
+  .post(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.createUser);
 
 router
   .route("/users/:id")
@@ -25,7 +30,7 @@ router
   .put(protect, UserController.updateUser)
   .delete(
     protect,
-    authorize("SUPER_ADMIN"),
+    authorize("ADMIN", "SUPER_ADMIN"),
     UserController.deleteUser
   );
 

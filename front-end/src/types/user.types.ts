@@ -15,9 +15,6 @@ export interface IUser {
   role: UserRole;
   googleId?: string;
   organisation?: string | IOrganisation;
-  batch?: string | IBatch;
-  enrolledCourses?: string[];
-  college?: string;
   department?: string;
   dob?: string;
   gender?: Gender;
@@ -34,10 +31,6 @@ export interface IUser {
 
 // Forward declarations for populated fields
 interface IOrganisation {
-  _id: string;
-  name: string;
-}
-interface IBatch {
   _id: string;
   name: string;
 }

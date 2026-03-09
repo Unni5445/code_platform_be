@@ -17,9 +17,6 @@ export const batchService = {
   deleteBatch: (id: string) =>
     api.delete<ApiResponse<object>>(`/batches/${id}`),
 
-  addStudents: (id: string, studentIds: string[]) =>
-    api.post<ApiResponse<IBatch>>(`/batches/${id}/students`, { studentIds }),
-
   updateBatches: (batchIds: string[], organisationId?: string) =>
     api.put<ApiResponse<object>>("/batches", { batchIds, organisationId }),
 };

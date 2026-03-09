@@ -1,7 +1,7 @@
 export type { ApiResponse, PaginatedResponse } from "./api.types";
 export type { IUser, UserRole, Gender, ActivityLogEntry } from "./user.types";
 export type { ICourse } from "./course.types";
-export type { IBatch } from "./batch.types";
+export type { IBatch, BatchDuration } from "./batch.types";
 export type { IOrganisation } from "./organisation.types";
 export type { ITest } from "./test.types";
 export type { IQuestion, QuestionType, Difficulty, QuestionStatus, TestCase } from "./question.types";

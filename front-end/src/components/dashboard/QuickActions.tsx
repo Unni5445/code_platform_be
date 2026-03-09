@@ -1,29 +1,34 @@
 import { UserPlus, BookPlus, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 
 export function QuickActions() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
 
   const actions = [
-    {
-      label: "Add User",
-      icon: <UserPlus className="h-5 w-5" />,
-      onClick: () => navigate("/users"),
-      variant: "primary" as const,
-    },
-    {
-      label: "Add Course",
-      icon: <BookPlus className="h-5 w-5" />,
-      onClick: () => navigate("/courses"),
-      variant: "secondary" as const,
-    },
-    {
-      label: "Generate Report",
-      icon: <FileDown className="h-5 w-5" />,
-      onClick: () => navigate("/analytics"),
-      variant: "outline" as const,
-    },
+    // {
+    //   label: isAdmin ? "Add Student" : "Add User",
+    //   icon: <UserPlus className="h-5 w-5" />,
+    //   onClick: () => navigate("/users"),
+    //   variant: "primary" as const,
+    // },
+    ...(!isAdmin ? [
+      {
+        label: "Add Course",
+        icon: <BookPlus className="h-5 w-5" />,
+        onClick: () => navigate("/courses"),
+        variant: "secondary" as const,
+      },
+      {
+        label: "Generate Report",
+        icon: <FileDown className="h-5 w-5" />,
+        onClick: () => navigate("/analytics"),
+        variant: "outline" as const,
+      },
+    ] : []),
   ];
 
   return (

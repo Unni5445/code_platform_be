@@ -11,6 +11,7 @@ import CoursesPage from "@/pages/CoursesPage";
 import TestsPage from "@/pages/TestsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import CertificatesPage from "@/pages/CertificatesPage";
+import CertificateDetailPage from "@/pages/CertificateDetailPage";
 import SystemPage from "@/pages/SystemPage";
 import CourseDetailPage from "@/pages/CourseDetailPage";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -36,7 +37,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN"]} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -46,6 +47,7 @@ function App() {
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/certificates" element={<CertificatesPage />} />
+              <Route path="/certificates/:id" element={<CertificateDetailPage />} />
               <Route path="/system" element={<SystemPage />} />
             </Route>
           </Route>

@@ -1,16 +1,18 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Download, ExternalLink, Award, QrCode } from "lucide-react";
 import { certificateService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
-import { Button, Card, Badge, Modal, EmptyState, SearchInput, Spinner } from "@/components/ui";
-import { useModal } from "@/hooks";
+import { Button, Card, Badge, EmptyState, SearchInput, Spinner } from "@/components/ui";
 import type { ICertificate } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CertificatesPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const [search, setSearch] = useState("");
-  const [selectedCert, setSelectedCert] = useState<ICertificate | null>(null);
-  const viewModal = useModal();
+  const navigate = useNavigate();
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -55,7 +57,7 @@ export default function CertificatesPage() {
         <div className="w-72">
           <SearchInput placeholder="Search certificates..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Button leftIcon={<Plus className="h-4 w-4" />}>Generate Certificate</Button>
+        {!isAdmin && <Button leftIcon={<Plus className="h-4 w-4" />}>Generate Certificate</Button>}
       </div>
 
       {/* Stats */}
@@ -156,18 +158,20 @@ export default function CertificatesPage() {
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-1">
                       <button
-                        onClick={() => { setSelectedCert(cert); viewModal.open(); }}
+                        onClick={() => navigate(`/certificates/${cert._id}`)}
                         className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="p-2 rounded-lg text-gray-400 hover:text-secondary-600 hover:bg-secondary-50 transition-colors cursor-pointer">
-                        <Download className="h-4 w-4" />
-                      </button>
                       {cert.verificationLink && (
-                        <button className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer">
+                        <a
+                          href={cert.verificationLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                        >
                           <ExternalLink className="h-4 w-4" />
-                        </button>
+                        </a>
                       )}
                     </div>
                   </td>
@@ -177,56 +181,6 @@ export default function CertificatesPage() {
           </table>
         )}
       </div>
-
-      {/* Certificate Preview Modal */}
-      <Modal isOpen={viewModal.isOpen} onClose={() => { viewModal.close(); setSelectedCert(null); }} title="Certificate Preview" size="lg">
-        {selectedCert && (
-          <div className="space-y-6">
-            <div className="relative bg-gradient-to-br from-primary-50 to-secondary-50 rounded-2xl p-8 border-2 border-primary-200 text-center">
-              <div className="absolute top-4 left-4 h-12 w-12 bg-primary-100 rounded-full flex items-center justify-center">
-                <Award className="h-6 w-6 text-primary-600" />
-              </div>
-              <div className="absolute top-4 right-4 h-12 w-12 bg-secondary-100 rounded-full flex items-center justify-center">
-                <QrCode className="h-6 w-6 text-secondary-600" />
-              </div>
-              <p className="text-xs uppercase tracking-widest text-primary-500 font-medium mt-4">Certificate of Completion</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-3">{selectedCert.title}</h3>
-              <p className="text-gray-500 mt-2">Awarded to</p>
-              <p className="text-xl font-bold text-primary-700 mt-1">{getStudentName(selectedCert.student as string)}</p>
-              <div className="flex justify-center gap-8 mt-6">
-                <div>
-                  <p className="text-xs text-gray-500">Grade</p>
-                  <p className="text-lg font-bold text-gray-900">{selectedCert.grade}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Score</p>
-                  <p className="text-lg font-bold text-gray-900">{selectedCert.score}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Issued</p>
-                  <p className="text-lg font-bold text-gray-900">{new Date(selectedCert.issuedAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surface-secondary rounded-lg p-3">
-                <p className="text-xs text-gray-500">Course</p>
-                <p className="text-sm font-medium mt-1">{getCourseName(selectedCert.course as string)}</p>
-              </div>
-              <div className="bg-surface-secondary rounded-lg p-3">
-                <p className="text-xs text-gray-500">Certificate ID</p>
-                <p className="text-sm font-medium mt-1 font-mono">{selectedCert._id}</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="primary" leftIcon={<Download className="h-4 w-4" />} className="flex-1">Download PDF</Button>
-              <Button variant="outline" leftIcon={<ExternalLink className="h-4 w-4" />} className="flex-1">Verify Online</Button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

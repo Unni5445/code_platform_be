@@ -15,4 +15,12 @@ router
   .put(protect, authorize("ADMIN", "SUPER_ADMIN"), TestController.updateTest)
   .delete(protect, authorize("SUPER_ADMIN"), TestController.deleteTest);
 
+router
+  .route("/tests/:id/questions")
+  .post(protect, authorize("ADMIN", "SUPER_ADMIN"), TestController.addQuestions);
+
+router
+  .route("/tests/:id/questions/:questionId")
+  .delete(protect, authorize("ADMIN", "SUPER_ADMIN"), TestController.removeQuestion);
+
 export default router;

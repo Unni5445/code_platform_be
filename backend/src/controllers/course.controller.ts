@@ -1,6 +1,7 @@
 import { NextFunction, Response, Request } from "express";
 import asyncHandler from "../utils/asyncHandler";
 import Course from "../models/course.model";
+import Enrollment from "../models/enrollment.model";
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
 
@@ -39,7 +40,7 @@ class CourseController {
 
     // Admin sees global courses + their org's courses
     if (req.user?.role === "ADMIN") {
-      const orgFilter = { $or: [{ isGlobal: true }, { organisation: req.user.organisation }] };
+      const orgFilter = { $or: [{ isGlobal: true }, { organisation: req.user.organisation }, { organisation: { $exists: false } }, { organisation: null }] };
       if (filter.$and) {
         filter.$and.push(orgFilter);
       } else {
@@ -49,17 +50,29 @@ class CourseController {
 
     const skip = (page - 1) * limit;
     const courses = await Course.find(filter)
-      // .populate("organisation", "name")
-      .populate("enrolledStudents", "name email")
+      .populate("organisation", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const totalCourses = await Course.countDocuments(filter);
 
+    const courseIds = courses.map((c) => c._id);
+    const enrollmentCounts = await Enrollment.aggregate([
+      { $match: { course: { $in: courseIds }, status: { $ne: "DROPPED" } } },
+      { $group: { _id: "$course", count: { $sum: 1 } } },
+    ]);
+    const enrollMap = Object.fromEntries(enrollmentCounts.map((e) => [e._id.toString(), e.count]));
+
+    const coursesWithCount = courses.map((c) => ({
+      ...c,
+      enrolledCount: enrollMap[c._id.toString()] || 0,
+    }));
+
     res.status(200).json(
       new ApiResponse(200, {
-        courses,
+        courses: coursesWithCount,
         currentPage: page,
         totalPages: Math.ceil(totalCourses / limit),
         totalCourses,
@@ -72,8 +85,7 @@ class CourseController {
     const { id } = req.params;
 
     const course = await Course.findById(id)
-      // .populate("organisation", "name")
-      .populate("enrolledStudents", "name email points");
+      .populate("organisation", "name");
 
     if (!course) return next(new ErrorResponse("Course not found", 404));
 
@@ -104,22 +116,6 @@ class CourseController {
     res.status(200).json(new ApiResponse(200, {}, "Course deleted successfully"));
   });
 
-  // ================= ENROLL STUDENTS =================
-  static enrollStudents = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const { studentIds } = req.body;
-
-    const course = await Course.findById(id);
-    if (!course) return next(new ErrorResponse("Course not found", 404));
-
-    const newStudents = studentIds.filter(
-      (sid: string) => !course.enrolledStudents.map(String).includes(sid)
-    );
-    course.enrolledStudents.push(...newStudents);
-    await course.save();
-
-    res.status(200).json(new ApiResponse(200, course, "Students enrolled successfully"));
-  });
 }
 
 export default CourseController;

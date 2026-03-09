@@ -1,10 +1,15 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 /** Batch Interface */
+export const BATCH_DURATIONS = ["1 month", "3 months", "6 months", "1 year", "2 years"] as const;
+export type BatchDuration = (typeof BATCH_DURATIONS)[number];
+
 export interface IBatch extends Document {
   name: string; // e.g., "Batch A" or "2026 Cohort"
   organisation: mongoose.Types.ObjectId; // which org this batch belongs to
-  students: mongoose.Types.ObjectId[]; // student IDs
+  duration: BatchDuration;
+  startDate: Date;
+  endDate: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,7 +19,9 @@ const batchSchema = new Schema<IBatch>(
   {
     name: { type: String, required: true, trim: true },
     organisation: { type: Schema.Types.ObjectId, ref: "Organisation", required: false },
-    students: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    duration: { type: String, required: true, enum: BATCH_DURATIONS },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
   },
   { timestamps: true }
 );

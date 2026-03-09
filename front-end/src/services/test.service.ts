@@ -30,10 +30,16 @@ export const testService = {
 
   deleteTest: (id: string) =>
     api.delete<ApiResponse<object>>(`/tests/${id}`),
+
+  addQuestionsToTest: (testId: string, questionIds: string[]) =>
+    api.post<ApiResponse<ITest>>(`/tests/${testId}/questions`, { questionIds }),
+
+  removeQuestionFromTest: (testId: string, questionId: string) =>
+    api.delete<ApiResponse<object>>(`/tests/${testId}/questions/${questionId}`),
 };
 
 export const questionService = {
-  getQuestions: (params?: { page?: number; limit?: number; search?: string; type?: string; difficulty?: string; course?: string; module?: string; tag?: string }) =>
+  getQuestions: (params?: { page?: number; limit?: number; search?: string; type?: string; difficulty?: string; course?: string; module?: string; test?: string; tag?: string }) =>
     api.get<ApiResponse<PaginatedQuestions>>("/questions", { params }),
 
   getQuestionById: (id: string) =>

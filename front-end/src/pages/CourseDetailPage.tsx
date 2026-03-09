@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Edit, Trash2, ChevronDown, ChevronRight,
   GripVertical, BookOpen, FileText, ClipboardList, HelpCircle,
-  UserMinus, Clock, Award,
+  UserMinus, Clock, Award, Search, Check,
 } from "lucide-react";
 import { courseService, moduleService, submoduleService, enrollmentService, testService, questionService } from "@/services";
 import { useApi } from "@/hooks/useApi";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui";
 import { QuestionForm } from "@/components/tests/QuestionForm";
 import type { IModule, ISubmodule, IEnrollment, ITest, IQuestion } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
 const ENROLLMENT_STATUS_OPTIONS = [
@@ -24,6 +25,8 @@ const ENROLLMENT_STATUS_OPTIONS = [
 ];
 
 export default function CourseDetailPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("modules");
@@ -89,6 +92,63 @@ export default function CourseDetailPage() {
   const [questionToDelete, setQuestionToDelete] = useState<{ question: IQuestion; moduleId: string } | null>(null);
   const [savingQuestion, setSavingQuestion] = useState(false);
 
+  // ─── Question Picker (Choose Existing) ───
+  const questionPickerModal = useModal();
+  const [pickerModuleId, setPickerModuleId] = useState("");
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerQuestions, setPickerQuestions] = useState<IQuestion[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
+  const [addingQuestions, setAddingQuestions] = useState(false);
+
+  const openQuestionPicker = (moduleId: string) => {
+    setPickerModuleId(moduleId);
+    setPickerSearch("");
+    setSelectedQuestionIds(new Set());
+    setPickerQuestions([]);
+    questionPickerModal.open();
+  };
+
+  // Fetch unassigned questions when picker opens or search changes
+  useEffect(() => {
+    if (!questionPickerModal.isOpen) return;
+    const fetchQuestions = async () => {
+      setPickerLoading(true);
+      try {
+        const res = await questionService.getQuestions({
+          test: "none",
+          search: pickerSearch || undefined,
+          limit: 50,
+        });
+        setPickerQuestions(res.data.data.questions);
+      } catch { setPickerQuestions([]); }
+      setPickerLoading(false);
+    };
+    const timer = setTimeout(fetchQuestions, 300);
+    return () => clearTimeout(timer);
+  }, [questionPickerModal.isOpen, pickerSearch]);
+
+  const togglePickerQuestion = (id: string) => {
+    setSelectedQuestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleAddExistingQuestions = async () => {
+    const testId = moduleTests[pickerModuleId]?._id;
+    if (!testId || selectedQuestionIds.size === 0) return;
+    setAddingQuestions(true);
+    try {
+      await testService.addQuestionsToTest(testId, Array.from(selectedQuestionIds));
+      questionPickerModal.close();
+      toast.success(`${selectedQuestionIds.size} question(s) added`);
+      fetchModuleTestAndQuestions(pickerModuleId);
+    } catch { toast.error("Failed to add questions"); }
+    setAddingQuestions(false);
+  };
+
   // ─── Enrollment modals ───
   const deleteEnrollModal = useModal();
   const [enrollToDelete, setEnrollToDelete] = useState<IEnrollment | null>(null);
@@ -125,9 +185,7 @@ export default function CourseDetailPage() {
       const test = tests.length > 0 ? tests[0] : null;
       setModuleTests((prev) => ({ ...prev, [moduleId]: test }));
 
-      // Fetch questions for this module
-      const qRes = await questionService.getQuestions({ course: courseId, module: moduleId, limit: 100 });
-      setModuleQuestions((prev) => ({ ...prev, [moduleId]: qRes.data.data.questions }));
+      setModuleQuestions((prev) => ({ ...prev, [moduleId]: (test?.questions as unknown as IQuestion[] )|| [] }));
     } catch {
       setModuleTests((prev) => ({ ...prev, [moduleId]: null }));
       setModuleQuestions((prev) => ({ ...prev, [moduleId]: [] }));
@@ -394,16 +452,18 @@ export default function CourseDetailPage() {
       {/* ═══════════ MODULES TAB ═══════════ */}
       {activeTab === "modules" && (
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => { setModuleForm({ title: "", description: "" }); addModuleModal.open(); }}>
-              Add Module
-            </Button>
-          </div>
+          {!isAdmin && (
+            <div className="flex justify-end">
+              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => { setModuleForm({ title: "", description: "" }); addModuleModal.open(); }}>
+                Add Module
+              </Button>
+            </div>
+          )}
 
           {modulesLoading ? (
             <div className="flex items-center justify-center h-40"><Spinner size="lg" /></div>
           ) : moduleList.length === 0 ? (
-            <EmptyState title="No modules yet" description="Add the first module to structure this course." action={<Button onClick={() => { setModuleForm({ title: "", description: "" }); addModuleModal.open(); }}>Add Module</Button>} />
+            <EmptyState title="No modules yet" description={isAdmin ? "No modules available for this course." : "Add the first module to structure this course."} action={!isAdmin ? <Button onClick={() => { setModuleForm({ title: "", description: "" }); addModuleModal.open(); }}>Add Module</Button> : undefined} />
           ) : (
             <div className="space-y-3">
               {moduleList.map((mod, index) => (
@@ -428,12 +488,16 @@ export default function CourseDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <Badge variant="default">{mod.submoduleCount ?? 0} items</Badge>
-                      <button onClick={(e) => { e.stopPropagation(); openEditModule(mod); }} className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
-                        <Edit className="h-3.5 w-3.5" />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); setModuleToDelete(mod); deleteModuleModal.open(); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {!isAdmin && (
+                        <>
+                          <button onClick={(e) => { e.stopPropagation(); openEditModule(mod); }} className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); setModuleToDelete(mod); deleteModuleModal.open(); }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -459,21 +523,25 @@ export default function CourseDetailPage() {
                                   <p className="text-sm text-gray-800 truncate">{sub.title}</p>
                                   {sub.description && <p className="text-xs text-gray-400 truncate mt-0.5">{sub.description}</p>}
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => openEditSubmodule(sub)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer">
-                                    <Edit className="h-3.5 w-3.5" />
-                                  </button>
-                                  <button onClick={() => { setSubToDelete(sub); deleteSubmoduleModal.open(); }} className="p-1 rounded text-gray-400 hover:text-red-600 cursor-pointer">
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
+                                {!isAdmin && (
+                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => openEditSubmodule(sub)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer">
+                                      <Edit className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button onClick={() => { setSubToDelete(sub); deleteSubmoduleModal.open(); }} className="p-1 rounded text-gray-400 hover:text-red-600 cursor-pointer">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
                         )}
-                        <button onClick={() => openAddSubmodule(mod._id)} className="flex items-center gap-2 px-3 py-2 text-xs text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer w-full">
-                          <Plus className="h-3.5 w-3.5" /> Add Submodule
-                        </button>
+                        {!isAdmin && (
+                          <button onClick={() => openAddSubmodule(mod._id)} className="flex items-center gap-2 px-3 py-2 text-xs text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer w-full">
+                            <Plus className="h-3.5 w-3.5" /> Add Submodule
+                          </button>
+                        )}
                       </div>
 
                       {/* ── Test Section ── */}
@@ -510,21 +578,25 @@ export default function CourseDetailPage() {
                                   </div>
                                 </div>
                               </div>
-                              <button
-                                onClick={() => openEditTest(moduleTests[mod._id]!, mod._id)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </button>
+                              {!isAdmin && (
+                                <button
+                                  onClick={() => openEditTest(moduleTests[mod._id]!, mod._id)}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
-                        ) : (
+                        ) : !isAdmin ? (
                           <button
                             onClick={() => openCreateTest(mod._id)}
                             className="flex items-center gap-2 px-3 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer w-full border border-dashed border-blue-200"
                           >
                             <Plus className="h-4 w-4" /> Create Test for this Module
                           </button>
+                        ) : (
+                          <p className="text-xs text-gray-400 py-2">No test assigned</p>
                         )}
                       </div>
 
@@ -537,12 +609,24 @@ export default function CourseDetailPage() {
                               Questions ({(moduleQuestions[mod._id] ?? []).length})
                             </span>
                           </div>
-                          <button
-                            onClick={() => openAddQuestion(mod._id)}
-                            className="flex items-center gap-1 px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Plus className="h-3 w-3" /> Add
-                          </button>
+                          {!isAdmin && (
+                            <div className="flex items-center gap-1">
+                              {moduleTests[mod._id] && (
+                                <button
+                                  onClick={() => openQuestionPicker(mod._id)}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <Search className="h-3 w-3" /> Choose Existing
+                                </button>
+                              )}
+                              <button
+                                onClick={() => openAddQuestion(mod._id)}
+                                className="flex items-center gap-1 px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <Plus className="h-3 w-3" /> Add New
+                              </button>
+                            </div>
+                          )}
                         </div>
                         {loadingTests.has(mod._id) ? (
                           <div className="flex justify-center py-4"><Spinner /></div>
@@ -561,6 +645,7 @@ export default function CourseDetailPage() {
                                     <span className="text-[10px] text-gray-400">{q.points} pts</span>
                                   </div>
                                 </div>
+                                {!isAdmin && (
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button onClick={() => openEditQuestion(q, mod._id)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer">
                                     <Edit className="h-3.5 w-3.5" />
@@ -569,6 +654,7 @@ export default function CourseDetailPage() {
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -764,6 +850,8 @@ export default function CourseDetailPage() {
           onSubmit={handleCreateQuestion}
           onCancel={addQuestionModal.close}
           isLoading={savingQuestion}
+          fixedCourseId={courseId}
+          fixedTestId={moduleTests[questionModuleId]?._id}
         />
       </Modal>
 
@@ -774,7 +862,68 @@ export default function CourseDetailPage() {
           onSubmit={handleUpdateQuestion}
           onCancel={editQuestionModal.close}
           isLoading={savingQuestion}
+          fixedCourseId={courseId}
+          fixedTestId={moduleTests[questionModuleId]?._id}
         />
+      </Modal>
+
+      {/* Choose Existing Questions */}
+      <Modal isOpen={questionPickerModal.isOpen} onClose={questionPickerModal.close} title="Choose Existing Questions" size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onClick={questionPickerModal.close}>Cancel</Button>
+            <Button onClick={handleAddExistingQuestions} disabled={selectedQuestionIds.size === 0} isLoading={addingQuestions}>
+              Add {selectedQuestionIds.size > 0 ? `${selectedQuestionIds.size} Question(s)` : "Selected"}
+            </Button>
+          </>
+        }>
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              value={pickerSearch}
+              onChange={(e) => setPickerSearch(e.target.value)}
+              placeholder="Search questions..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400"
+            />
+          </div>
+          {pickerLoading ? (
+            <div className="flex justify-center py-8"><Spinner /></div>
+          ) : pickerQuestions.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">No unassigned questions found.</p>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto space-y-1">
+              {pickerQuestions.map((q) => (
+                <div
+                  key={q._id}
+                  onClick={() => togglePickerQuestion(q._id)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                    selectedQuestionIds.has(q._id)
+                      ? "bg-primary-50 border border-primary-200"
+                      : "hover:bg-gray-50 border border-transparent"
+                  }`}
+                >
+                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                    selectedQuestionIds.has(q._id)
+                      ? "bg-primary-600 border-primary-600"
+                      : "border-gray-300"
+                  }`}>
+                    {selectedQuestionIds.has(q._id) && <Check className="h-3 w-3 text-white" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-800 truncate">{q.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge variant={difficultyVariant(q.difficulty)} className="text-[10px]">{q.difficulty}</Badge>
+                      <span className="text-[10px] text-gray-400 uppercase">{q.type.replace("_", " ")}</span>
+                      <span className="text-[10px] text-gray-400">{q.points} pts</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Modal>
 
       {/* Delete confirms */}

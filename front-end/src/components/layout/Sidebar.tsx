@@ -31,7 +31,7 @@ interface NavItem {
   children?: NavChild[];
 }
 
-const navItems: NavItem[] = [
+const superAdminNavItems: NavItem[] = [
   { path: PATHS.DASHBOARD, label: "Dashboard", icon: LayoutDashboard },
   {
     path: PATHS.USERS,
@@ -43,15 +43,25 @@ const navItems: NavItem[] = [
     ],
   },
   { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
-  { path: PATHS.TESTS, label: "Tests", icon: FileQuestion },
+  { path: PATHS.TESTS, label: "Questions", icon: FileQuestion },
   { path: PATHS.ANALYTICS, label: "Analytics", icon: BarChart3 },
   { path: PATHS.CERTIFICATES, label: "Certificates", icon: Award },
   { path: PATHS.SYSTEM, label: "System", icon: Settings },
 ];
 
+const adminNavItems: NavItem[] = [
+  { path: PATHS.DASHBOARD, label: "Dashboard", icon: LayoutDashboard },
+  { path: PATHS.USERS, label: "Students", icon: UserRound },
+  { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
+  // { path: PATHS.TESTS, label: "Tests", icon: FileQuestion },
+  { path: PATHS.CERTIFICATES, label: "Certificates", icon: Award },
+];
+
 export function Sidebar() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const navItems = isAdmin ? adminNavItems : superAdminNavItems;
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
     // Auto-expand parent if we're on a child route
     return navItems
@@ -73,8 +83,8 @@ export function Sidebar() {
           <GraduationCap className="h-6 w-6 text-white" />
         </div>
         <div>
-          <h1 className="text-white font-bold text-lg leading-tight">CodePlatform</h1>
-          <p className="text-sidebar-text text-xs">Super Admin</p>
+          <h1 className="text-white font-bold text-lg leading-tight">Skill & Brains</h1>
+          <p className="text-sidebar-text text-xs">{isAdmin ? "Organisation Admin" : "Super Admin"}</p>
         </div>
       </div>
 

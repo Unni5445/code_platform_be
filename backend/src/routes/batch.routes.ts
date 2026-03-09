@@ -15,13 +15,6 @@ router
   .put(protect, authorize("ADMIN", "SUPER_ADMIN"), BatchController.updateBatch)
   .delete(protect, authorize("SUPER_ADMIN"), BatchController.deleteBatch);
 
-router.post(
-  "/batches/:id/students",
-  protect,
-  authorize("ADMIN", "SUPER_ADMIN"),
-  BatchController.addStudents
-);
-
 // Batch operations (batch delete and update)
 router.delete(
   "/batches",

@@ -11,7 +11,10 @@ import ApiResponse from "../utils/ApiResponse";
 
 class DashboardController {
   // ================= GET DASHBOARD STATS =================
-  static getStats = asyncHandler(async (_req: Request, res: Response) => {
+  static getStats = asyncHandler(async (req: Request, res: Response) => {
+    const isAdmin = req.user?.role === "ADMIN";
+    const orgFilter = isAdmin ? { organisation: req.user!.organisation } : {};
+
     const [
       totalUsers,
       totalStudents,
@@ -22,9 +25,9 @@ class DashboardController {
       totalCertificates,
       totalQuestions,
     ] = await Promise.all([
-      User.countDocuments({ isDeleted: false }),
-      User.countDocuments({ isDeleted: false, role: "STUDENT" }),
-      User.countDocuments({ isDeleted: false, role: { $in: ["ADMIN", "SUPER_ADMIN"] } }),
+      User.countDocuments({ isDeleted: false, ...orgFilter }),
+      User.countDocuments({ isDeleted: false, role: "STUDENT", ...orgFilter }),
+      User.countDocuments({ isDeleted: false, role: { $in: ["ADMIN", "SUPER_ADMIN"] }, ...orgFilter }),
       Course.countDocuments(),
       Test.countDocuments({ isActive: true }),
       Test.countDocuments(),
@@ -34,7 +37,7 @@ class DashboardController {
 
     // Average points and streak for students
     const studentStats = await User.aggregate([
-      { $match: { isDeleted: false, role: "STUDENT" } },
+      { $match: { isDeleted: false, role: "STUDENT", ...orgFilter } },
       {
         $group: {
           _id: null,
@@ -65,12 +68,15 @@ class DashboardController {
   });
 
   // ================= GET USER GROWTH DATA =================
-  static getUserGrowth = asyncHandler(async (_req: Request, res: Response) => {
+  static getUserGrowth = asyncHandler(async (req: Request, res: Response) => {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
+    const isAdmin = req.user?.role === "ADMIN";
+    const orgFilter = isAdmin ? { organisation: req.user!.organisation } : {};
+
     const growth = await User.aggregate([
-      { $match: { createdAt: { $gte: sixMonthsAgo }, isDeleted: false } },
+      { $match: { createdAt: { $gte: sixMonthsAgo }, isDeleted: false, ...orgFilter } },
       {
         $group: {
           _id: {
@@ -133,29 +139,33 @@ class DashboardController {
   static getLeaderboard = asyncHandler(async (req: Request, res: Response) => {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
 
-    const leaderboard = await User.find({ isDeleted: false, role: "STUDENT" })
-      .select("name email points streak maxStreak enrolledCourses")
+    const students = await User.find({ isDeleted: false, role: "STUDENT" })
+      .select("name email points streak maxStreak")
       .sort({ points: -1 })
       .limit(limit);
 
-    const data = leaderboard.map((user, index) => ({
-      rank: index + 1,
+    const leaderboard = students.map((user) => ({
       _id: user._id,
-      name: user.name,
-      email: user.email,
+      student: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
       points: user.points,
       streak: user.streak,
       maxStreak: user.maxStreak,
-      courses: user.enrolledCourses?.length || 0,
     }));
 
-    res.status(200).json(new ApiResponse(200, data, "Leaderboard fetched successfully"));
+    res.status(200).json(new ApiResponse(200, { leaderboard, total: leaderboard.length }, "Leaderboard fetched successfully"));
   });
 
   // ================= GET RECENT ACTIVITY =================
-  static getRecentActivity = asyncHandler(async (_req: Request, res: Response) => {
+  static getRecentActivity = asyncHandler(async (req: Request, res: Response) => {
+    const isAdmin = req.user?.role === "ADMIN";
+    const orgFilter = isAdmin ? { organisation: req.user!.organisation } : {};
+
     // Get recent user registrations
-    const recentUsers = await User.find({ isDeleted: false })
+    const recentUsers = await User.find({ isDeleted: false, ...orgFilter })
       .select("name createdAt role")
       .sort({ createdAt: -1 })
       .limit(5);

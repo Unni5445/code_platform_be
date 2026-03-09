@@ -1,6 +1,8 @@
 import { NextFunction, Response, Request } from "express";
 import asyncHandler from "../utils/asyncHandler";
 import Organisation from "../models/organisation.model";
+import User from "../models/user.model";
+import Batch from "../models/batch.model";
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
 
@@ -25,10 +27,32 @@ class OrganisationController {
 
     const organisations = await Organisation.find(filter)
       .populate("admin", "name email")
-      .populate("courses", "title")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    res.status(200).json(new ApiResponse(200, organisations, "Organisations retrieved successfully"));
+    const orgIds = organisations.map((org) => org._id);
+
+    const [studentCounts, batchCounts] = await Promise.all([
+      User.aggregate([
+        { $match: { organisation: { $in: orgIds }, role: "STUDENT", isDeleted: { $ne: true } } },
+        { $group: { _id: "$organisation", count: { $sum: 1 } } },
+      ]),
+      Batch.aggregate([
+        { $match: { organisation: { $in: orgIds } } },
+        { $group: { _id: "$organisation", count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const studentMap = Object.fromEntries(studentCounts.map((s) => [s._id.toString(), s.count]));
+    const batchMap = Object.fromEntries(batchCounts.map((b) => [b._id.toString(), b.count]));
+
+    const result = organisations.map((org) => ({
+      ...org,
+      studentCount: studentMap[org._id.toString()] || 0,
+      batchCount: batchMap[org._id.toString()] || 0,
+    }));
+
+    res.status(200).json(new ApiResponse(200, result, "Organisations retrieved successfully"));
   });
 
   // ================= GET ORGANISATION BY ID =================
@@ -37,8 +61,6 @@ class OrganisationController {
 
     const organisation = await Organisation.findById(id)
       .populate("admin", "name email")
-      .populate("students", "name email points")
-      .populate("courses", "title description");
 
     if (!organisation) return next(new ErrorResponse("Organisation not found", 404));
 

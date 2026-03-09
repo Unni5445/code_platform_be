@@ -15,6 +15,7 @@ export interface IModuleProgress {
 export interface IEnrollment extends Document {
   student: mongoose.Types.ObjectId;
   course: mongoose.Types.ObjectId;
+  batch: mongoose.Types.ObjectId;
   status: EnrollmentStatus;
   enrolledBy?: mongoose.Types.ObjectId; // admin who enrolled the student
   moduleProgress: IModuleProgress[];
@@ -45,6 +46,7 @@ const enrollmentSchema = new Schema<IEnrollment>(
   {
     student: { type: Schema.Types.ObjectId, ref: "User", required: true },
     course: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    batch: { type: Schema.Types.ObjectId, ref: "Batch", required: true },
     status: {
       type: String,
       enum: ["ACTIVE", "COMPLETED", "DROPPED", "EXPIRED"],

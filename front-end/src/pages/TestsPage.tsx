@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from "react";
-import { Plus, Edit, Trash2, Code, CheckCircle, ListChecks, MessageSquare, Clock, Award, Upload, Download, FileUp, AlertCircle, CheckCircle2 } from "lucide-react";
+import React, { useState, useCallback, useRef } from "react";
+import { Plus, Edit, Trash2, Code, CheckCircle, ListChecks, MessageSquare, Clock, Award, Upload, Download, FileUp, AlertCircle, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 import { testService, questionService, courseService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
@@ -7,6 +7,7 @@ import { Button, Badge, Modal, Input, Select, Tabs, ConfirmDialog, EmptyState, S
 import { QuestionForm } from "@/components/tests/QuestionForm";
 import { useModal } from "@/hooks";
 import type { ITest, IQuestion, QuestionType } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
 const questionTypeConfig: Record<QuestionType, { label: string; icon: React.ReactNode; variant: "primary" | "secondary" | "info" | "success" }> = {
@@ -17,7 +18,9 @@ const questionTypeConfig: Record<QuestionType, { label: string; icon: React.Reac
 };
 
 export default function TestsPage() {
-  const [activeTab, setActiveTab] = useState("tests");
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === "ADMIN";
+  const [activeTab, setActiveTab] = useState("questions");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [diffFilter, setDiffFilter] = useState("");
@@ -25,6 +28,7 @@ export default function TestsPage() {
   const [questionToDelete, setQuestionToDelete] = useState<IQuestion | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<IQuestion | null>(null);
   const [editingTest, setEditingTest] = useState<ITest | null>(null);
+  const [expandedTestId, setExpandedTestId] = useState<string | null>(null);
 
   const addTestModal = useModal();
   const editTestModal = useModal();
@@ -75,7 +79,7 @@ export default function TestsPage() {
   const coursesList = coursesData?.courses ?? [];
 
   const tabs = [
-    { id: "tests", label: "Tests", count: testsData?.totalTests ?? 0 },
+    // { id: "tests", label: "Tests", count: testsData?.totalTests ?? 0 },
     { id: "questions", label: "Question Bank", count: questionsData?.totalQuestions ?? 0 },
   ];
 
@@ -335,23 +339,25 @@ export default function TestsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Tabs tabs={tabs} activeTab={activeTab} onChange={(tab) => { setActiveTab(tab); setSearch(""); }} />
-        <div className="flex gap-2">
-          {activeTab === "questions" && (
+        {!isAdmin && (
+          <div className="flex gap-2">
+            {activeTab === "questions" && (
+              <Button
+                variant="outline"
+                leftIcon={<Upload className="h-4 w-4" />}
+                onClick={() => { resetBulkState(); bulkUploadModal.open(); }}
+              >
+                Bulk Upload
+              </Button>
+            )}
             <Button
-              variant="outline"
-              leftIcon={<Upload className="h-4 w-4" />}
-              onClick={() => { resetBulkState(); bulkUploadModal.open(); }}
+              leftIcon={<Plus className="h-4 w-4" />}
+              onClick={() => (activeTab === "tests" ? addTestModal.open() : addQuestionModal.open())}
             >
-              Bulk Upload
+              {activeTab === "tests" ? "Add Test" : "Add Question"}
             </Button>
-          )}
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={() => (activeTab === "tests" ? addTestModal.open() : addQuestionModal.open())}
-          >
-            {activeTab === "tests" ? "Add Test" : "Add Question"}
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -413,49 +419,100 @@ export default function TestsPage() {
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Duration</th>
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                      {!isAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-border">
-                    {tests.map((test) => (
-                      <tr key={test._id} className="hover:bg-primary-50/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-900">{test.title}</p>
-                          {test.description && <p className="text-xs text-gray-500 mt-0.5">{test.description}</p>}
-                        </td>
-                        <td className="px-6 py-4 hidden md:table-cell">
-                          <span className="text-sm text-gray-600">{getCourseName(test.course)}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant="gray">{test.questions?.length ?? 0} questions</Badge>
-                        </td>
-                        <td className="px-6 py-4 hidden lg:table-cell">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Clock className="h-3.5 w-3.5" />
-                            {test.duration || 0} min
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 hidden lg:table-cell">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Award className="h-3.5 w-3.5" />
-                            {test.totalPoints || 0}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={test.isActive ? "success" : "gray"}>{test.isActive ? "Active" : "Inactive"}</Badge>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1">
-                            <button onClick={() => openEditTest(test)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => { setTestToDelete(test); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {tests.map((test) => {
+                      const isExpanded = expandedTestId === test._id;
+                      const testQuestions = Array.isArray(test.questions) ? test.questions : [];
+                      return (
+                        <React.Fragment key={test._id}>
+                          <tr className="hover:bg-primary-50/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setExpandedTestId(isExpanded ? null : test._id)}
+                                  className="p-1 rounded text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                >
+                                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                </button>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{test.title}</p>
+                                  {test.description && <p className="text-xs text-gray-500 mt-0.5">{test.description}</p>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 hidden md:table-cell">
+                              <span className="text-sm text-gray-600">{getCourseName(test.course)}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge variant="gray">{testQuestions.length} questions</Badge>
+                            </td>
+                            <td className="px-6 py-4 hidden lg:table-cell">
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                                <Clock className="h-3.5 w-3.5" />
+                                {test.duration || 0} min
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 hidden lg:table-cell">
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                                <Award className="h-3.5 w-3.5" />
+                                {test.totalPoints || 0}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge variant={test.isActive ? "success" : "gray"}>{test.isActive ? "Active" : "Inactive"}</Badge>
+                            </td>
+                            {!isAdmin && (
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-1">
+                                  <button onClick={() => openEditTest(test)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button onClick={() => { setTestToDelete(test); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={7} className="px-6 py-4 bg-gray-50/50">
+                                {testQuestions.length === 0 ? (
+                                  <p className="text-sm text-gray-500 text-center py-3">No questions in this test yet.</p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Test Questions</p>
+                                    {testQuestions.map((q: any, idx: number) => {
+                                      const qObj = typeof q === "object" ? q : null;
+                                      if (!qObj) return null;
+                                      const config = questionTypeConfig[qObj.type as QuestionType];
+                                      return (
+                                        <div key={qObj._id || idx} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-surface-border">
+                                          <div className="flex items-center gap-3 min-w-0">
+                                            <span className="text-xs text-gray-400 shrink-0">{idx + 1}.</span>
+                                            <span className="text-sm font-medium text-gray-900 truncate">{qObj.title}</span>
+                                          </div>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            {config && <Badge variant={config.variant}><span className="flex items-center gap-1">{config.icon} {config.label}</span></Badge>}
+                                            <Badge variant={qObj.difficulty === "Easy" ? "success" : qObj.difficulty === "Hard" ? "danger" : "warning"}>
+                                              {qObj.difficulty}
+                                            </Badge>
+                                            <span className="text-xs text-gray-500">{qObj.points} pts</span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
@@ -476,7 +533,7 @@ export default function TestsPage() {
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Difficulty</th>
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Tags</th>
-                      <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                      {!isAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-border">
@@ -510,16 +567,18 @@ export default function TestsPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-1">
-                              <button onClick={() => openEditQuestion(question)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button onClick={() => { setQuestionToDelete(question); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
+                          {!isAdmin && (
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex justify-end gap-1">
+                                <button onClick={() => openEditQuestion(question)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button onClick={() => { setQuestionToDelete(question); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

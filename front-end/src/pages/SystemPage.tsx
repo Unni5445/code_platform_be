@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { Send, Plus, Edit, Trash2, Bell, Building2, Users, Settings, Activity } from "lucide-react";
 import { Button, Card, Input, Select, Badge, Tabs, Modal, ConfirmDialog, EmptyState, Spinner } from "@/components/ui";
-import { batchService, organisationService } from "@/services";
+import { batchService, organisationService, userService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useModal } from "@/hooks";
-import type { IBatch, IOrganisation } from "@/types";
+import type { IBatch, IOrganisation, IUser } from "@/types";
 import toast from "react-hot-toast";
 
 const systemTabs = [
-  { id: "notifications", label: "Notifications" },
+  // { id: "notifications", label: "Notifications" },
   { id: "batches", label: "Batches" },
   { id: "organisations", label: "Organisations" },
-  { id: "settings", label: "Settings" },
-  { id: "logs", label: "System Logs" },
+  // { id: "settings", label: "Settings" },
+  // { id: "logs", label: "System Logs" },
 ];
 
 const mockLogs = [
@@ -29,7 +29,7 @@ const mockLogs = [
 ];
 
 export default function SystemPage() {
-  const [activeTab, setActiveTab] = useState("notifications");
+  const [activeTab, setActiveTab] = useState("batches");
 
   // Notification state
   const [notifTitle, setNotifTitle] = useState("");
@@ -45,7 +45,34 @@ export default function SystemPage() {
   const [editingBatch, setEditingBatch] = useState<IBatch | null>(null);
   const [selectedBatches, setSelectedBatches] = useState<string[]>([]);
   const [newBatchName, setNewBatchName] = useState("");
+  const [batchDuration, setBatchDuration] = useState("");
+  const [batchStartDate, setBatchStartDate] = useState("");
+  const [batchEndDate, setBatchEndDate] = useState("");
   const [batchOrganisationId, setBatchOrganisationId] = useState<string>("");
+
+  const calcEndDate = (start: string, duration: string) => {
+    if (!start || !duration) return "";
+    const date = new Date(start);
+    switch (duration) {
+      case "1 month": date.setMonth(date.getMonth() + 1); break;
+      case "3 months": date.setMonth(date.getMonth() + 3); break;
+      case "6 months": date.setMonth(date.getMonth() + 6); break;
+      case "1 year": date.setFullYear(date.getFullYear() + 1); break;
+      case "2 years": date.setFullYear(date.getFullYear() + 2); break;
+      default: return "";
+    }
+    return date.toISOString().split("T")[0];
+  };
+
+  const handleDurationChange = (duration: string) => {
+    setBatchDuration(duration);
+    setBatchEndDate(calcEndDate(batchStartDate, duration));
+  };
+
+  const handleStartDateChange = (start: string) => {
+    setBatchStartDate(start);
+    setBatchEndDate(calcEndDate(start, batchDuration));
+  };
 
   // Organisation state
   const addOrganisationModal = useModal();
@@ -55,6 +82,7 @@ export default function SystemPage() {
   const [editingOrganisation, setEditingOrganisation] = useState<IOrganisation | null>(null);
   const [newOrgName, setNewOrgName] = useState("");
   const [newOrgAddress, setNewOrgAddress] = useState("");
+  const [newOrgAdmin, setNewOrgAdmin] = useState("");
 
   // API data
   const { data: batches, loading: batchesLoading, refetch: refetchBatches } = useApi(
@@ -67,6 +95,12 @@ export default function SystemPage() {
     []
   );
 
+  const { data: adminUsersData } = useApi(
+    () => userService.getUsers({ role: "ADMIN", limit: 100 }),
+    []
+  );
+  const adminList: IUser[] = adminUsersData?.users || [];
+
   const handleSendNotification = () => {
     if (!notifTitle.trim() || !notifMessage.trim()) {
       toast.error("Please fill in all fields");
@@ -78,11 +112,14 @@ export default function SystemPage() {
   };
 
   const handleCreateBatch = async () => {
-    if (!newBatchName.trim() || !batchOrganisationId.trim()) return;
+    if (!newBatchName.trim() || !batchOrganisationId.trim() || !batchDuration || !batchStartDate || !batchEndDate) return;
     try {
-      await batchService.createBatch({ name: newBatchName, organisation: batchOrganisationId });
+      await batchService.createBatch({ name: newBatchName, organisation: batchOrganisationId, duration: batchDuration as IBatch["duration"], startDate: batchStartDate, endDate: batchEndDate });
       addBatchModal.close();
       setNewBatchName("");
+      setBatchDuration("");
+      setBatchStartDate("");
+      setBatchEndDate("");
       setBatchOrganisationId("");
       toast.success("Batch created successfully");
       refetchBatches();
@@ -105,15 +142,21 @@ export default function SystemPage() {
   };
 
   const handleEditBatch = async () => {
-    if (!editingBatch || !newBatchName.trim()) return;
+    if (!editingBatch || !newBatchName.trim() || !batchDuration || !batchStartDate || !batchEndDate) return;
     try {
       await batchService.updateBatch(editingBatch._id, {
         name: newBatchName,
         organisation: batchOrganisationId || undefined,
+        duration: batchDuration as IBatch["duration"],
+        startDate: batchStartDate,
+        endDate: batchEndDate,
       });
       editBatchModal.close();
       setEditingBatch(null);
       setNewBatchName("");
+      setBatchDuration("");
+      setBatchStartDate("");
+      setBatchEndDate("");
       setBatchOrganisationId("");
       toast.success("Batch updated successfully");
       refetchBatches();
@@ -125,6 +168,9 @@ export default function SystemPage() {
   const openEditBatchModal = (batch: IBatch) => {
     setEditingBatch(batch);
     setNewBatchName(batch.name);
+    setBatchDuration(batch.duration || "");
+    setBatchStartDate(batch.startDate ? new Date(batch.startDate).toISOString().split("T")[0] : "");
+    setBatchEndDate(batch.endDate ? new Date(batch.endDate).toISOString().split("T")[0] : "");
     const orgId = typeof batch.organisation === "object" && batch.organisation !== null
       ? (batch.organisation as unknown as { _id: string })._id
       : (batch.organisation as string) || "";
@@ -179,10 +225,12 @@ export default function SystemPage() {
       await organisationService.createOrganisation({
         name: newOrgName,
         address: newOrgAddress || undefined,
+        admin: newOrgAdmin || undefined,
       });
       addOrganisationModal.close();
       setNewOrgName("");
       setNewOrgAddress("");
+      setNewOrgAdmin("");
       toast.success("Organisation created successfully");
       refetchOrganisations();
     } catch {
@@ -196,11 +244,13 @@ export default function SystemPage() {
       await organisationService.updateOrganisation(editingOrganisation._id, {
         name: newOrgName,
         address: newOrgAddress || undefined,
+        admin: newOrgAdmin || undefined,
       });
       editOrganisationModal.close();
       setEditingOrganisation(null);
       setNewOrgName("");
       setNewOrgAddress("");
+      setNewOrgAdmin("");
       toast.success("Organisation updated successfully");
       refetchOrganisations();
     } catch {
@@ -225,6 +275,10 @@ export default function SystemPage() {
     setEditingOrganisation(org);
     setNewOrgName(org.name);
     setNewOrgAddress(org.address || "");
+    const adminId = typeof org.admin === "object" && org.admin !== null
+      ? (org.admin as unknown as { _id: string })._id
+      : (org.admin as string) || "";
+    setNewOrgAdmin(adminId);
     editOrganisationModal.open();
   };
 
@@ -346,7 +400,9 @@ export default function SystemPage() {
                     </th>
                     <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Batch Name</th>
                     <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Organisation</th>
-                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Students</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Start Date</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">End Date</th>
                     <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Created</th>
                     <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -376,7 +432,13 @@ export default function SystemPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant="info">{batch.students?.length ?? 0} students</Badge>
+                        <Badge variant="info">{batch.duration || "—"}</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{batch.startDate ? new Date(batch.startDate).toLocaleDateString() : "—"}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{batch.endDate ? new Date(batch.endDate).toLocaleDateString() : "—"}</span>
                       </td>
                       <td className="px-6 py-4 hidden md:table-cell">
                         <span className="text-sm text-gray-500">{new Date(batch.createdAt).toLocaleDateString()}</span>
@@ -394,9 +456,26 @@ export default function SystemPage() {
             )}
           </div>
           <Modal isOpen={addBatchModal.isOpen} onClose={addBatchModal.close} title="Add New Batch" size="sm"
-            footer={<><Button variant="ghost" onClick={addBatchModal.close}>Cancel</Button><Button onClick={handleCreateBatch} disabled={!newBatchName.trim() || !batchOrganisationId.trim()}>Create Batch</Button></>}>
+            footer={<><Button variant="ghost" onClick={addBatchModal.close}>Cancel</Button><Button onClick={handleCreateBatch} disabled={!newBatchName.trim() || !batchOrganisationId.trim() || !batchDuration || !batchStartDate || !batchEndDate}>Create Batch</Button></>}>
             <div className="space-y-4">
               <Input label="Batch Name" value={newBatchName} onChange={(e) => setNewBatchName(e.target.value)} placeholder="e.g., Batch 2026-C" />
+              <Select
+                label="Duration *"
+                value={batchDuration}
+                onChange={(e) => handleDurationChange(e.target.value)}
+                options={[
+                  { value: "", label: "Select duration..." },
+                  { value: "1 month", label: "1 Month" },
+                  { value: "3 months", label: "3 Months" },
+                  { value: "6 months", label: "6 Months" },
+                  { value: "1 year", label: "1 Year" },
+                  { value: "2 years", label: "2 Years" },
+                ]}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Start Date" type="date" value={batchStartDate} onChange={(e) => handleStartDateChange(e.target.value)} />
+                <Input label="End Date" type="date" value={batchEndDate} onChange={(e) => setBatchEndDate(e.target.value)} />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Organisation *</label>
                 <Select
@@ -413,9 +492,26 @@ export default function SystemPage() {
           </Modal>
           <ConfirmDialog isOpen={deleteBatchModal.isOpen} onClose={() => { deleteBatchModal.close(); setBatchToDelete(null); }} onConfirm={handleDeleteBatch} title="Delete Batch" message="Are you sure you want to delete this batch?" />
           <Modal isOpen={editBatchModal.isOpen} onClose={() => { editBatchModal.close(); setEditingBatch(null); }} title="Edit Batch" size="sm"
-            footer={<><Button variant="ghost" onClick={() => { editBatchModal.close(); setEditingBatch(null); }}>Cancel</Button><Button onClick={handleEditBatch} disabled={!newBatchName.trim()}>Update Batch</Button></>}>
+            footer={<><Button variant="ghost" onClick={() => { editBatchModal.close(); setEditingBatch(null); }}>Cancel</Button><Button onClick={handleEditBatch} disabled={!newBatchName.trim() || !batchDuration || !batchStartDate || !batchEndDate}>Update Batch</Button></>}>
             <div className="space-y-4">
               <Input label="Batch Name" value={newBatchName} onChange={(e) => setNewBatchName(e.target.value)} placeholder="e.g., Batch 2026-C" />
+              <Select
+                label="Duration *"
+                value={batchDuration}
+                onChange={(e) => handleDurationChange(e.target.value)}
+                options={[
+                  { value: "", label: "Select duration..." },
+                  { value: "1 month", label: "1 Month" },
+                  { value: "3 months", label: "3 Months" },
+                  { value: "6 months", label: "6 Months" },
+                  { value: "1 year", label: "1 Year" },
+                  { value: "2 years", label: "2 Years" },
+                ]}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Start Date" type="date" value={batchStartDate} onChange={(e) => handleStartDateChange(e.target.value)} />
+                <Input label="End Date" type="date" value={batchEndDate} onChange={(e) => setBatchEndDate(e.target.value)} />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
                 <Select
@@ -496,12 +592,12 @@ export default function SystemPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="bg-surface-secondary rounded-lg p-3 text-center">
-                      <p className="text-lg font-bold text-gray-900">{org.courses?.length ?? 0}</p>
-                      <p className="text-xs text-gray-500">Courses</p>
+                      <p className="text-lg font-bold text-gray-900">{org.studentCount ?? 0}</p>
+                      <p className="text-xs text-gray-500">Students</p>
                     </div>
                     <div className="bg-surface-secondary rounded-lg p-3 text-center">
-                      <p className="text-lg font-bold text-gray-900">{org.students?.length ?? 0}</p>
-                      <p className="text-xs text-gray-500">Students</p>
+                      <p className="text-lg font-bold text-gray-900">{org.batchCount ?? 0}</p>
+                      <p className="text-xs text-gray-500">Batches</p>
                     </div>
                     <div className="bg-surface-secondary rounded-lg p-3 text-center">
                       <p className="text-sm font-medium text-gray-900 truncate">
@@ -536,6 +632,15 @@ export default function SystemPage() {
                 onChange={(e) => setNewOrgAddress(e.target.value)}
                 placeholder="e.g., 123 Main Street, New Delhi"
               />
+              <Select
+                label="Admin"
+                value={newOrgAdmin}
+                onChange={(e) => setNewOrgAdmin(e.target.value)}
+                options={[
+                  { value: "", label: "Select an admin..." },
+                  ...adminList.map((user: IUser) => ({ value: user._id, label: `${user.name} (${user.email})` })),
+                ]}
+              />
             </div>
           </Modal>
           <Modal
@@ -558,6 +663,15 @@ export default function SystemPage() {
                 onChange={(e) => setNewOrgAddress(e.target.value)}
                 placeholder="e.g., 123 Main Street, New Delhi"
               />
+              <Select
+                label="Admin"
+                value={newOrgAdmin}
+                onChange={(e) => setNewOrgAdmin(e.target.value)}
+                options={[
+                  { value: "", label: "Select an admin..." },
+                  ...adminList.map((user: IUser) => ({ value: user._id, label: `${user.name} (${user.email})` })),
+                ]}
+              />
             </div>
           </Modal>
           <ConfirmDialog
@@ -574,7 +688,7 @@ export default function SystemPage() {
       {activeTab === "settings" && (
         <Card header={<h3 className="text-base font-semibold text-gray-900">Platform Settings</h3>}>
           <div className="space-y-6 max-w-xl">
-            <Input label="Platform Name" defaultValue="CodePlatform" />
+            <Input label="Platform Name" defaultValue="Skill & Brains" />
             <Input label="Support Email" type="email" defaultValue="support@platform.com" />
             <Select
               label="Default Language"

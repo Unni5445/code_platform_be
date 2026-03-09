@@ -4,7 +4,7 @@ export interface ICourse {
   description?: string;
   organisation?: string;
   isGlobal: boolean;
-  enrolledStudents: string[];
+  enrolledCount?: number;
   createdAt: string;
   updatedAt: string;
 }
