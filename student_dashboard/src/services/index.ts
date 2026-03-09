@@ -1,0 +1,7 @@
+export { authService } from "./auth.service";
+export { enrollmentService } from "./enrollment.service";
+export { courseService } from "./course.service";
+export { testService } from "./test.service";
+export { codeService } from "./code.service";
+export { dashboardService } from "./dashboard.service";
+export { playgroundService } from "./playground.service";
