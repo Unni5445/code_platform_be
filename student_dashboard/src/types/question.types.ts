@@ -33,6 +33,7 @@ export interface IQuestion {
   version?: number;
   status?: QuestionStatus;
   submissionLimit?: number;
+  submissionCount?: number;
   createdAt: string;
   updatedAt: string;
 }

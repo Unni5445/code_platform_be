@@ -20,7 +20,6 @@ interface QuestionAnswer {
 
 export default function TestTakePage() {
   const { id: testId } = useParams<{ id: string }>();
-  console.log(testId)
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, QuestionAnswer>>({});
@@ -28,6 +27,7 @@ export default function TestTakePage() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [submittedCoding, setSubmittedCoding] = useState<Set<string>>(new Set());
   const [results, setResults] = useState<{ totalScore: number; maxScore: number } | null>(null);
 
   const fetchTest = useCallback(() => testService.getTestById(testId!), [testId]);
@@ -84,12 +84,12 @@ export default function TestTakePage() {
     questions.forEach((q, i) => {
       const a = answers[q._id];
       if (!a) return;
-      if (q.type === "CODING" && a.code.trim()) set.add(i);
+      if (q.type === "CODING" && submittedCoding.has(q._id)) set.add(i);
       else if (Array.isArray(a.answer) && a.answer.length > 0) set.add(i);
       else if (typeof a.answer === "string" && a.answer.trim()) set.add(i);
     });
     return set;
-  }, [answers, questions]);
+  }, [answers, questions, submittedCoding]);
 
   const handleSubmit = async () => {
     setShowSubmitConfirm(false);
@@ -137,7 +137,7 @@ export default function TestTakePage() {
               {percentage}%
             </div>
             <p className="text-gray-500 mb-1">Your Score</p>
-            <p className="text-2xl font-bold text-gray-900 mb-6">
+            <p className="text-2xl font-bold text-white mb-6">
               {results.totalScore} / {results.maxScore}
             </p>
             <Badge variant={percentage >= 70 ? "success" : percentage >= 40 ? "warning" : "danger"} className="text-sm px-4 py-1 mb-6">
@@ -160,21 +160,21 @@ export default function TestTakePage() {
       <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <Card className="max-w-lg w-full mx-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{test?.title}</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">{test?.title}</h1>
             {test?.description && <p className="text-gray-500 mb-6">{test.description}</p>}
             <div className="flex items-center justify-center gap-6 mb-8 text-sm text-gray-600">
               <div>
-                <span className="block text-2xl font-bold text-gray-900">{questions.length}</span>
+                <span className="block text-2xl font-bold text-white">{questions.length}</span>
                 Questions
               </div>
               <div className="h-10 w-px bg-gray-200" />
               <div>
-                <span className="block text-2xl font-bold text-gray-900">{test?.duration || 60}</span>
+                <span className="block text-2xl font-bold text-white">{test?.duration || 60}</span>
                 Minutes
               </div>
               <div className="h-10 w-px bg-gray-200" />
               <div>
-                <span className="block text-2xl font-bold text-gray-900">{test?.totalPoints || 0}</span>
+                <span className="block text-2xl font-bold text-white">{test?.totalPoints || 0}</span>
                 Points
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function TestTakePage() {
       {/* Top Bar */}
       <div className="sticky top-0 z-30 bg-surface border-b border-surface-border px-6 py-3 flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-gray-900">{test?.title}</h1>
+          <h1 className="font-bold text-white">{test?.title}</h1>
           <p className="text-xs text-gray-500">
             Question {currentIndex + 1} of {questions.length}
           </p>
@@ -268,7 +268,7 @@ export default function TestTakePage() {
                   </Badge>
                   <span className="text-sm text-gray-500">{currentQuestion.points} pts</span>
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">{currentQuestion.title}</h2>
+                <h2 className="text-lg font-semibold text-white">{currentQuestion.title}</h2>
                 {currentQuestion.description && (
                   <div
                     className="text-sm text-gray-600 mt-2 prose prose-sm max-w-none"
@@ -300,6 +300,9 @@ export default function TestTakePage() {
                     ...prev,
                     [currentQuestion._id]: { ...prev[currentQuestion._id], language },
                   }))
+                }
+                onSubmitCode={() =>
+                  setSubmittedCoding((prev) => new Set(prev).add(currentQuestion._id))
                 }
               />
 
@@ -346,10 +349,10 @@ export default function TestTakePage() {
           <p className="text-gray-600">
             Are you sure you want to submit your test?
           </p>
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className=" rounded-xl p-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Answered:</span>
-              <span className="font-medium text-gray-900">{answeredIndices.size} / {questions.length}</span>
+              <span className="font-medium text-white">{answeredIndices.size} / {questions.length}</span>
             </div>
             {answeredIndices.size < questions.length && (
               <p className="text-amber-600 text-sm mt-2 flex items-center gap-1">

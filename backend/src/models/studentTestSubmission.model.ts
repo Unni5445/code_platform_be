@@ -12,6 +12,7 @@ export interface IStudentTestSubmission extends Document {
     maxScore: number;
   }[];
   totalScore: number;
+  maxScore: number;
   attemptedAt: Date;
   completedAt?: Date;
 }
@@ -31,6 +32,7 @@ const studentTestSubmissionSchema = new Schema<IStudentTestSubmission>(
       },
     ],
     totalScore: { type: Number, default: 0 },
+    maxScore: { type: Number, default: 0 },
     attemptedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },
   },

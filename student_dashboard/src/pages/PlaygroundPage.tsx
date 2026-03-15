@@ -8,6 +8,7 @@ import {
   Tag,
   Zap,
   Filter,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, Badge, Spinner, EmptyState, Select } from "@/components/ui";
 import { playgroundService } from "@/services";
@@ -218,6 +219,12 @@ export default function PlaygroundPage() {
                     </p>
                   )}
                   <div className="flex items-center gap-3 flex-wrap">
+                    {q.submissionCount != null && q.submissionCount > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {q.submissionCount} submission{q.submissionCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
                     {q.points > 0 && (
                       <span className="flex items-center gap-1 text-xs font-medium text-amber-300">
                         <Zap className="h-3.5 w-3.5" />

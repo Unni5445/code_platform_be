@@ -10,6 +10,7 @@ router.use(protect);
 // Test operations
 router.post("/tests/:id/start", StudentController.startTest);
 router.post("/tests/:id/submit", StudentController.submitTest);
+router.get("/submissions/:id", StudentController.getTestSubmission);
 
 // Code execution
 router.post("/code/execute", StudentController.executeCode);

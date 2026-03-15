@@ -38,10 +38,10 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer">
+        {/* <button className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer">
           <Bell className="h-5 w-5" />
           <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-emerald-500 rounded-full" />
-        </button>
+        </button> */}
 
         <div className="flex items-center gap-3 pl-4 border-l border-slate-700/80">
           <Avatar name={user?.name || "Student"} size="sm" />

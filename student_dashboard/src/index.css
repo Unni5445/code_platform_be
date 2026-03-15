@@ -275,3 +275,53 @@ pre,
     0 0 0 1px rgba(30, 64, 175, 0.4);
 }
 
+/* Landing page animations */
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-10px) translateX(4px); }
+}
+
+@keyframes landing-particle {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(-180px) translateX(40px); opacity: 0; }
+}
+
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.landing-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Print: show only the certificate */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .print-certificate,
+  .print-certificate * {
+    visibility: visible !important;
+  }
+  .print-certificate {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+.landing-page {
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at top, #1d283a 0, #020617 55%);
+  color: #e5e7eb;
+  min-height: 100vh;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+

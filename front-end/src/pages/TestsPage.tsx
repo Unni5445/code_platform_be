@@ -277,7 +277,6 @@ export default function TestsPage() {
           type: "SINGLE_CHOICE",
           difficulty: "Easy",
           points: 10,
-          course: "<course_id>",
           options: ["A library", "A framework", "A language", "An OS"],
           correctAnswer: "0",
           tags: ["react", "basics"],
@@ -288,7 +287,6 @@ export default function TestsPage() {
           type: "CODING",
           difficulty: "Medium",
           points: 20,
-          course: "<course_id>",
           description: "<p>Implement a stack data structure.</p>",
           languages: ["javascript", "python"],
           tags: ["dsa", "stack"],
@@ -296,9 +294,9 @@ export default function TestsPage() {
       ], null, 2);
       downloadFile(template, "questions-template.json", "application/json");
     } else {
-      const csv = `title,type,difficulty,points,course,options,correctAnswer,tags,company,description
-"What is React?",SINGLE_CHOICE,Easy,10,<course_id>,"A library;A framework;A language;An OS",0,"react;basics",Google,""
-"Explain closures",BEHAVIORAL,Medium,15,<course_id>,,,"javascript;closures",,""`;
+      const csv = `title,type,difficulty,points,options,correctAnswer,tags,company,description
+"What is React?",SINGLE_CHOICE,Easy,10,"A library;A framework;A language;An OS",0,"react;basics",Google,""
+"Explain closures",BEHAVIORAL,Medium,15,,,"javascript;closures",,""`;
       downloadFile(csv, "questions-template.csv", "text/csv");
     }
   };
@@ -311,6 +309,41 @@ export default function TestsPage() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // ── Export questions ──
+  const handleExportQuestions = () => {
+    if (questions.length === 0) {
+      toast.error("No questions to export");
+      return;
+    }
+
+    const exported = questions.map((q: IQuestion) => {
+      const obj: Record<string, any> = {
+        title: q.title,
+        type: q.type,
+        difficulty: q.difficulty,
+        points: q.points,
+      };
+      if (q.description) obj.description = q.description;
+      if (q.options?.length) obj.options = q.options.map((o: any) => o.text || o);
+      if (q.correctAnswer != null) obj.correctAnswer = q.correctAnswer;
+      if (q.tags?.length) obj.tags = q.tags;
+      if (q.company) obj.company = q.company;
+      if (q.languages?.length) obj.languages = q.languages;
+      if (q.starterCode) obj.starterCode = q.starterCode;
+      if (q.testCases?.length) obj.testCases = q.testCases.map((tc: any) => ({
+        input: tc.input,
+        output: tc.output,
+        ...(tc.weight ? { weight: tc.weight } : {}),
+        ...(tc.hidden ? { hidden: tc.hidden } : {}),
+      }));
+      return obj;
+    });
+
+    const json = JSON.stringify(exported, null, 2);
+    downloadFile(json, `questions-export-${Date.now()}.json`, "application/json");
+    toast.success(`${exported.length} question(s) exported`);
   };
 
   // ── Delete handler ──
@@ -342,13 +375,22 @@ export default function TestsPage() {
         {!isAdmin && (
           <div className="flex gap-2">
             {activeTab === "questions" && (
-              <Button
-                variant="outline"
-                leftIcon={<Upload className="h-4 w-4" />}
-                onClick={() => { resetBulkState(); bulkUploadModal.open(); }}
-              >
-                Bulk Upload
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  leftIcon={<Download className="h-4 w-4" />}
+                  onClick={handleExportQuestions}
+                >
+                  Export
+                </Button>
+                <Button
+                  variant="outline"
+                  leftIcon={<Upload className="h-4 w-4" />}
+                  onClick={() => { resetBulkState(); bulkUploadModal.open(); }}
+                >
+                  Bulk Upload
+                </Button>
+              </>
             )}
             <Button
               leftIcon={<Plus className="h-4 w-4" />}

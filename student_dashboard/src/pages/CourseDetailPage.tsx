@@ -250,13 +250,19 @@ export default function CourseDetailPage() {
                     })
                   )}
 
-                  {module.test && (
+                  {enrollment && module.test && (
                     <div className="border-t border-slate-800/80 pt-3">
-                      <Link to={`/tests/${module.test._id}/take`}>
-                        <Button size="sm" leftIcon={<FileQuestion className="h-4 w-4" />}>
-                          Take Test
-                        </Button>
-                      </Link>
+                      {totalSubs > 0 && completedCount >= totalSubs ? (
+                        <Link to={`/tests/${(module.test as any)?._id}/take`}>
+                          <Button size="sm" leftIcon={<FileQuestion className="h-4 w-4" />}>
+                            Take Test
+                          </Button>
+                        </Link>
+                      ) : (
+                        <p className="text-sm text-slate-400">
+                          Complete all submodules to unlock the test ({completedCount}/{totalSubs} completed)
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

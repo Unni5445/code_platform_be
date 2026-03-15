@@ -5,7 +5,7 @@ export interface IModuleProgress {
   module: string;
   status: ModuleProgressStatus;
   completedSubmodules: string[];
-  testSubmission?: string;
+  testSubmission?: string | { _id: string; totalScore: number; maxScore: number; completedAt?: string };
   startedAt?: string;
   completedAt?: string;
 }

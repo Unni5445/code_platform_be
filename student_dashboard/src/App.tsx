@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -7,6 +7,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import { Spinner } from "@/components/ui/Spinner";
 
+import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
@@ -22,6 +23,7 @@ import AllCoursesPage from "./pages/AllCoursesPage";
 import CertificatePage from "@/pages/CertificatePage";
 import PlaygroundPage from "@/pages/PlaygroundPage";
 import PlaygroundPracticePage from "@/pages/PlaygroundPracticePage";
+import TestResultPage from "@/pages/TestResultPage";
 
 const TestTakePage = lazy(() => import("@/pages/TestTakePage"));
 
@@ -50,6 +52,9 @@ function App() {
           }}
         />
         <Routes>
+          {/* Landing page - public */}
+          <Route path="/" element={<LandingPage />} />
+
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
@@ -71,12 +76,12 @@ function App() {
           {/* Dashboard routes with sidebar */}
           <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
             <Route element={<DashboardLayout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               {/* <Route path="/courses" element={<CoursesPage />} /> */}
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/certificates/:courseId" element={<CertificatePage />} />
               <Route path="/tests" element={<TestsPage />} />
+              <Route path="/tests/results/:id" element={<TestResultPage />} />
               <Route path="/playground" element={<PlaygroundPage />} />
               <Route path="/playground/:id" element={<PlaygroundPracticePage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />

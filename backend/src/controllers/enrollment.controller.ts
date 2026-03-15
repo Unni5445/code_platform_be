@@ -131,8 +131,9 @@ class EnrollmentController {
   static getMyEnrollments = asyncHandler(async (req: Request, res: Response) => {
     const studentId = req.user?._id;
 
-    const enrollments = await Enrollment.find({ student: studentId, status: "ACTIVE" })
+    const enrollments = await Enrollment.find({ student: studentId })
       .populate("course", "title description")
+      .populate("moduleProgress.testSubmission", "totalScore maxScore completedAt")
       .sort({ createdAt: -1 });
 
     res.status(200).json(new ApiResponse(200, enrollments, "My enrollments retrieved successfully"));

@@ -86,15 +86,7 @@ export const generateFirstLoginEmail = (
           </div>
           <div class="body">
               <h2>Hi ${userName},</h2>
-              <p>Welcome to Miller Auto Tech! We are excited to have you on board. Below are your login credentials for your first-time access.</p>
               
-              <div class="credentials">
-                  <p>Email: <span>${userEmail}</span></p>
-                  <p>Password: <span>${userPassword}</span></p>
-              </div>
-              
-              <p>Please make sure to change your password after your first login for security reasons.</p>
-              <p>If you have any issues logging in, feel free to contact us at <a href="mailto:support@azerotech.com">support@azerotech.com</a>.</p>
           </div>
           <div class="footer">
               <p>Thank you for choosing Miller Auto Tech.</p>

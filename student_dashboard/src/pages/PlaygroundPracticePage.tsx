@@ -52,11 +52,11 @@ export default function PlaygroundPracticePage() {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("");
 
-  // Run test cases (no streak)
+  // Run code (just execute, no test cases)
   const [isRunning, setIsRunning] = useState(false);
-  const [runResults, setRunResults] = useState<TestResult[] | null>(null);
-  const [runPassed, setRunPassed] = useState(0);
-  const [runTotal, setRunTotal] = useState(0);
+  const [runOutput, setRunOutput] = useState("");
+  const [runHasError, setRunHasError] = useState(false);
+  const [customInput, setCustomInput] = useState("");
 
   // Submit solution (with streak)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,33 +88,42 @@ export default function PlaygroundPracticePage() {
 
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
-    if (question?.starterCode?.[newLang] && !code.trim()) {
-      setCode(question.starterCode[newLang]);
-    }
+    setCode(question?.starterCode?.[newLang] || "");
   };
 
   const handleRun = async () => {
     if (!question) return;
+    if (!customInput.trim()) {
+      toast.error("Please provide input before running");
+      return;
+    }
     setIsRunning(true);
-    setRunResults(null);
+    setRunOutput("");
+    setRunHasError(false);
     setSubmitResult(null);
 
     try {
-      const res = await codeService.runTestCases(question._id, language, code);
+      const res = await codeService.execute(language, "latest", code, customInput);
       const data = res.data.data;
-      setRunResults(data.results);
-      setRunPassed(data.passed);
-      setRunTotal(data.total);
+      if (data.stderr) {
+        setRunOutput(data.stderr);
+        setRunHasError(true);
+      } else {
+        setRunOutput(data.stdout || data.output || "(no output)");
+      }
     } catch {
-      toast.error("Failed to run test cases");
+      toast.error("Failed to run code");
     }
     setIsRunning(false);
   };
 
   const handleSubmit = async () => {
     if (!question) return;
+    if (!customInput.trim()) {
+      toast.error("Please provide input before submitting");
+      return;
+    }
     setIsSubmitting(true);
-    setRunResults(null);
     setSubmitResult(null);
 
     try {
@@ -143,9 +152,9 @@ export default function PlaygroundPracticePage() {
 
   if (!question) return null;
 
-  const activeResults = submitResult?.results || runResults;
-  const activePassed = submitResult ? submitResult.passed : runPassed;
-  const activeTotal = submitResult ? submitResult.total : runTotal;
+  const activeResults = submitResult?.results || null;
+  const activePassed = submitResult ? submitResult.passed : 0;
+  const activeTotal = submitResult ? submitResult.total : 0;
 
   return (
     <div className="space-y-6">
@@ -296,6 +305,35 @@ export default function PlaygroundPracticePage() {
             />
           </div>
 
+          {/* Custom Input */}
+          <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
+            <div className="border-b border-slate-800/80 bg-slate-900/80 px-4 py-2">
+              <span className="text-sm font-semibold text-slate-100">Custom Input</span>
+            </div>
+            <textarea
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              placeholder="Enter input for your code here..."
+              className="w-full resize-none bg-transparent px-4 py-3 font-mono text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+              rows={3}
+            />
+          </div>
+
+          {/* Run Output */}
+          {runOutput && (
+            <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
+              <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-2">
+                <span className="text-sm font-semibold text-slate-100">Output</span>
+                {runHasError && (
+                  <span className="text-xs font-medium text-red-400">Error</span>
+                )}
+              </div>
+              <pre className={`max-h-48 overflow-y-auto whitespace-pre-wrap px-4 py-3 font-mono text-sm ${runHasError ? "text-red-400" : "text-slate-100"}`}>
+                {runOutput}
+              </pre>
+            </div>
+          )}
+
           {/* Submit success banner */}
           {submitResult?.allPassed && (
             <div className="flex items-center gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 p-4">
@@ -321,7 +359,7 @@ export default function PlaygroundPracticePage() {
             <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
               <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-3">
                 <span className="text-sm font-semibold text-slate-100">
-                  {submitResult ? "Submission Results" : "Test Results"}
+                  Submission Results
                 </span>
                 <span
                   className={`text-sm font-semibold ${
