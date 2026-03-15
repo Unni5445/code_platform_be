@@ -52,11 +52,11 @@ export default function PlaygroundPracticePage() {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("");
 
-  // Run test cases (no streak)
+  // Run code (just execute, no test cases)
   const [isRunning, setIsRunning] = useState(false);
-  const [runResults, setRunResults] = useState<TestResult[] | null>(null);
-  const [runPassed, setRunPassed] = useState(0);
-  const [runTotal, setRunTotal] = useState(0);
+  const [runOutput, setRunOutput] = useState("");
+  const [runHasError, setRunHasError] = useState(false);
+  const [customInput, setCustomInput] = useState("");
 
   // Submit solution (with streak)
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,33 +88,42 @@ export default function PlaygroundPracticePage() {
 
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
-    if (question?.starterCode?.[newLang] && !code.trim()) {
-      setCode(question.starterCode[newLang]);
-    }
+    setCode(question?.starterCode?.[newLang] || "");
   };
 
   const handleRun = async () => {
     if (!question) return;
+    if (!customInput.trim()) {
+      toast.error("Please provide input before running");
+      return;
+    }
     setIsRunning(true);
-    setRunResults(null);
+    setRunOutput("");
+    setRunHasError(false);
     setSubmitResult(null);
 
     try {
-      const res = await codeService.runTestCases(question._id, language, code);
+      const res = await codeService.execute(language, "latest", code, customInput);
       const data = res.data.data;
-      setRunResults(data.results);
-      setRunPassed(data.passed);
-      setRunTotal(data.total);
+      if (data.stderr) {
+        setRunOutput(data.stderr);
+        setRunHasError(true);
+      } else {
+        setRunOutput(data.stdout || data.output || "(no output)");
+      }
     } catch {
-      toast.error("Failed to run test cases");
+      toast.error("Failed to run code");
     }
     setIsRunning(false);
   };
 
   const handleSubmit = async () => {
     if (!question) return;
+    if (!customInput.trim()) {
+      toast.error("Please provide input before submitting");
+      return;
+    }
     setIsSubmitting(true);
-    setRunResults(null);
     setSubmitResult(null);
 
     try {
@@ -143,9 +152,9 @@ export default function PlaygroundPracticePage() {
 
   if (!question) return null;
 
-  const activeResults = submitResult?.results || runResults;
-  const activePassed = submitResult ? submitResult.passed : runPassed;
-  const activeTotal = submitResult ? submitResult.total : runTotal;
+  const activeResults = submitResult?.results || null;
+  const activePassed = submitResult ? submitResult.passed : 0;
+  const activeTotal = submitResult ? submitResult.total : 0;
 
   return (
     <div className="space-y-6">
@@ -153,27 +162,27 @@ export default function PlaygroundPracticePage() {
       <div className="flex items-start gap-4">
         <button
           onClick={() => navigate("/playground")}
-          className="mt-1 p-2 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+          className="mt-1 rounded-xl border border-slate-800/90 bg-slate-900/80 p-2 text-slate-300 hover:border-sky-400/80 hover:text-white hover:bg-slate-900/90 transition-colors cursor-pointer"
         >
-          <ArrowLeft className="h-5 w-5 text-gray-500" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-xl font-bold text-gray-900">{question.title}</h1>
+          <div className="mb-1 flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-slate-50">{question.title}</h1>
             <Badge variant={DIFFICULTY_COLORS[question.difficulty]}>
               {question.difficulty}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-slate-400">
             {question.points > 0 && (
               <span className="flex items-center gap-1">
-                <Zap className="h-3.5 w-3.5 text-amber-500" />
+                <Zap className="h-3.5 w-3.5 text-amber-300" />
                 {question.points} pts
               </span>
             )}
             {question.tags && question.tags.length > 0 && (
               <span className="flex items-center gap-1">
-                <Tag className="h-3.5 w-3.5" />
+                <Tag className="h-3.5 w-3.5 text-slate-400" />
                 {question.tags.join(", ")}
               </span>
             )}
@@ -181,41 +190,41 @@ export default function PlaygroundPracticePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left - Question Description */}
         <div className="space-y-4">
           <Card>
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Description</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-50">Description</h2>
             {question.description ? (
               <div
-                className="prose prose-sm max-w-none text-gray-600"
+                className="prose prose-sm max-w-none text-slate-200 prose-headings:text-slate-100 prose-p:text-slate-300 prose-strong:text-slate-100 prose-code:text-sky-300"
                 dangerouslySetInnerHTML={{ __html: question.description }}
               />
             ) : (
-              <p className="text-sm text-gray-500">No description provided.</p>
+              <p className="text-sm text-slate-400">No description provided.</p>
             )}
           </Card>
 
           {/* Sample Test Cases (visible ones) */}
           {question.testCases && question.testCases.length > 0 && (
             <Card>
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Examples</h2>
+              <h2 className="mb-3 text-sm font-semibold text-slate-50">Examples</h2>
               <div className="space-y-3">
                 {question.testCases.map((tc, i) => (
-                  <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                  <div key={i} className="space-y-2 rounded-xl bg-slate-900/80 p-3">
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
                       Example {i + 1}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">Input</p>
-                        <pre className="text-xs font-mono bg-white rounded p-2 whitespace-pre-wrap border border-gray-100">
+                        <p className="mb-1 text-xs text-slate-400">Input</p>
+                        <pre className="code-font whitespace-pre-wrap rounded border border-slate-800 bg-slate-950/70 p-2 text-xs text-slate-100">
                           {tc.input || "(empty)"}
                         </pre>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">Expected Output</p>
-                        <pre className="text-xs font-mono bg-white rounded p-2 whitespace-pre-wrap border border-gray-100">
+                        <p className="mb-1 text-xs text-slate-400">Expected Output</p>
+                        <pre className="code-font whitespace-pre-wrap rounded border border-slate-800 bg-slate-950/70 p-2 text-xs text-emerald-200">
                           {tc.output}
                         </pre>
                       </div>
@@ -234,7 +243,7 @@ export default function PlaygroundPracticePage() {
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
               {(question.languages || ["javascript"]).map((lang) => (
                 <option key={lang} value={lang}>
@@ -276,7 +285,7 @@ export default function PlaygroundPracticePage() {
           </div>
 
           {/* Editor */}
-          <div className="rounded-2xl overflow-hidden border border-gray-200">
+          <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950">
             <Editor
               height="400px"
               language={MONACO_LANGUAGE_MAP[language] || language}
@@ -296,15 +305,44 @@ export default function PlaygroundPracticePage() {
             />
           </div>
 
+          {/* Custom Input */}
+          <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
+            <div className="border-b border-slate-800/80 bg-slate-900/80 px-4 py-2">
+              <span className="text-sm font-semibold text-slate-100">Custom Input</span>
+            </div>
+            <textarea
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              placeholder="Enter input for your code here..."
+              className="w-full resize-none bg-transparent px-4 py-3 font-mono text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+              rows={3}
+            />
+          </div>
+
+          {/* Run Output */}
+          {runOutput && (
+            <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
+              <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-2">
+                <span className="text-sm font-semibold text-slate-100">Output</span>
+                {runHasError && (
+                  <span className="text-xs font-medium text-red-400">Error</span>
+                )}
+              </div>
+              <pre className={`max-h-48 overflow-y-auto whitespace-pre-wrap px-4 py-3 font-mono text-sm ${runHasError ? "text-red-400" : "text-slate-100"}`}>
+                {runOutput}
+              </pre>
+            </div>
+          )}
+
           {/* Submit success banner */}
           {submitResult?.allPassed && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
-              <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Trophy className="h-5 w-5 text-emerald-600" />
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
+                <Trophy className="h-5 w-5 text-emerald-300" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-emerald-800">Solution Accepted!</p>
-                <p className="text-xs text-emerald-600 flex items-center gap-3 mt-0.5">
+                <p className="text-sm font-semibold text-emerald-200">Solution Accepted!</p>
+                <p className="mt-0.5 flex items-center gap-3 text-xs text-emerald-200/80">
                   <span className="flex items-center gap-1">
                     <Zap className="h-3 w-3" /> +{submitResult.score} points
                   </span>
@@ -318,55 +356,55 @@ export default function PlaygroundPracticePage() {
 
           {/* Test Results */}
           {activeResults && (
-            <div className="rounded-2xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-700">
-                  {submitResult ? "Submission Results" : "Test Results"}
+            <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
+              <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-3">
+                <span className="text-sm font-semibold text-slate-100">
+                  Submission Results
                 </span>
                 <span
                   className={`text-sm font-semibold ${
-                    activePassed === activeTotal ? "text-emerald-600" : "text-amber-600"
+                    activePassed === activeTotal ? "text-emerald-300" : "text-amber-300"
                   }`}
                 >
                   {activePassed}/{activeTotal} Passed
                 </span>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-800/80">
                 {activeResults.map((tc, i) => (
                   <div key={i} className="p-3">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                       {tc.passed ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-4 w-4 text-red-400" />
                       )}
                       <span
                         className={`text-sm font-medium ${
-                          tc.passed ? "text-emerald-600" : "text-red-600"
+                          tc.passed ? "text-emerald-200" : "text-red-300"
                         }`}
                       >
                         Test Case {i + 1}
                       </span>
                     </div>
                     {!tc.hidden && (
-                      <div className="grid grid-cols-3 gap-3 text-xs font-mono">
+                      <div className="grid grid-cols-3 gap-3 text-xs code-font">
                         <div>
-                          <p className="text-gray-500 mb-1 font-sans">Input</p>
-                          <pre className="bg-gray-50 rounded p-2 whitespace-pre-wrap">
+                          <p className="mb-1 font-sans text-slate-400">Input</p>
+                          <pre className="whitespace-pre-wrap rounded bg-slate-900/80 p-2 text-slate-100">
                             {tc.input || "(empty)"}
                           </pre>
                         </div>
                         <div>
-                          <p className="text-gray-500 mb-1 font-sans">Expected</p>
-                          <pre className="bg-gray-50 rounded p-2 whitespace-pre-wrap">
+                          <p className="mb-1 font-sans text-slate-400">Expected</p>
+                          <pre className="whitespace-pre-wrap rounded bg-slate-900/80 p-2 text-emerald-200">
                             {tc.expected}
                           </pre>
                         </div>
                         <div>
-                          <p className="text-gray-500 mb-1 font-sans">Actual</p>
+                          <p className="mb-1 font-sans text-slate-400">Actual</p>
                           <pre
-                            className={`rounded p-2 whitespace-pre-wrap ${
-                              tc.passed ? "bg-emerald-50" : "bg-red-50"
+                            className={`whitespace-pre-wrap rounded p-2 ${
+                              tc.passed ? "bg-emerald-500/10 text-emerald-200" : "bg-red-500/10 text-red-200"
                             }`}
                           >
                             {tc.actual || "(empty)"}
@@ -375,7 +413,7 @@ export default function PlaygroundPracticePage() {
                       </div>
                     )}
                     {tc.hidden && !tc.passed && (
-                      <p className="text-xs text-gray-400 ml-6">
+                      <p className="ml-6 text-xs text-slate-500">
                         Hidden test case — wrong answer
                       </p>
                     )}

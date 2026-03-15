@@ -10,6 +10,7 @@ interface QuestionRendererProps {
   onAnswerChange: (answer: string | string[]) => void;
   onCodeChange: (code: string) => void;
   onLanguageChange: (language: string) => void;
+  onSubmitCode?: () => void;
 }
 
 export function QuestionRenderer({
@@ -20,6 +21,7 @@ export function QuestionRenderer({
   onAnswerChange,
   onCodeChange,
   onLanguageChange,
+  onSubmitCode,
 }: QuestionRendererProps) {
   switch (question.type) {
     case "SINGLE_CHOICE":
@@ -40,6 +42,7 @@ export function QuestionRenderer({
           language={language}
           onCodeChange={onCodeChange}
           onLanguageChange={onLanguageChange}
+          onSubmitCode={onSubmitCode}
         />
       );
 

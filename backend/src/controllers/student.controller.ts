@@ -8,6 +8,7 @@ import Course from "../models/course.model";
 import Batch from "../models/batch.model";
 import Enrollment from "../models/enrollment.model";
 import StudentTestSubmission from "../models/studentTestSubmission.model";
+import StudentSubmission from "../models/studentSubmission.model";
 import User from "../models/user.model";
 import Module from "../models/module.model";
 import Submodule from "../models/submodule.model";
@@ -93,6 +94,7 @@ class StudentController {
       }
 
       let totalScore = 0;
+      let totalMaxScore = 0;
       const gradedAnswers = [];
 
       for (const ans of answers) {
@@ -142,6 +144,7 @@ class StudentController {
         }
 
         totalScore += score;
+        totalMaxScore += maxScore;
 
         gradedAnswers.push({
           question: ans.question,
@@ -159,6 +162,7 @@ class StudentController {
         {
           answers: gradedAnswers,
           totalScore,
+          maxScore: totalMaxScore,
           completedAt: new Date(),
         },
         { new: true, upsert: true }
@@ -274,6 +278,14 @@ class StudentController {
         return next(new ErrorResponse("Language and code are required", 400));
       }
 
+      if (typeof code !== "string" || code.length > 65_536) {
+        return next(new ErrorResponse("Code exceeds maximum allowed size", 400));
+      }
+
+      if (stdin && (typeof stdin !== "string" || stdin.length > 1_048_576)) {
+        return next(new ErrorResponse("Input exceeds maximum allowed size", 400));
+      }
+
       if (!PISTON_LANGUAGES[language]) {
         return next(new ErrorResponse(`Unsupported language: ${language}`, 400));
       }
@@ -297,10 +309,13 @@ class StudentController {
     async (req: Request, res: Response, next: NextFunction) => {
       const { id: questionId } = req.params;
       const { language, code } = req.body;
-      console.log(req.body)
 
       if (!language || !code) {
         return next(new ErrorResponse("Language and code are required", 400));
+      }
+
+      if (typeof code !== "string" || code.length > 65_536) {
+        return next(new ErrorResponse("Code exceeds maximum allowed size", 400));
       }
 
       const question = await Question.findById(questionId);
@@ -309,8 +324,6 @@ class StudentController {
 
       const testCases = question.testCases || [];
       const results = [];
-
-      console.log(testCases)
 
       for (const tc of testCases) {
         try {
@@ -617,8 +630,9 @@ class StudentController {
       if (language) filter.languages = language;
       if (tag) filter.tags = tag;
 
+      const studentId = req.user!._id;
       const skip = (page - 1) * limit;
-      const [questions, total] = await Promise.all([
+      const [questions, total, allTags] = await Promise.all([
         Question.find(filter)
           .select("title slug description difficulty points languages tags createdAt")
           .sort({ difficulty: 1, createdAt: -1 })
@@ -626,18 +640,29 @@ class StudentController {
           .limit(limit)
           .lean(),
         Question.countDocuments(filter),
+        Question.distinct("tags", {
+          type: "CODING",
+          status: "PUBLISHED",
+          isDeleted: false,
+        }),
       ]);
 
-      // Get distinct tags for filter options
-      const allTags = await Question.distinct("tags", {
-        type: "CODING",
-        status: "PUBLISHED",
-        isDeleted: false,
-      });
+      // Get submission counts for the current student for these questions
+      const questionIds = questions.map((q) => q._id);
+      const submissions = await StudentSubmission.aggregate([
+        { $match: { student: studentId, question: { $in: questionIds } } },
+        { $group: { _id: "$question", count: { $sum: 1 } } },
+      ]);
+      const submissionMap = new Map(submissions.map((s) => [s._id.toString(), s.count]));
+
+      const questionsWithSubmissions = questions.map((q) => ({
+        ...q,
+        submissionCount: submissionMap.get(q._id.toString()) || 0,
+      }));
 
       res.status(200).json(
         new ApiResponse(200, {
-          questions,
+          questions: questionsWithSubmissions,
           currentPage: page,
           totalPages: Math.ceil(total / limit),
           totalQuestions: total,
@@ -674,6 +699,10 @@ class StudentController {
 
       if (!language || !code) {
         return next(new ErrorResponse("Language and code are required", 400));
+      }
+
+      if (typeof code !== "string" || code.length > 65_536) {
+        return next(new ErrorResponse("Code exceeds maximum allowed size", 400));
       }
 
       const question = await Question.findOne({
@@ -785,6 +814,35 @@ class StudentController {
         data: submodules,
         message: "Submodules retrieved successfully",
       });
+    }
+  );
+
+  // ==================== GET TEST SUBMISSION ====================
+  static getTestSubmission = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id: submissionId } = req.params;
+      const studentId = req.user!._id;
+
+      const submission = await StudentTestSubmission.findOne({
+        _id: submissionId,
+        student: studentId,
+      })
+        .populate({
+          path: "test",
+          select: "title description duration totalPoints",
+        })
+        .populate({
+          path: "answers.question",
+          select: "title type difficulty points options description",
+        });
+
+      if (!submission) {
+        return next(new ErrorResponse("Submission not found", 404));
+      }
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, submission, "Submission retrieved"));
     }
   );
 }

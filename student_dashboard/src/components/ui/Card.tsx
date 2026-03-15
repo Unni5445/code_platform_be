@@ -12,12 +12,12 @@ export function Card({ children, className, header, noPadding }: CardProps) {
   return (
     <div
       className={clsx(
-        "bg-surface rounded-xl shadow-card border border-surface-border",
+        "rounded-xl shadow-card border border-slate-800/80 bg-slate-900/60 backdrop-blur-sm",
         className
       )}
     >
       {header && (
-        <div className="px-6 py-4 border-b border-surface-border">
+        <div className="px-6 py-4 border-b border-slate-800/80">
           {header}
         </div>
       )}

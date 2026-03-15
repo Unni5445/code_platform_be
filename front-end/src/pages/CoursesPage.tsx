@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Edit, Trash2, Users, BookOpen, LayoutGrid, List, Eye, Globe } from "lucide-react";
-import { courseService } from "@/services";
+import { courseService, organisationService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
-import { Button, Card, Badge, Modal, Input, ConfirmDialog, EmptyState, SearchInput, Spinner, Pagination } from "@/components/ui";
+import { Button, Card, Badge, Modal, Input, Select, ConfirmDialog, EmptyState, SearchInput, Spinner, Pagination } from "@/components/ui";
 import { useModal } from "@/hooks";
 import type { ICourse } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +29,7 @@ export default function CoursesPage() {
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
   const [formIsGlobal, setFormIsGlobal] = useState(false);
+  const [formOrg, setFormOrg] = useState("");
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -37,16 +38,21 @@ export default function CoursesPage() {
     [currentPage, debouncedSearch]
   );
 
+  const fetchOrgs = useCallback(() => organisationService.getOrganisations(), []);
+
   const { data, loading, refetch } = useApi(fetchCourses, [currentPage, debouncedSearch]);
+  const { data: orgs } = useApi(fetchOrgs, []);
 
   const courses = data?.courses ?? [];
   const totalPages = data?.totalPages ?? 1;
+  const orgList = orgs ?? [];
 
   const openEdit = (course: ICourse) => {
     setSelectedCourse(course);
     setFormTitle(course.title);
     setFormDesc(course.description || "");
     setFormIsGlobal(course.isGlobal);
+    setFormOrg(course.organisation || "");
     editModal.open();
   };
 
@@ -54,12 +60,13 @@ export default function CoursesPage() {
     setFormTitle("");
     setFormDesc("");
     setFormIsGlobal(false);
+    setFormOrg("");
     addModal.open();
   };
 
   const handleCreate = async () => {
     try {
-      await courseService.createCourse({ title: formTitle, description: formDesc, isGlobal: formIsGlobal });
+      await courseService.createCourse({ title: formTitle, description: formDesc, isGlobal: formIsGlobal, ...(formOrg && !formIsGlobal ? { organisation: formOrg } : {}) });
       addModal.close();
       toast.success("Course created successfully");
       refetch();
@@ -71,7 +78,7 @@ export default function CoursesPage() {
   const handleUpdate = async () => {
     if (!selectedCourse) return;
     try {
-      await courseService.updateCourse(selectedCourse._id, { title: formTitle, description: formDesc, isGlobal: formIsGlobal });
+      await courseService.updateCourse(selectedCourse._id, { title: formTitle, description: formDesc, isGlobal: formIsGlobal, organisation: formIsGlobal ? undefined : formOrg || undefined });
       editModal.close();
       setSelectedCourse(null);
       toast.success("Course updated successfully");
@@ -256,8 +263,19 @@ export default function CoursesPage() {
               placeholder="Course description..."
             />
           </div>
+          {!formIsGlobal && (
+            <Select
+              label="Organisation"
+              value={formOrg}
+              onChange={(e) => setFormOrg(e.target.value)}
+              options={[
+                { value: "", label: "Select Organisation" },
+                ...orgList.map((o) => ({ value: o._id, label: o.name })),
+              ]}
+            />
+          )}
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={formIsGlobal} onChange={(e) => setFormIsGlobal(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <input type="checkbox" checked={formIsGlobal} onChange={(e) => { setFormIsGlobal(e.target.checked); if (e.target.checked) setFormOrg(""); }} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
             <div>
               <span className="text-sm font-medium text-gray-700">Global Course</span>
               <p className="text-xs text-gray-500">Available to all organisations</p>
@@ -289,8 +307,19 @@ export default function CoursesPage() {
               className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400 hover:border-gray-400 transition-colors"
             />
           </div>
+          {!formIsGlobal && (
+            <Select
+              label="Organisation"
+              value={formOrg}
+              onChange={(e) => setFormOrg(e.target.value)}
+              options={[
+                { value: "", label: "Select Organisation" },
+                ...orgList.map((o) => ({ value: o._id, label: o.name })),
+              ]}
+            />
+          )}
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={formIsGlobal} onChange={(e) => setFormIsGlobal(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <input type="checkbox" checked={formIsGlobal} onChange={(e) => { setFormIsGlobal(e.target.checked); if (e.target.checked) setFormOrg(""); }} className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
             <div>
               <span className="text-sm font-medium text-gray-700">Global Course</span>
               <p className="text-xs text-gray-500">Available to all organisations</p>

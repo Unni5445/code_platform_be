@@ -1,6 +1,16 @@
 import axios from "axios";
 
-const PISTON_API = "https://40b3-157-51-126-35.ngrok-free.app/api/v2";
+const PISTON_API = `${process.env.PISTON_API_URL}/api/v2`;
+
+// ── Limits ──────────────────────────────────────────────
+const COMPILE_TIMEOUT = 10_000;   // 10 s
+const RUN_TIMEOUT = 5_000;        // 5 s
+const COMPILE_MEMORY = 256_000_000; // 256 MB
+const RUN_MEMORY = 256_000_000;     // 256 MB
+const MAX_OUTPUT_SIZE = 65_536;     // 64 KB stdout cap
+const MAX_CODE_SIZE = 65_536;       // 64 KB source cap
+const MAX_STDIN_SIZE = 1_048_576;   // 1 MB input cap
+const MAX_PROCESS_LIMIT = 32;       // max processes/threads
 
 export const PISTON_LANGUAGES: Record<
   string,
@@ -33,32 +43,30 @@ export async function executeCode(
     throw new Error(`Unsupported language: ${language}`);
   }
 
-  console.log({
-    language: langConfig.language,
-    version: langConfig.version,
-    files: [{ content: code }],
-    stdin: stdin || "",
-    compile_timeout: 10000,
-    run_timeout: 5000,
-    compile_memory_limit: -1,
-    run_memory_limit: -1,
-  });
+  // ── Validate input sizes ──
+  if (code.length > MAX_CODE_SIZE) {
+    throw new Error(`Code exceeds maximum size of ${MAX_CODE_SIZE} bytes`);
+  }
+  if (stdin && stdin.length > MAX_STDIN_SIZE) {
+    throw new Error(`Input exceeds maximum size of ${MAX_STDIN_SIZE} bytes`);
+  }
 
   const functionName = getFunctionName(language, code);
 
   let codeWithInput = code;
 
-  if (language === "javascript") {
-    codeWithInput = `${code}
+  if (functionName) {
+    if (language === "javascript") {
+      codeWithInput = `${code}
 
 const fs = require('fs');
 const input = fs.readFileSync(0, 'utf-8').trim();
 console.log(${functionName}(input));
 `;
-  }
+    }
 
- if (language === "python") {
-  codeWithInput = `${code}
+    if (language === "python") {
+      codeWithInput = `${code}
 
 import sys
 input_data = sys.stdin.read().strip()
@@ -70,22 +78,34 @@ except:
 
 print(${functionName}(input_data))
 `;
-}
+    }
+  }
 
-  const response = await axios.post(`${PISTON_API}/execute`, {
-    language: langConfig.language, // e.g., "nodejs"
-    version: langConfig.version, // e.g., "20"
-    files: [{ content: codeWithInput }],
-    stdin: stdin || "",
-  });
-
-  console.log(response)
+  const response = await axios.post(
+    `${PISTON_API}/execute`,
+    {
+      language: langConfig.language,
+      version: langConfig.version,
+      files: [{ content: codeWithInput }],
+      stdin: stdin || "",
+      // compile_timeout: COMPILE_TIMEOUT,
+      // run_timeout: RUN_TIMEOUT,
+      // compile_memory_limit: COMPILE_MEMORY,
+      // run_memory_limit: RUN_MEMORY,
+      // output_limit: MAX_OUTPUT_SIZE,
+      // process_limit: MAX_PROCESS_LIMIT,
+    },
+    { timeout: COMPILE_TIMEOUT + RUN_TIMEOUT + 5_000 } // axios timeout as safety net
+  );
 
   const run = response.data.run;
+  const stdout = (run.stdout || "").slice(0, MAX_OUTPUT_SIZE);
+  const stderr = (run.stderr || "").slice(0, MAX_OUTPUT_SIZE);
+
   return {
-    stdout: run.stdout || "",
-    stderr: run.stderr || "",
-    output: run.output || "",
+    stdout,
+    stderr,
+    output: (run.output || "").slice(0, MAX_OUTPUT_SIZE),
     code: run.code,
     signal: run.signal,
   };

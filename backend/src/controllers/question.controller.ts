@@ -111,11 +111,14 @@ class QuestionController {
       return next(new ErrorResponse("Maximum 100 questions per import", 400));
     }
 
-    // Auto-generate slugs for questions that don't have one
-    const questionsWithSlugs = questions.map((q: any) => ({
-      ...q,
-      slug: q.slug || q.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    }));
+    // Strip course/module/test and auto-generate slugs
+    const questionsWithSlugs = questions.map((q: any) => {
+      const { course, module, test, ...rest } = q;
+      return {
+        ...rest,
+        slug: q.slug || q.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      };
+    });
 
     const created = await Question.insertMany(questionsWithSlugs, { ordered: false });
 
