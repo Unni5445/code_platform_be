@@ -27,7 +27,7 @@ const TestTakePage = lazy(() => import("@/pages/TestTakePage"));
 
 function LazyFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
+    <div className="mc-page flex min-h-screen items-center justify-center">
       <Spinner size="lg" />
     </div>
   );

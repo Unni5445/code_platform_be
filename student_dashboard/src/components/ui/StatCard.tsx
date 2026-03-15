@@ -10,14 +10,26 @@ interface StatCardProps {
   className?: string;
 }
 
-export function StatCard({ icon: Icon, label, value, trend, color = "text-primary-600 bg-primary-50", className }: StatCardProps) {
+export function StatCard({
+  icon: Icon,
+  label,
+  value,
+  trend,
+  color = "bg-primary-500/20 text-primary-300",
+  className,
+}: StatCardProps) {
   return (
-    <div className={clsx("bg-surface rounded-xl shadow-card border border-surface-border p-5", className)}>
+    <div
+      className={clsx(
+        "rounded-xl shadow-card border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-sm",
+        className
+      )}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          {trend && <p className="text-xs text-emerald-600 mt-1">{trend}</p>}
+          <p className="text-sm text-slate-400">{label}</p>
+          <p className="text-2xl font-bold text-white mt-1">{value}</p>
+          {trend && <p className="text-xs text-emerald-400 mt-1">{trend}</p>}
         </div>
         <div className={clsx("p-3 rounded-xl", color)}>
           <Icon className="h-6 w-6" />

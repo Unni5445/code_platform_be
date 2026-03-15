@@ -32,7 +32,10 @@ export default function CourseDetailPage() {
   const { data: modules, loading: modulesLoading } = useApi<IModule[]>(fetchModules, [courseId]);
 
   const fetchEnrollments = useCallback(() => enrollmentService.getMyEnrollments(), []);
-  const { data: enrollments, refetch: refetchEnrollments } = useApi<IEnrollment[]>(fetchEnrollments, []);
+  const { data: enrollments, refetch: refetchEnrollments } = useApi<IEnrollment[]>(
+    fetchEnrollments,
+    []
+  );
 
   const enrollment = enrollments?.find((e) => {
     const eCourseId = typeof e.course === "object" ? e.course._id : e.course;
@@ -67,7 +70,11 @@ export default function CourseDetailPage() {
     setExpandedModules(next);
   };
 
-  const handleToggleSubmodule = async (moduleId: string, submoduleId: string, isCompleted: boolean) => {
+  const handleToggleSubmodule = async (
+    moduleId: string,
+    submoduleId: string,
+    isCompleted: boolean
+  ) => {
     if (!enrollment || updatingProgress) return;
     setUpdatingProgress(submoduleId);
     try {
@@ -94,37 +101,46 @@ export default function CourseDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back link */}
-      <Link to="/courses" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+      <Link
+        to="/courses"
+        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+      >
         <ArrowLeft className="h-4 w-4" /> Back to Courses
       </Link>
 
-      {/* Course Header */}
       <Card>
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-primary-50 rounded-xl">
-            <BookOpen className="h-8 w-8 text-primary-600" />
+          <div className="rounded-xl bg-primary-500/20 p-3">
+            <BookOpen className="h-8 w-8 text-primary-300" />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">{course?.title}</h1>
+            <h1 className="text-2xl font-bold text-white">{course?.title}</h1>
             {course?.description && (
-              <p className="text-gray-500 mt-1">{course.description}</p>
+              <p className="mt-1 text-slate-400">{course.description}</p>
             )}
-            <div className="flex items-center gap-4 mt-4">
+            <div className="mt-4 flex items-center gap-4">
               <Badge variant="primary">{modules?.length || 0} Modules</Badge>
               {enrollment && (
-                <Badge variant={enrollment.status === "COMPLETED" ? "success" : "info"}>
+                <Badge
+                  variant={
+                    enrollment.status === "COMPLETED" ? "success" : "info"
+                  }
+                >
                   {enrollment.status}
                 </Badge>
               )}
             </div>
             {enrollment && (
-              <ProgressBar value={enrollment.overallProgress} showLabel className="mt-4 max-w-md" />
+              <ProgressBar
+                value={enrollment.overallProgress}
+                showLabel
+                className="mt-4 max-w-md"
+              />
             )}
             {enrollment && enrollment.overallProgress >= 100 && (
               <Link
                 to={`/certificates/${courseId}`}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
               >
                 <Award className="h-4 w-4" /> Get Certificate
               </Link>
@@ -133,7 +149,6 @@ export default function CourseDetailPage() {
         </div>
       </Card>
 
-      {/* Modules Accordion */}
       <div className="space-y-3">
         {modules?.map((module) => {
           const isExpanded = expandedModules.has(module._id);
@@ -147,18 +162,18 @@ export default function CourseDetailPage() {
             <Card key={module._id} noPadding>
               <button
                 onClick={() => toggleModule(module._id)}
-                className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-slate-800/60"
               >
                 <div className="flex items-center gap-3">
                   {isExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                    <ChevronDown className="h-5 w-5 text-slate-400" />
                   ) : (
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                    <ChevronRight className="h-5 w-5 text-slate-400" />
                   )}
                   <div>
-                    <h3 className="font-semibold text-gray-900">{module.title}</h3>
+                    <h3 className="font-semibold text-white">{module.title}</h3>
                     {module.description && (
-                      <p className="text-sm text-gray-500 mt-0.5">{module.description}</p>
+                      <p className="mt-0.5 text-sm text-slate-400">{module.description}</p>
                     )}
                   </div>
                 </div>
@@ -176,46 +191,58 @@ export default function CourseDetailPage() {
                       {progress.status.replace("_", " ")}
                     </Badge>
                   )}
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-slate-400">
                     {completedCount}/{totalSubs}
                   </span>
                 </div>
               </button>
 
               {isExpanded && (
-                <div className="border-t border-surface-border px-5 py-4 space-y-2">
+                <div className="space-y-2 border-t border-slate-800/80 px-5 py-4">
                   {isLoadingSubs ? (
-                    <div className="py-4"><Spinner size="sm" /></div>
+                    <div className="py-4">
+                      <Spinner size="sm" />
+                    </div>
                   ) : submodules.length === 0 ? (
-                    <p className="text-sm text-gray-400 py-2">No submodules in this module</p>
+                    <p className="py-2 text-sm text-slate-500">No submodules in this module</p>
                   ) : (
                     submodules.map((sub) => {
-                      const isCompleted = progress?.completedSubmodules.includes(sub._id) || false;
+                      const isCompleted =
+                        progress?.completedSubmodules.includes(sub._id) || false;
                       const isUpdating = updatingProgress === sub._id;
 
                       return (
                         <button
                           key={sub._id}
-                          onClick={() => handleToggleSubmodule(module._id, sub._id, isCompleted)}
+                          onClick={() =>
+                            handleToggleSubmodule(module._id, sub._id, isCompleted)
+                          }
                           disabled={isUpdating}
                           className={clsx(
-                            "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors cursor-pointer",
-                            isCompleted ? "bg-emerald-50" : "hover:bg-gray-50"
+                            "flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left transition-colors",
+                            isCompleted
+                              ? "bg-emerald-500/20"
+                              : "hover:bg-slate-800/60"
                           )}
                         >
                           {isUpdating ? (
-                            <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                           ) : isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                           ) : (
-                            <Circle className="h-5 w-5 text-gray-300" />
+                            <Circle className="h-5 w-5 text-slate-500" />
                           )}
                           <div>
-                            <p className={clsx("text-sm font-medium", isCompleted ? "text-emerald-700" : "text-gray-700")}>
+                            <p
+                              className={clsx(
+                                "text-sm font-medium",
+                                isCompleted ? "text-emerald-300" : "text-white"
+                              )}
+                            >
                               {sub.title}
                             </p>
                             {sub.description && (
-                              <p className="text-xs text-gray-500 mt-0.5">{sub.description}</p>
+                              <p className="mt-0.5 text-xs text-slate-500">{sub.description}</p>
                             )}
                           </div>
                         </button>
@@ -223,9 +250,8 @@ export default function CourseDetailPage() {
                     })
                   )}
 
-                  {/* Test Link */}
                   {module.test && (
-                    <div className="pt-3 border-t border-surface-border">
+                    <div className="border-t border-slate-800/80 pt-3">
                       <Link to={`/tests/${module.test._id}/take`}>
                         <Button size="sm" leftIcon={<FileQuestion className="h-4 w-4" />}>
                           Take Test

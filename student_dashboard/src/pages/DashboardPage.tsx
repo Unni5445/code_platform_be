@@ -21,9 +21,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-6 text-white">
-        <h1 className="text-2xl font-bold">Welcome back, {user?.name || "Student"}!</h1>
-        <p className="text-primary-200 mt-1">Keep up the great work. Here's your learning overview.</p>
+      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 px-6 py-5 text-white backdrop-blur-sm">
+        <h1 className="text-2xl font-bold text-white">
+          Welcome back, {user?.name || "Student"}!
+        </h1>
+        <p className="mt-1 text-slate-300">
+          Keep up the great work. Here&apos;s your learning overview.
+        </p>
       </div>
 
       {/* Stats Row */}
@@ -32,40 +36,47 @@ export default function DashboardPage() {
           icon={BookOpen}
           label="Enrolled Courses"
           value={totalCourses}
-          color="text-primary-600 bg-primary-50"
+          color="bg-primary-500/20 text-primary-300"
         />
         <StatCard
           icon={Star}
           label="Average Progress"
           value={`${avgProgress}%`}
-          color="text-secondary-600 bg-secondary-50"
+          color="bg-secondary-500/20 text-secondary-300"
         />
         <StatCard
           icon={Flame}
           label="Current Streak"
           value={user?.streak || 0}
           trend={user?.maxStreak ? `Max: ${user.maxStreak}` : undefined}
-          color="text-orange-600 bg-orange-50"
+          color="bg-orange-500/20 text-orange-300"
         />
         <StatCard
           icon={Trophy}
           label="Total Points"
           value={user?.points || 0}
-          color="text-emerald-600 bg-emerald-50"
+          color="bg-emerald-500/20 text-emerald-300"
         />
       </div>
 
       {/* Enrolled Courses */}
-      <Card header={
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">My Courses</h3>
-          <Link to="/courses" className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
-            View All <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      }>
+      <Card
+        header={
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">My Courses</h3>
+            <Link
+              to="/courses"
+              className="flex items-center gap-1 text-sm font-medium text-primary-400 hover:text-primary-300"
+            >
+              View All <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        }
+      >
         {loading ? (
-          <div className="py-8"><Spinner /></div>
+          <div className="py-8">
+            <Spinner />
+          </div>
         ) : !enrollments?.length ? (
           <EmptyState
             title="No Courses Yet"
@@ -79,18 +90,26 @@ export default function DashboardPage() {
                 <Link
                   key={enrollment._id}
                   to={`/courses/${typeof enrollment.course === "object" ? enrollment.course._id : enrollment.course}`}
-                  className="block p-4 rounded-xl border border-surface-border hover:shadow-card-hover hover:border-primary-200 transition-all duration-200"
+                  className="block rounded-xl border border-slate-800/80 p-4 transition-all duration-200 hover:border-primary-500/40 hover:bg-slate-800/40"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900 line-clamp-1">
+                  <div className="mb-3 flex items-start justify-between">
+                    <h4 className="line-clamp-1 font-semibold text-white">
                       {course?.title || "Course"}
                     </h4>
-                    <Badge variant={enrollment.status === "COMPLETED" ? "success" : enrollment.status === "ACTIVE" ? "primary" : "gray"}>
+                    <Badge
+                      variant={
+                        enrollment.status === "COMPLETED"
+                          ? "success"
+                          : enrollment.status === "ACTIVE"
+                          ? "primary"
+                          : "gray"
+                      }
+                    >
                       {enrollment.status}
                     </Badge>
                   </div>
                   {course?.description && (
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-3">{course.description}</p>
+                    <p className="mb-3 line-clamp-2 text-sm text-slate-400">{course.description}</p>
                   )}
                   <ProgressBar value={enrollment.overallProgress} showLabel />
                 </Link>

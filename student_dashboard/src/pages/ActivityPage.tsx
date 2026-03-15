@@ -13,36 +13,37 @@ export default function ActivityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Activity</h1>
-        <p className="text-sm text-gray-500 mt-1">Your learning activity over time</p>
+        <h1 className="text-xl font-bold text-white">Activity</h1>
+        <p className="mt-1 text-sm text-slate-400">Your learning activity over time</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           icon={Calendar}
           label="Active Days"
           value={totalActive}
-          color="text-primary-600 bg-primary-50"
+          color="bg-primary-500/20 text-primary-300"
         />
         <StatCard
           icon={Flame}
           label="Current Streak"
           value={user?.streak || 0}
           trend={user?.maxStreak ? `Best: ${user.maxStreak} days` : undefined}
-          color="text-orange-600 bg-orange-50"
+          color="bg-orange-500/20 text-orange-300"
         />
         <StatCard
           icon={TrendingUp}
           label="Total Submissions"
           value={totalContributions}
-          color="text-emerald-600 bg-emerald-50"
+          color="bg-emerald-500/20 text-emerald-300"
         />
       </div>
 
-      {/* Heatmap */}
-      <Card className={" w-fit"} header={<h3 className="text-lg font-semibold text-gray-900">Contribution Calendar</h3>}>
-        <ActivityHeatmap data={activityLog}/>
+      <Card
+        className="w-fit"
+        header={<h3 className="text-lg font-semibold text-white">Contribution Calendar</h3>}
+      >
+        <ActivityHeatmap data={activityLog} />
       </Card>
     </div>
   );

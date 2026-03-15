@@ -32,11 +32,14 @@ export default function CertificatePage() {
   if (error || !certificate) {
     return (
       <div className="space-y-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex cursor-pointer items-center gap-2 text-slate-400 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <div className="text-center py-20">
-          <p className="text-gray-500">Certificate not available. Complete the course first.</p>
+        <div className="py-20 text-center">
+          <p className="text-slate-400">Certificate not available. Complete the course first.</p>
         </div>
       </div>
     );
@@ -54,7 +57,10 @@ export default function CertificatePage() {
     <div className="space-y-6">
       {/* Header - hidden when printing */}
       <div className="flex items-center justify-between print:hidden">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex cursor-pointer items-center gap-2 text-slate-400 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <Button leftIcon={<Download className="h-4 w-4" />} onClick={handlePrint}>

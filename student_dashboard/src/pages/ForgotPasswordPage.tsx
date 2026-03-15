@@ -97,52 +97,50 @@ export default function ForgotPasswordPage() {
 
   return (
     <div>
-      {/* Heading */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 leading-tight">
+        <h1 className="text-4xl font-bold leading-tight text-white">
           {step === "email" && "Forgot\nPassword?"}
           {step === "otp" && "Enter\nOTP"}
           {step === "reset" && "New\nPassword"}
         </h1>
-        <p className="text-gray-500 mt-3">
-          {step === "email" && "Enter your email and we'll send you an OTP to reset your password"}
+        <p className="mt-3 text-slate-400">
+          {step === "email" &&
+            "Enter your email and we'll send you an OTP to reset your password"}
           {step === "otp" && `We've sent a 6-digit OTP to ${email}`}
           {step === "reset" && "Create a new password for your account"}
         </p>
       </div>
 
-      {/* Step indicators */}
-      <div className="flex items-center gap-2 mb-6">
-        {["email", "otp", "reset"].map((s, i) => (
+      <div className="mb-6 flex items-center gap-2">
+        {(["email", "otp", "reset"] as const).map((s, i) => (
           <div
             key={s}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
               i <= ["email", "otp", "reset"].indexOf(step)
-                ? "bg-primary-600"
-                : "bg-gray-200"
+                ? "bg-primary-500"
+                : "bg-slate-700"
             }`}
           />
         ))}
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 mb-5">
+        <div className="mb-5 rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
           {error}
         </div>
       )}
 
-      {/* Step 1: Email */}
       {step === "email" && (
         <form onSubmit={handleSendOtp} className="space-y-5">
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
@@ -152,11 +150,10 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      {/* Step 2: OTP */}
       {step === "otp" && (
         <form onSubmit={handleVerifyOtp} className="space-y-5">
           <div className="relative">
-            <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <KeyRound className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               placeholder="Enter 6-digit OTP"
@@ -164,55 +161,63 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
               required
               maxLength={6}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all tracking-widest text-center font-mono text-lg"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-center font-mono text-lg tracking-widest text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
-          <Button type="submit" isLoading={isLoading} disabled={otp.length !== 6} className="w-full !rounded-xl !py-3">
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={otp.length !== 6}
+            className="w-full !rounded-xl !py-3"
+          >
             Verify OTP
           </Button>
 
           <button
             type="button"
-            onClick={() => { setStep("email"); setOtp(""); setError(""); }}
-            className="w-full text-sm text-gray-500 hover:text-primary-600 cursor-pointer"
+            onClick={() => {
+              setStep("email");
+              setOtp("");
+              setError("");
+            }}
+            className="w-full cursor-pointer text-sm text-slate-400 hover:text-primary-400"
           >
-            Didn't receive the OTP? Try again
+            Didn&apos;t receive the OTP? Try again
           </button>
         </form>
       )}
 
-      {/* Step 3: Reset Password */}
       {step === "reset" && (
         <form onSubmit={handleResetPassword} className="space-y-5">
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="New password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
 
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
@@ -222,8 +227,11 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <p className="mt-6 text-sm text-gray-500 text-center">
-        <Link to="/login" className="inline-flex items-center gap-1 text-primary-600 font-medium hover:text-primary-700">
+      <p className="mt-6 text-center text-sm text-slate-400">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-1 font-medium text-primary-400 hover:text-primary-300"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In
         </Link>
       </p>
