@@ -4,9 +4,9 @@
   "description": "",
   "main": "app.ts",
   "scripts": {
-    "start": "nodemon --exec ./node_modules/.bin/babel-node app.ts",
-    "dev": "nodemon app.ts",
-    "build": "babel app.ts -d dist --extensions '.ts' && babel src --out-dir dist --extensions '.ts'"
+    "start": "ts-node app.ts",
+    "dev": "nodemon --exec ts-node app.ts",
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
@@ -28,11 +28,6 @@
     "nodemailer": "^6.9.15"
   },
   "devDependencies": {
-    "@babel/cli": "^7.28.6",
-    "@babel/core": "^7.29.0",
-    "@babel/node": "^7.25.7",
-    "@babel/preset-env": "^7.29.2",
-    "@babel/preset-typescript": "^7.28.5",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
