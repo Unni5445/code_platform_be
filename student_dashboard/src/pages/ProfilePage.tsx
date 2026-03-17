@@ -73,7 +73,7 @@ export default function ProfilePage() {
             <p className="text-slate-400">{user?.email}</p>
             <div className="mt-2 flex items-center gap-2">
               <Badge variant="primary">{user?.role}</Badge>
-              {orgName && <Badge variant="gray">{orgName}</Badge>}
+              {orgName && <Badge variant="gray">{typeof orgName === 'string' ? orgName : orgName.name}</Badge>}
               {user?.isActive && <Badge variant="success">Active</Badge>}
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">{item.label}</p>
-                  <p className="text-sm font-medium text-white">{item.value}</p>
+                  <p className="text-sm font-medium text-white">{String(item.value)}</p>
                 </div>
               </div>
             ))}

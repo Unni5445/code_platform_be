@@ -29,7 +29,7 @@ const app = express();
 app.use(helmet());
 
 // Parse allowed origins from environment variable
-const allowedOrigins = (process.env.ALLOWED_ORIGINS!).split(",");
+const allowedOrigins = (process.env.ALLOWED_ORIGINS||"").split(",");
 
 // CORS Configuration
 app.use(

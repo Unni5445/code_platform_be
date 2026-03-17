@@ -6,15 +6,6 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
 
-  const handleLinkClick = () => setIsOpen(false);
-
-  const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const target = document.querySelector(id);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-    handleLinkClick();
-  };
-
   return (
     <header className="sticky top-0 z-50">
       <nav className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 border-b border-slate-400/30 bg-gradient-to-br from-slate-900/85 to-slate-900/65 px-6 py-4 backdrop-blur-[22px] max-md:px-[1.15rem]">

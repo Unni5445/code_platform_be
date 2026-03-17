@@ -1,9 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Button, Input, Select, Badge, RichTextEditor } from "@/components/ui";
-import { courseService, testService } from "@/services";
-import { useApi } from "@/hooks/useApi";
-import type { IQuestion, ITest, QuestionType, Difficulty, TestCase } from "@/types";
+import type { IQuestion, QuestionType, Difficulty, TestCase } from "@/types";
 
 interface QuestionFormProps {
   question?: IQuestion | null;
@@ -32,8 +30,8 @@ export function QuestionForm({ question, onSubmit, onCancel, isLoading, fixedCou
   const [type, setType] = useState<QuestionType>(question?.type || "SINGLE_CHOICE");
   const [difficulty, setDifficulty] = useState<Difficulty>(question?.difficulty || "Medium");
   const [points, setPoints] = useState(question?.points?.toString() || "10");
-  const [testId, setTestId] = useState(fixedTestId || question?.test || "");
-  const [course, setCourse] = useState(fixedCourseId || question?.course || "");
+  const [testId] = useState(fixedTestId || question?.test || "");
+  const [course] = useState(fixedCourseId || question?.course || "");
   const [company, setCompany] = useState(question?.company || "");
   const [status, setStatus] = useState(question?.status || "DRAFT");
   const [tagInput, setTagInput] = useState("");
@@ -54,12 +52,6 @@ export function QuestionForm({ question, onSubmit, onCancel, isLoading, fixedCou
   );
   const [maxExecutionTime, setMaxExecutionTime] = useState(question?.maxExecutionTime?.toString() || "2");
   const [maxMemory, setMaxMemory] = useState(question?.maxMemory?.toString() || "128");
-
-  const { data: coursesData } = useApi(() => fixedCourseId ? Promise.resolve(null) : courseService.getCourses({ limit: 100 }), [fixedCourseId]);
-  const coursesList = coursesData?.courses ?? [];
-
-  const { data: testsData } = useApi(() => fixedTestId ? Promise.resolve(null) : testService.getTests({ limit: 100 }), [fixedTestId]);
-  const testsList: ITest[] = testsData?.tests ?? [];
 
   const isChoiceType = type === "SINGLE_CHOICE" || type === "MULTIPLE_CHOICE";
   const isCodingType = type === "CODING";
@@ -223,7 +215,7 @@ export function QuestionForm({ question, onSubmit, onCancel, isLoading, fixedCou
               { value: "ARCHIVED", label: "Archived" },
             ]}
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => setStatus(e.target.value as "DRAFT" | "PUBLISHED" | "ARCHIVED")}
           />
           <Input
             label="Submission Limit"

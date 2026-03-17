@@ -487,7 +487,7 @@ export default function CourseDetailPage() {
                       <h3 className="text-sm font-semibold text-gray-900 truncate">{mod.title}</h3>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge variant="default">{mod.submoduleCount ?? 0} items</Badge>
+                      <Badge variant="gray">{mod.submoduleCount ?? 0} items</Badge>
                       {!isAdmin && (
                         <>
                           <button onClick={(e) => { e.stopPropagation(); openEditModule(mod); }} className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">

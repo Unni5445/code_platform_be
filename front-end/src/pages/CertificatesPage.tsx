@@ -5,7 +5,6 @@ import { certificateService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
 import { Button, Card, Badge, EmptyState, SearchInput, Spinner } from "@/components/ui";
-import type { ICertificate } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 export default function CertificatesPage() {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Plus, Edit, Trash2, Bell, Building2, Users, Settings, Activity } from "lucide-react";
+import { Send, Plus, Edit, Trash2, Bell, Building2, Users, Settings } from "lucide-react";
 import { Button, Card, Input, Select, Badge, Tabs, Modal, ConfirmDialog, EmptyState, Spinner } from "@/components/ui";
 import { batchService, organisationService, userService } from "@/services";
 import { useApi } from "@/hooks/useApi";
@@ -176,18 +176,6 @@ export default function SystemPage() {
       : (batch.organisation as string) || "";
     setBatchOrganisationId(orgId);
     editBatchModal.open();
-  };
-
-  const handleDeleteBatches = async () => {
-    if (selectedBatches.length === 0) return;
-    try {
-      await organisationService.deleteBatches(selectedBatches);
-      setSelectedBatches([]);
-      toast.success(`${selectedBatches.length} batch(es) deleted successfully`);
-      refetchBatches();
-    } catch {
-      toast.error("Failed to delete batches");
-    }
   };
 
   const handleUpdateBatches = async () => {

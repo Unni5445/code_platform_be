@@ -200,7 +200,7 @@ export default function CoursesPage() {
                     <span className="text-sm text-gray-500 line-clamp-1">{course.description}</span>
                   </td>
                   <td className="px-6 py-4 hidden sm:table-cell">
-                    {course.isGlobal ? <Badge variant="warning">Global</Badge> : <Badge variant="default">Org</Badge>}
+                    {course.isGlobal ? <Badge variant="warning">Global</Badge> : <Badge variant="gray">Org</Badge>}
                   </td>
                   <td className="px-6 py-4">
                     <Badge variant="info">{getStudentCount(course)} enrolled</Badge>

@@ -1,5 +1,4 @@
 import { useLocation } from "react-router-dom";
-import { Bell } from "lucide-react";
 import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { PATHS } from "@/config/routes";

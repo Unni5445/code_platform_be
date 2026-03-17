@@ -24,7 +24,7 @@ export function UserForm({ user, onSubmit, onCancel, isLoading, forceStudentRole
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const [role, setRole] = useState(user?.role || defaultRole || "STUDENT");
+  const [role] = useState(user?.role || defaultRole || "STUDENT");
   const [password, setPassword] = useState("");
   const [department, setDepartment] = useState(user?.department || "");
   const [gender, setGender] = useState(user?.gender || "");

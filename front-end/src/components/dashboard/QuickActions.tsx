@@ -1,4 +1,4 @@
-import { UserPlus, BookPlus, FileDown } from "lucide-react";
+import { BookPlus, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
