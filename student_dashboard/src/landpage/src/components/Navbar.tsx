@@ -30,16 +30,7 @@ export default function Navbar() {
               </span>
             </span>
           </div>
-          <ul
-            className={`flex list-none items-center gap-6 max-md:pointer-events-none max-md:fixed max-md:inset-x-5 max-md:top-[72px] max-md:flex-col max-md:items-start max-md:gap-3.5 max-md:rounded-2xl max-md:border max-md:border-blue-900/90 max-md:bg-slate-900/[0.98] max-md:p-4 max-md:opacity-0 max-md:backdrop-blur-[20px] max-md:transition-all max-md:duration-200 max-md:ease-out ${isOpen ? "max-md:pointer-events-auto max-md:translate-y-0 max-md:opacity-100" : "max-md:-translate-y-4"}`}
-          >
-            <li><a href="#features" onClick={(e) => scrollTo(e, "#features")} className="relative pb-0.5 text-sm text-gray-400 no-underline transition-colors duration-200 ease-out hover:text-gray-200 hover:after:w-full after:absolute after:bottom-[-0.25rem] after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-to-r after:from-green-500 after:to-blue-500 after:transition-[width] after:duration-300">Problems</a></li>
-            <li><a href="#features" onClick={(e) => scrollTo(e, "#features")} className="relative pb-0.5 text-sm text-gray-400 no-underline transition-colors duration-200 ease-out hover:text-gray-200 hover:after:w-full after:absolute after:bottom-[-0.25rem] after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-to-r after:from-green-500 after:to-blue-500 after:transition-[width] after:duration-300">Mock Tests</a></li>
-            <li><a href="#features" onClick={(e) => scrollTo(e, "#features")} className="relative pb-0.5 text-sm text-gray-400 no-underline transition-colors duration-200 ease-out hover:text-gray-200 hover:after:w-full after:absolute after:bottom-[-0.25rem] after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-to-r after:from-green-500 after:to-blue-500 after:transition-[width] after:duration-300">Contests</a></li>
-            <li><a href="#cta" onClick={(e) => scrollTo(e, "#cta")} className="relative pb-0.5 text-sm text-gray-400 no-underline transition-colors duration-200 ease-out hover:text-gray-200 hover:after:w-full after:absolute after:bottom-[-0.25rem] after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-to-r after:from-green-500 after:to-blue-500 after:transition-[width] after:duration-300">Compiler</a></li>
-            <li><a href="#topics" onClick={(e) => scrollTo(e, "#topics")} className="relative pb-0.5 text-sm text-gray-400 no-underline transition-colors duration-200 ease-out hover:text-gray-200 hover:after:w-full after:absolute after:bottom-[-0.25rem] after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-to-r after:from-green-500 after:to-blue-500 after:transition-[width] after:duration-300">Learn</a></li>
-            <li><a href="#stats" onClick={(e) => scrollTo(e, "#stats")} className="relative pb-0.5 text-sm text-gray-400 no-underline transition-colors duration-200 ease-out hover:text-gray-200 hover:after:w-full after:absolute after:bottom-[-0.25rem] after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-to-r after:from-green-500 after:to-blue-500 after:transition-[width] after:duration-300">Leaderboard</a></li>
-          </ul>
+        
         </div>
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
