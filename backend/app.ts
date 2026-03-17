@@ -68,7 +68,7 @@ app.use("/api/v1", enrollmentRoute);
 app.use("/api/v1", studentRoute);
 // Database Connection
 mongoose
-  .connect(process.env.MONGO_DB!,)
+  .connect(process.env.MONGO_DB||"",)
   .then(() => console.log("MongoDB connected successfully"))
   .catch(() => console.log("MongoDB connection failed"));
 
