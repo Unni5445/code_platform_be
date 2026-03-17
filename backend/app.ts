@@ -18,6 +18,7 @@ import moduleRoute from "./src/routes/module.routes";
 import submoduleRoute from "./src/routes/submodule.routes";
 import enrollmentRoute from "./src/routes/enrollment.routes";
 import studentRoute from "./src/routes/student.routes";
+import { apiKeyProtect } from "./src/middlewares/apiKeyProtect";
 
 
 dotenv.config();
@@ -48,6 +49,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// API Key Protection
+app.use("/api/v1", apiKeyProtect);
 
 // Routes
 app.use("/api/v1", userRoute);
