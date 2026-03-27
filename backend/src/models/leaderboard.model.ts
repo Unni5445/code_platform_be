@@ -10,6 +10,7 @@ export interface ILeaderboard extends Document {
   maxStreak: number; // personal best streak
   rank?: number; // optional, calculated field
   lastActivity: Date; // last activity date
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +26,7 @@ const leaderboardSchema = new Schema<ILeaderboard>(
     maxStreak: { type: Number, default: 0 },
     rank: { type: Number }, // optional, can be calculated when querying
     lastActivity: { type: Date, default: Date.now },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

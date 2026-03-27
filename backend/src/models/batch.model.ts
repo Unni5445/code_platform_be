@@ -10,6 +10,7 @@ export interface IBatch extends Document {
   duration: BatchDuration;
   startDate: Date;
   endDate: Date;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +23,7 @@ const batchSchema = new Schema<IBatch>(
     duration: { type: String, required: true, enum: BATCH_DURATIONS },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -7,6 +7,7 @@ export interface IModule extends Document {
   test?: mongoose.Types.ObjectId; // 1:1 with Test
   order: number; // display ordering within the course
   isActive: boolean;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +20,7 @@ const moduleSchema = new Schema<IModule>(
     test: { type: Schema.Types.ObjectId, ref: "Test" },
     order: { type: Number, required: true, default: 0 },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

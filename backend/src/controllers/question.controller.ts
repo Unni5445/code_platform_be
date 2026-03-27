@@ -32,7 +32,7 @@ class QuestionController {
     const testFilter = req.query.test as string;
     const tagFilter = req.query.tag as string;
 
-    const filter: any = {};
+    const filter: any = {isDeleted: false};
     if (search) filter.title = { $regex: search, $options: "i" };
     if (typeFilter) filter.type = typeFilter;
     if (difficultyFilter) filter.difficulty = difficultyFilter;
@@ -141,7 +141,7 @@ class QuestionController {
       });
     }
 
-    await Question.findByIdAndDelete(id);
+    await Question.findByIdAndUpdate(id,{isDeleted: true});
     res.status(200).json(new ApiResponse(200, {}, "Question deleted successfully"));
   });
 }

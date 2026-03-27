@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext.tsx";
+import  logo from "@/assets/logo.jpeg";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,9 +12,9 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 border-b border-slate-400/30 bg-gradient-to-br from-slate-900/85 to-slate-900/65 px-6 py-4 backdrop-blur-[22px] max-md:px-[1.15rem]">
         <div className="flex items-center gap-11 max-md:gap-4">
           <div className="inline-flex items-center gap-2.5">
-            <span className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 text-[0.95rem] font-bold text-emerald-50 shadow-[0_0_25px_rgba(34,197,94,0.7)]">
-              &lt;/&gt;
-            </span>
+            <div className="h-14 w-14 bg-black rounded-xl flex items-center p-1 justify-center overflow-hidden">
+              <img src={logo} alt="Logo" className="h-full w-full text-white" />
+            </div>
             <span className="font-semibold tracking-wide">
               Morattu{" "}
               <span className="bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent">

@@ -26,7 +26,7 @@ class CertificateController {
     const studentFilter = req.query.student as string;
     const courseFilter = req.query.course as string;
 
-    const filter: any = {};
+    const filter: any = {isDeleted: false};
     if (search) filter.title = { $regex: search, $options: "i" };
     if (studentFilter) filter.student = studentFilter;
     if (courseFilter) filter.course = courseFilter;
@@ -73,7 +73,7 @@ class CertificateController {
     const certificate = await Certificate.findById(id);
     if (!certificate) return next(new ErrorResponse("Certificate not found", 404));
 
-    await Certificate.findByIdAndDelete(id);
+    await Certificate.findByIdAndUpdate(id, { isDeleted: true });
     res.status(200).json(new ApiResponse(200, {}, "Certificate deleted successfully"));
   });
 

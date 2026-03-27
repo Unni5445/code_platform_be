@@ -132,8 +132,6 @@ export default function PlaygroundPage() {
                 { value: "java", label: "Java" },
                 { value: "cpp", label: "C++" },
                 { value: "c", label: "C" },
-                { value: "csharp", label: "C#" },
-                { value: "ruby", label: "Ruby" },
               ]}
               value={language}
               onChange={(e) => setLanguage(e.target.value)}

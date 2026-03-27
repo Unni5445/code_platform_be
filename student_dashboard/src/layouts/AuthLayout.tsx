@@ -1,5 +1,6 @@
 import { Outlet, Link } from "react-router-dom";
-import { GraduationCap, Code2, Flame, Award } from "lucide-react";
+import {Code2, Flame, Award } from "lucide-react";
+import logo from "@/assets/logo.jpeg";
 
 export default function AuthLayout() {
   return (
@@ -8,9 +9,8 @@ export default function AuthLayout() {
       <header className="mc-navbar-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-2xl bg-linear-to-br from-primary-500 via-emerald-400 to-secondary-400 shadow-lg shadow-emerald-500/40">
-              <GraduationCap className="h-5 w-5 text-slate-950" />
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/40" />
+            <div className="h-14 w-14 bg-black rounded-xl flex items-center p-1 justify-center overflow-hidden">
+              <img src={logo} alt="Logo" className="h-full w-full text-white" />
             </div>
             <div className="hidden sm:block">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300/80">

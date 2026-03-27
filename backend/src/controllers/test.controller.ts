@@ -4,6 +4,8 @@ import Test from "../models/test.model";
 import Module from "../models/module.model";
 import ApiResponse from "../utils/ApiResponse";
 import ErrorResponse from "../utils/errorResponse";
+import Question from "../models/question.model";
+import StudentTestSubmission from "../models/studentTestSubmission.model";
 
 class TestController {
   // ================= CREATE TEST =================
@@ -27,7 +29,7 @@ class TestController {
     const moduleFilter = req.query.module as string;
     const activeFilter = req.query.isActive as string;
 
-    const filter: any = {};
+    const filter: any = { isDeleted: false }; // Filter out deleted tests
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -94,7 +96,7 @@ class TestController {
     res.status(200).json(new ApiResponse(200, test, "Test updated successfully"));
   });
 
-  // ================= ADD EXISTING QUESTIONS TO TEST =================
+ // ================= ADD EXISTING QUESTIONS TO TEST =================
   static addQuestions = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const { questionIds } = req.body;
@@ -106,15 +108,27 @@ class TestController {
     const test = await Test.findById(id);
     if (!test) return next(new ErrorResponse("Test not found", 404));
 
-    // Add questions to the test's questions array
+    // Only process IDs not already in the test (avoid double-counting points)
+    const existingIds = new Set(test.questions.map((q: any) => q.toString()));
+    const newQuestionIds = questionIds.filter((qId: string) => !existingIds.has(qId));
+
+    if (newQuestionIds.length === 0) {
+      return res.status(200).json(new ApiResponse(200, test, "Questions already in test"));
+    }
+
+    // Sum points of the new questions being added
+    const newQuestions = await Question.find({ _id: { $in: newQuestionIds } }).select("points");
+    const pointsToAdd = newQuestions.reduce((sum: number, q: any) => sum + (q.points ?? 0), 0);
+
+    // Add questions + increment totalPoints atomically
     await Test.findByIdAndUpdate(id, {
-      $addToSet: { questions: { $each: questionIds } },
+      $addToSet: { questions: { $each: newQuestionIds } },
+      $inc: { totalPoints: pointsToAdd },
     });
 
-    // Update each question's test field
-    const Question = require("../models/question.model").default;
+    // Update each question's test/module/course reference
     await Question.updateMany(
-      { _id: { $in: questionIds } },
+      { _id: { $in: newQuestionIds } },
       { $set: { test: id, module: test.module, course: test.course } }
     );
 
@@ -129,11 +143,19 @@ class TestController {
     const test = await Test.findById(id);
     if (!test) return next(new ErrorResponse("Test not found", 404));
 
+    const Question = require("../models/question.model").default;
+
+    // Fetch the question's points before removing
+    const question = await Question.findById(questionId).select("points");
+    const pointsToRemove = question?.points ?? 0;
+
+    // Remove question + decrement totalPoints atomically
     await Test.findByIdAndUpdate(id, {
       $pull: { questions: questionId },
+      $inc: { totalPoints: -pointsToRemove },
     });
 
-    const Question = require("../models/question.model").default;
+    // Unset the question's test reference
     await Question.findByIdAndUpdate(questionId, {
       $unset: { test: 1 },
     });
@@ -141,16 +163,76 @@ class TestController {
     res.status(200).json(new ApiResponse(200, {}, "Question removed from test"));
   });
 
-  // ================= DELETE TEST =================
+  // ================= DELETE TEST (SOFT DELETE) =================
   static deleteTest = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
     const test = await Test.findById(id);
     if (!test) return next(new ErrorResponse("Test not found", 404));
 
-    await Test.findByIdAndDelete(id);
+    // Soft delete: set isDeleted to true instead of removing from database
+    await Test.findByIdAndUpdate(id, { isDeleted: true });
+
     res.status(200).json(new ApiResponse(200, {}, "Test deleted successfully"));
   });
+
+  static getTestSubmissions = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id:testId } = req.params;
+
+      const submission = await StudentTestSubmission.find({
+        test: testId,
+      })
+        .populate({
+          path: "student",
+          select: "-password -__v",
+        })
+        .populate({
+          path: "test",
+          select: "title description duration totalPoints",
+        })
+        .populate({
+          path: "answers.question",
+          select: "title type difficulty points options description",
+        });
+
+      if (!submission) {
+        return next(new ErrorResponse("Submission not found", 404));
+      }
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, submission, "Submission retrieved"));
+    }
+  );
+
+   static getTestSubmission = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id:submissionId } = req.params;
+
+      const submission = await StudentTestSubmission.findById(submissionId)
+        .populate({
+          path: "student",
+          select: "-password -__v",
+        })
+        .populate({
+          path: "test",
+          select: "title description duration totalPoints",
+        })
+        .populate({
+          path: "answers.question",
+          select: "title type difficulty points options description",
+        });
+
+      if (!submission) {
+        return next(new ErrorResponse("Submission not found", 404));
+      }
+
+      res
+        .status(200)
+        .json(new ApiResponse(200, submission, "Submission retrieved"));
+    }
+  );
 }
 
 export default TestController;

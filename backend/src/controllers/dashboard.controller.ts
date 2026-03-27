@@ -30,9 +30,9 @@ class DashboardController {
       User.countDocuments({ isDeleted: false, role: { $in: ["ADMIN", "SUPER_ADMIN"] }, ...orgFilter }),
       Course.countDocuments(),
       Test.countDocuments({ isActive: true }),
-      Test.countDocuments(),
-      Certificate.countDocuments(),
-      Question.countDocuments(),
+      Test.countDocuments({isDeleted: false}),
+      Certificate.countDocuments({isDeleted: false}),
+      Question.countDocuments({isDeleted: false}),
     ]);
 
     // Average points and streak for students

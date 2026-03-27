@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   Loader2,
   Award,
+  FileText,
+  X,
 } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { courseService, enrollmentService } from "@/services";
@@ -18,12 +20,90 @@ import type { ICourse, IModule, ISubmodule, IEnrollment, IModuleProgress } from 
 import clsx from "clsx";
 import toast from "react-hot-toast";
 
+// ── Protected PDF Viewer ──────────────────────────────────────────────────────
+// Uses an <iframe> with the JWT in the URL as a query param so the protected
+// /uploads/pdfs/:filename route accepts the request.
+// Right-click → Save / toolbar download button is blocked via CSS + sandbox.
+function PdfViewerModal({
+  url,
+  title,
+  onClose,
+}: {
+  url: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const src = `${url}`;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      onContextMenu={(e) => e.preventDefault()} // disable right-click on backdrop
+    >
+      <div className="relative flex h-[92vh] w-full max-w-4xl flex-col rounded-2xl bg-[#1e1e2e] shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary-400" />
+            <span className="truncate text-sm font-medium text-white max-w-[500px]">
+              {title}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/*
+          iframe sandbox:
+            - allow-scripts      → needed for PDF.js viewer inside some browsers
+            - allow-same-origin  → needed to read the blob/response
+          Intentionally OMITTED:
+            - allow-downloads    → blocks the browser's download button in the PDF toolbar
+            - allow-forms        → not needed
+          The #toolbar=0 fragment hides the Acrobat toolbar in Chrome's built-in viewer.
+          For Firefox we rely on sandbox to block downloads.
+        */}
+        <iframe
+          key={src}                          // remount if URL changes
+          src={`${src}#toolbar=0&navpanes=0&scrollbar=1`}
+          className="flex-1 w-full select-none"
+          title={title}
+          sandbox="allow-scripts allow-same-origin"
+          onContextMenu={(e) => e.preventDefault()}
+          style={{
+            // Extra CSS layer: hide the download/print buttons injected by some
+            // browser PDF viewers via the shadow DOM (best-effort)
+            border: "none",
+            pointerEvents: "auto",
+          }}
+        />
+
+        {/* Transparent overlay that blocks right-click → Save image / Save as
+            but still lets scroll & click-to-zoom work via pointer-events:none */}
+        <div
+          className="absolute inset-0 top-[52px] z-10 select-none"
+          style={{ pointerEvents: "none" }}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function CourseDetailPage() {
   const { id: courseId } = useParams<{ id: string }>();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [moduleSubmodules, setModuleSubmodules] = useState<Record<string, ISubmodule[]>>({});
   const [loadingSubmodules, setLoadingSubmodules] = useState<Set<string>>(new Set());
   const [updatingProgress, setUpdatingProgress] = useState<string | null>(null);
+
+  // PDF viewer state
+  const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
 
   const fetchCourse = useCallback(() => courseService.getCourseById(courseId!), [courseId]);
   const { data: course, loading: courseLoading } = useApi<ICourse>(fetchCourse, [courseId]);
@@ -42,9 +122,8 @@ export default function CourseDetailPage() {
     return eCourseId === courseId;
   });
 
-  const getModuleProgress = (moduleId: string): IModuleProgress | undefined => {
-    return enrollment?.moduleProgress.find((mp) => mp.module === moduleId);
-  };
+  const getModuleProgress = (moduleId: string): IModuleProgress | undefined =>
+    enrollment?.moduleProgress.find((mp) => mp.module === moduleId);
 
   const toggleModule = async (moduleId: string) => {
     const next = new Set(expandedModules);
@@ -101,6 +180,15 @@ export default function CourseDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* PDF Viewer Modal */}
+      {pdfViewer && (
+        <PdfViewerModal
+          url={pdfViewer.url}
+          title={pdfViewer.title}
+          onClose={() => setPdfViewer(null)}
+        />
+      )}
+
       <Link
         to="/courses"
         className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
@@ -108,6 +196,7 @@ export default function CourseDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back to Courses
       </Link>
 
+      {/* Course header card */}
       <Card>
         <div className="flex items-start gap-4">
           <div className="rounded-xl bg-primary-500/20 p-3">
@@ -121,21 +210,13 @@ export default function CourseDetailPage() {
             <div className="mt-4 flex items-center gap-4">
               <Badge variant="primary">{modules?.length || 0} Modules</Badge>
               {enrollment && (
-                <Badge
-                  variant={
-                    enrollment.status === "COMPLETED" ? "success" : "info"
-                  }
-                >
+                <Badge variant={enrollment.status === "COMPLETED" ? "success" : "info"}>
                   {enrollment.status}
                 </Badge>
               )}
             </div>
             {enrollment && (
-              <ProgressBar
-                value={enrollment.overallProgress}
-                showLabel
-                className="mt-4 max-w-md"
-              />
+              <ProgressBar value={enrollment.overallProgress} showLabel className="mt-4 max-w-md" />
             )}
             {enrollment && enrollment.overallProgress >= 100 && (
               <Link
@@ -149,6 +230,7 @@ export default function CourseDetailPage() {
         </div>
       </Card>
 
+      {/* Modules list */}
       <div className="space-y-3">
         {modules?.map((module) => {
           const isExpanded = expandedModules.has(module._id);
@@ -160,6 +242,7 @@ export default function CourseDetailPage() {
 
           return (
             <Card key={module._id} noPadding>
+              {/* Module header */}
               <button
                 onClick={() => toggleModule(module._id)}
                 className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-slate-800/60"
@@ -197,6 +280,7 @@ export default function CourseDetailPage() {
                 </div>
               </button>
 
+              {/* Submodules */}
               {isExpanded && (
                 <div className="space-y-2 border-t border-slate-800/80 px-5 py-4">
                   {isLoadingSubs ? (
@@ -207,32 +291,36 @@ export default function CourseDetailPage() {
                     <p className="py-2 text-sm text-slate-500">No submodules in this module</p>
                   ) : (
                     submodules.map((sub) => {
-                      const isCompleted =
-                        progress?.completedSubmodules.includes(sub._id) || false;
+                      const isCompleted = progress?.completedSubmodules.includes(sub._id) || false;
                       const isUpdating = updatingProgress === sub._id;
+                      const hasPdf = !!(sub as any).pdfUrl;
 
                       return (
-                        <button
+                        <div
                           key={sub._id}
-                          onClick={() =>
-                            handleToggleSubmodule(module._id, sub._id, isCompleted)
-                          }
-                          disabled={isUpdating}
                           className={clsx(
-                            "flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left transition-colors",
-                            isCompleted
-                              ? "bg-emerald-500/20"
-                              : "hover:bg-slate-800/60"
+                            "flex w-full items-center gap-3 rounded-lg p-3 transition-colors",
+                            isCompleted ? "bg-emerald-500/20" : "hover:bg-slate-800/60"
                           )}
                         >
-                          {isUpdating ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                          ) : isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-slate-500" />
-                          )}
-                          <div>
+                          {/* Complete toggle button */}
+                          <button
+                            onClick={() => handleToggleSubmodule(module._id, sub._id, isCompleted)}
+                            disabled={!!isUpdating}
+                            className="shrink-0"
+                            title={isCompleted ? "Mark incomplete" : "Mark complete"}
+                          >
+                            {isUpdating ? (
+                              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                            ) : isCompleted ? (
+                              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-slate-500" />
+                            )}
+                          </button>
+
+                          {/* Title + description */}
+                          <div className="flex-1 min-w-0">
                             <p
                               className={clsx(
                                 "text-sm font-medium",
@@ -245,11 +333,29 @@ export default function CourseDetailPage() {
                               <p className="mt-0.5 text-xs text-slate-500">{sub.description}</p>
                             )}
                           </div>
-                        </button>
+
+                          {/* View PDF button — only shown if submodule has a PDF */}
+                          {hasPdf && (
+                            <button
+                              onClick={() =>
+                                setPdfViewer({
+                                  url: (sub as any).pdfUrl,
+                                  title: sub.title,
+                                })
+                              }
+                              className="shrink-0 flex items-center gap-1.5 rounded-lg border border-primary-500/40 bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-300 transition-colors hover:bg-primary-500/20"
+                              title="View PDF"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              View PDF
+                            </button>
+                          )}
+                        </div>
                       );
                     })
                   )}
 
+                  {/* Test unlock section */}
                   {enrollment && module.test && (
                     <div className="border-t border-slate-800/80 pt-3">
                       {totalSubs > 0 && completedCount >= totalSubs ? (

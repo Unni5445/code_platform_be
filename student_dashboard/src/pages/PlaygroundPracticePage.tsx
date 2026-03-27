@@ -24,8 +24,6 @@ const MONACO_LANGUAGE_MAP: Record<string, string> = {
   python: "python",
   java: "java",
   cpp: "cpp",
-  csharp: "csharp",
-  ruby: "ruby",
   c: "c",
 };
 

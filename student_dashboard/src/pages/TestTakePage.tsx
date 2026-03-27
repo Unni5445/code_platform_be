@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Send, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, AlertTriangle, Maximize, Minimize } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useTimer } from "@/hooks/useTimer";
 import { testService } from "@/services";
@@ -29,6 +29,8 @@ export default function TestTakePage() {
   const [showResults, setShowResults] = useState(false);
   const [submittedCoding, setSubmittedCoding] = useState<Set<string>>(new Set());
   const [results, setResults] = useState<{ totalScore: number; maxScore: number } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isTestActive = hasStarted && !showResults;
 
   const fetchTest = useCallback(() => testService.getTestById(testId!), [testId]);
   const { data: test, loading } = useApi<ITest>(fetchTest, [testId]);
@@ -38,7 +40,7 @@ export default function TestTakePage() {
     return test.questions.filter((q): q is IQuestion => typeof q === "object" && "_id" in q);
   }, [test]);
 
-  const duration = (test?.duration || 60) * 60; // Convert minutes to seconds
+  const duration = (test?.duration || 60) * 60;
 
   const handleExpire = useCallback(() => {
     toast.error("Time's up! Submitting your test...");
@@ -48,20 +50,62 @@ export default function TestTakePage() {
 
   const { formatted, timeLeft, start } = useTimer(duration, handleExpire);
 
+  // ── Prevent accidental close/refresh while test is active ──────────────────
+  useEffect(() => {
+    if (!isTestActive) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Modern browsers show their own message; setting returnValue keeps legacy support.
+      e.returnValue = "Your test is still in progress. Are you sure you want to leave?";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isTestActive]);
+
+  // ── Fullscreen helpers ─────────────────────────────────────────────────────
+  const toggleFullscreen = useCallback(async () => {
+    if (!document.fullscreenElement) {
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch {
+        toast.error("Fullscreen is not supported in this browser.");
+      }
+    } else {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  // Keep isFullscreen state in sync with actual fullscreen changes
+  // (e.g. user pressing Esc to exit fullscreen)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  // ──────────────────────────────────────────────────────────────────────────
+
   const handleStart = async () => {
     try {
       await testService.startTest(testId!);
       setHasStarted(true);
       start();
     } catch {
-      // If start fails (e.g., already started), still allow taking the test
       setHasStarted(true);
       start();
     }
   };
 
   useEffect(() => {
-    // Initialize answers with starter code for coding questions
     if (questions.length > 0 && Object.keys(answers).length === 0) {
       const initial: Record<string, QuestionAnswer> = {};
       for (const q of questions) {
@@ -111,6 +155,10 @@ export default function TestTakePage() {
       });
       setShowResults(true);
       toast.success("Test submitted successfully!");
+      // Exit fullscreen after submission
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
     } catch {
       toast.error("Failed to submit test. Please try again.");
     }
@@ -133,14 +181,25 @@ export default function TestTakePage() {
       <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <Card className="max-w-md w-full mx-4">
           <div className="text-center">
-            <div className={`text-6xl font-bold mb-2 ${percentage >= 70 ? "text-emerald-600" : percentage >= 40 ? "text-amber-600" : "text-red-600"}`}>
+            <div
+              className={`text-6xl font-bold mb-2 ${
+                percentage >= 70
+                  ? "text-emerald-600"
+                  : percentage >= 40
+                  ? "text-amber-600"
+                  : "text-red-600"
+              }`}
+            >
               {percentage}%
             </div>
             <p className="text-gray-500 mb-1">Your Score</p>
             <p className="text-2xl font-bold text-white mb-6">
               {results.totalScore} / {results.maxScore}
             </p>
-            <Badge variant={percentage >= 70 ? "success" : percentage >= 40 ? "warning" : "danger"} className="text-sm px-4 py-1 mb-6">
+            <Badge
+              variant={percentage >= 70 ? "success" : percentage >= 40 ? "warning" : "danger"}
+              className="text-sm px-4 py-1 mb-6"
+            >
               {percentage >= 70 ? "Passed" : percentage >= 40 ? "Needs Improvement" : "Failed"}
             </Badge>
             <div className="mt-6">
@@ -187,6 +246,7 @@ export default function TestTakePage() {
                     <li>The timer starts once you begin the test</li>
                     <li>You can navigate between questions freely</li>
                     <li>The test auto-submits when time runs out</li>
+                    <li>Do not close or refresh the tab during the test</li>
                   </ul>
                 </div>
               </div>
@@ -212,6 +272,24 @@ export default function TestTakePage() {
         </div>
         <div className="flex items-center gap-4">
           <TestTimer formatted={formatted} timeLeft={timeLeft} />
+
+          {/* Fullscreen toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            leftIcon={
+              isFullscreen ? (
+                <Minimize className="h-4 w-4" />
+              ) : (
+                <Maximize className="h-4 w-4" />
+              )
+            }
+          >
+            {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          </Button>
+
           <Button
             onClick={() => setShowSubmitConfirm(true)}
             variant="danger"
@@ -346,13 +424,13 @@ export default function TestTakePage() {
         }
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
-            Are you sure you want to submit your test?
-          </p>
-          <div className=" rounded-xl p-4">
+          <p className="text-gray-600">Are you sure you want to submit your test?</p>
+          <div className="rounded-xl p-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Answered:</span>
-              <span className="font-medium text-white">{answeredIndices.size} / {questions.length}</span>
+              <span className="font-medium text-white">
+                {answeredIndices.size} / {questions.length}
+              </span>
             </div>
             {answeredIndices.size < questions.length && (
               <p className="text-amber-600 text-sm mt-2 flex items-center gap-1">

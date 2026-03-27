@@ -20,4 +20,4 @@ export const DIFFICULTY_LEVELS = {
   Hard: "Hard",
 } as const;
 
-export const LANGUAGES = ["javascript", "python", "java", "cpp", "csharp", "ruby"] as const;
+export const LANGUAGES = ["javascript", "python", "java", "cpp", "c"] as const;

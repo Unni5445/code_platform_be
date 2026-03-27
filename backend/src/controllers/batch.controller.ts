@@ -36,7 +36,7 @@ class BatchController {
     const search = req.query.search as string;
     const orgFilter = req.query.organisation as string;
 
-    const filter: any = {};
+    const filter: any = { isDeleted: false }; // Filter out deleted batches
     if (search) filter.name = { $regex: search, $options: "i" };
     if (orgFilter) filter.organisation = orgFilter;
 
@@ -75,18 +75,20 @@ class BatchController {
     res.status(200).json(new ApiResponse(200, batch, "Batch updated successfully"));
   });
 
-  // ================= DELETE BATCH =================
+  // ================= DELETE BATCH (SOFT DELETE) =================
   static deleteBatch = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
     const batch = await Batch.findById(id);
     if (!batch) return next(new ErrorResponse("Batch not found", 404));
 
-    await Batch.findByIdAndDelete(id);
+    // Soft delete: set isDeleted to true instead of removing from database
+    await Batch.findByIdAndUpdate(id, { isDeleted: true });
+
     res.status(200).json(new ApiResponse(200, {}, "Batch deleted successfully"));
   });
 
-  // ================= DELETE MULTIPLE BATCHES =================
+  // ================= DELETE MULTIPLE BATCHES (SOFT DELETE) =================
   static deleteBatches = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { batchIds } = req.body;
 
@@ -94,9 +96,12 @@ class BatchController {
       return next(new ErrorResponse("Batch IDs are required", 400));
     }
 
-    const result = await Batch.deleteMany({ _id: { $in: batchIds } });
+    const result = await Batch.updateMany(
+      { _id: { $in: batchIds } },
+      { isDeleted: true }
+    );
 
-    res.status(200).json(new ApiResponse(200, { deletedCount: result.deletedCount }, "Batches deleted successfully"));
+    res.status(200).json(new ApiResponse(200, { deletedCount: result.modifiedCount }, "Batches deleted successfully"));
   });
 
   // ================= UPDATE MULTIPLE BATCHES =================

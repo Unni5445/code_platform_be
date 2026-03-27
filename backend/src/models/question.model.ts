@@ -12,8 +12,6 @@ const ALLOWED_LANGUAGES = [
   "python",
   "java",
   "cpp",
-  "csharp",
-  "ruby",
   "c",
 ];
 

@@ -1,27 +1,40 @@
-import multer from 'multer';
-import path from 'path';
-import {Request} from 'express'
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { Request } from "express";
 
-// Multer storage configuration (optional, if you want to validate file types or customize filenames)
-const storage = multer.memoryStorage();
+// ── Ensure upload directory exists ───────────────────────────────────────────
+const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "pdfs");
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
 
-// const fileFilter = (req:Request, file:any, cb:any) => {
-//   const fileTypes = /jpeg|jpg|png|gif/;
-//   const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
-//   const mimeType = fileTypes.test(file.mimetype);
+// ── Disk storage ─────────────────────────────────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `pdf-${uniqueSuffix}${ext}`);
+  },
+});
 
-//   if (extname && mimeType) {
-//     return cb(null, true);
-//   } else {
-//     cb(new Error('Only images are allowed'));
-//   }
-// };
+// ── PDF-only filter ───────────────────────────────────────────────────────────
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.mimetype === "application/pdf") {
+    cb(null, true);
+  } else {
+    cb(new Error("Only PDF files are allowed"));
+  }
+};
 
-// Multer middleware
+// ── Multer instance ───────────────────────────────────────────────────────────
 const upload = multer({
   storage,
-//   fileFilter,
-  // limits: { fileSize: 5 * 1024 * 1024 }, // Limit size to 5MB
+  fileFilter,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
 });
 
 export default upload;

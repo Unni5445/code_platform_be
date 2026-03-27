@@ -11,6 +11,7 @@ export interface ICertificate extends Document {
   verificationLink?: string;              // link for verification
   grade?: string;                         // e.g., "A+", "Passed"
   score?: number;                         // total score
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ const certificateSchema = new Schema<ICertificate>(
     verificationLink: { type: String, trim: true },
     grade: { type: String },
     score: { type: Number },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

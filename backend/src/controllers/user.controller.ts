@@ -99,6 +99,47 @@ class UserController {
     res.status(200).json(new ApiResponse(200, {}, "User deleted successfully"));
   });
 
+  // ================= EXPORT USERS =================
+  static exportUsers = asyncHandler(async (req: Request, res: Response) => {
+    const search = req.query.search as string;
+    const roleFilter = req.query.role as UserRole;
+    const isAdmin = req.user?.role === "ADMIN";
+
+    const filter: any = { isDeleted: false };
+    if (search) filter.$or = [{ name: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }];
+    if (roleFilter) filter.role = roleFilter;
+
+    // Admin can only see their org users
+    if (isAdmin) filter.organisation = req?.user?.organisation;
+
+    const users = await User.find(filter).select("-password").populate("organisation").sort({ createdAt: -1 });
+
+    // Convert to CSV
+    const headers = ["Name", "Email", "Role", "Department", "Passout Year", "Gender", "Status", "Points", "Streak", "Joined"];
+    const rows = users.map(user => [
+      `"${(user.name || "").replace(/"/g, '""')}"`,
+      `"${(user.email || "").replace(/"/g, '""')}"`,
+      user.role || "",
+      `"${(user.department || "").replace(/"/g, '""')}"`,
+      user.passoutYear || "",
+      user.gender || "",
+      user.isActive ? "Active" : "Inactive",
+      user.points || 0,
+      user.streak || 0,
+      new Date(user.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    // Set headers for CSV download
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=users-export-${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csvContent);
+  });
+
   // ================= SIGN UP (STUDENT) =================
   static signupUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password, phone } = req.body;
@@ -289,6 +330,78 @@ class UserController {
       .select("-password -refreshToken -refreshTokenExpiry -otp -otpExpiry");
 
     res.json(new ApiResponse(200, user));
+  });
+
+  // ================= BULK IMPORT USERS =================
+  static bulkImportUsers = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { users } = req.body;
+
+    if (!Array.isArray(users) || users.length === 0) {
+      return next(new ErrorResponse("Please provide an array of users", 400));
+    }
+
+    if (users.length > 100) {
+      return next(new ErrorResponse("Maximum 100 users per import", 400));
+    }
+
+    const requestingUser = req.user;
+
+    // Prepare users
+    const preparedUsers = users.map((u: any) => {
+      const userData: any = {
+        name: u.name,
+        email: u.email?.toLowerCase(),
+        phone: u.phone,
+        password: u.password || "123456", // default password
+        department: u.department,
+        passoutYear: u.passoutYear,
+        role: u.role || "STUDENT",
+        isActive: true,
+      };
+
+      // ADMIN restrictions
+      if (requestingUser?.role === "ADMIN") {
+        userData.role = "STUDENT";
+        userData.organisation = requestingUser.organisation;
+      }
+
+      // SUPER_ADMIN can assign org
+      if (requestingUser?.role === "SUPER_ADMIN") {
+        userData.organisation = u.organisation;
+      }
+
+      return userData;
+    });
+
+    // Remove duplicates (email)
+    const emails = preparedUsers.map((u) => u.email).filter(Boolean);
+
+    const existingUsers = await User.find({
+      email: { $in: emails },
+      isDeleted: false,
+    }).select("email");
+
+    const existingEmails = new Set(existingUsers.map((u) => u.email));
+
+    const filteredUsers = preparedUsers.filter((u) => !existingEmails.has(u.email));
+
+    if (filteredUsers.length === 0) {
+      return next(new ErrorResponse("All users already exist", 400));
+    }
+
+    const createdUsers = await User.insertMany(filteredUsers, { ordered: false });
+
+    res.status(201).json(
+      new ApiResponse(
+        201,
+        {
+          imported: createdUsers.length,
+          skipped: users.length - createdUsers.length,
+          users: createdUsers,
+        },
+        `${createdUsers.length} user(s) imported successfully`
+      )
+    );
   });
 }
 

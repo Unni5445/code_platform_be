@@ -22,6 +22,7 @@ export interface IEnrollment extends Document {
   overallProgress: number; // 0–100, computed on save
   lastAccessedAt?: Date;
   completedAt?: Date;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +58,7 @@ const enrollmentSchema = new Schema<IEnrollment>(
     overallProgress: { type: Number, default: 0, min: 0, max: 100 },
     lastAccessedAt: { type: Date },
     completedAt: { type: Date },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

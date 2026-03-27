@@ -6,6 +6,7 @@ export interface ICourse extends Document {
   description?: string;
   organisation?: mongoose.Types.ObjectId; // null = global course, set = org-specific
   isGlobal: boolean;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const courseSchema = new Schema<ICourse>(
     description: { type: String, trim: true },
     organisation: { type: Schema.Types.ObjectId, ref: "Organisation" },
     isGlobal: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

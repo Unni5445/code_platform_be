@@ -149,7 +149,7 @@ export default function TestsPage() {
               </div>
 
               {activeTab === "available" && (
-                <Link to={`/tests/${test.testId}/take`}>
+                <Link to={`/tests/${(test.testId as any)._id}/take`}>
                   <Button className="w-full" leftIcon={<PlayCircle className="h-4 w-4" />}>
                     Start Test
                   </Button>

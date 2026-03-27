@@ -23,4 +23,12 @@ router
   .route("/tests/:id/questions/:questionId")
   .delete(protect, authorize("ADMIN", "SUPER_ADMIN"), TestController.removeQuestion);
 
+router
+  .route("/tests/:id/submissions")
+  .get(protect, authorize("ADMIN", "SUPER_ADMIN"), TestController.getTestSubmissions);
+
+router
+  .route("/tests/submissions/:id")
+  .get(protect, authorize("ADMIN", "SUPER_ADMIN"), TestController.getTestSubmission);
+
 export default router;

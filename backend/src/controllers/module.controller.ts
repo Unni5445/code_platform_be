@@ -23,7 +23,7 @@ class ModuleController {
   static getModulesByCourse = asyncHandler(async (req: Request, res: Response) => {
     const { courseId } = req.params;
 
-    const modules = await Module.find({ course: courseId })
+    const modules = await Module.find({ course: courseId, isDeleted: false })
       .populate("test", "title totalPoints duration isActive")
       .sort({ order: 1 });
 
@@ -71,16 +71,15 @@ class ModuleController {
     res.status(200).json(new ApiResponse(200, module, "Module updated successfully"));
   });
 
-  // ================= DELETE MODULE =================
+  // ================= DELETE MODULE (SOFT DELETE) =================
   static deleteModule = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
     const module = await Module.findById(id);
     if (!module) return next(new ErrorResponse("Module not found", 404));
 
-    // Delete all submodules under this module
-    await Submodule.deleteMany({ module: id });
-    await Module.findByIdAndDelete(id);
+    // Soft delete: set isDeleted to true instead of removing from database
+    await Module.findByIdAndUpdate(id, { isDeleted: true });
 
     res.status(200).json(new ApiResponse(200, {}, "Module deleted successfully"));
   });

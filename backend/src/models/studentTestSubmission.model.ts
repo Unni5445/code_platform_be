@@ -15,6 +15,7 @@ export interface IStudentTestSubmission extends Document {
   maxScore: number;
   attemptedAt: Date;
   completedAt?: Date;
+  isDeleted: boolean;
 }
 
 const studentTestSubmissionSchema = new Schema<IStudentTestSubmission>(
@@ -35,6 +36,7 @@ const studentTestSubmissionSchema = new Schema<IStudentTestSubmission>(
     maxScore: { type: Number, default: 0 },
     attemptedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

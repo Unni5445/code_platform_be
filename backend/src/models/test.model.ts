@@ -11,6 +11,7 @@ export interface ITest extends Document {
   startTime?: Date;
   endTime?: Date;
   isActive: boolean;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ const testSchema = new Schema<ITest>(
     startTime: { type: Date },
     endTime: { type: Date },
     isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

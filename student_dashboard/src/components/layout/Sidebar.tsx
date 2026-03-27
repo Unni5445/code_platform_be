@@ -7,7 +7,6 @@ import {
   Calendar,
   UserRound,
   LogOut,
-  GraduationCap,
   Code2,
   Menu,
   X,
@@ -16,6 +15,7 @@ import { useState } from "react";
 import { PATHS } from "@/config/routes";
 import { useAuth } from "@/context/AuthContext";
 import clsx from "clsx";
+import logo from "@/assets/logo.jpeg"
 
 interface NavItem {
   path: string;
@@ -65,8 +65,8 @@ export function Sidebar() {
       >
         {/* Brand */}
         <div className="px-6 py-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500 via-emerald-400 to-secondary-400 shadow-lg shadow-emerald-500/30">
-            <GraduationCap className="h-6 w-6 text-slate-950" />
+          <div className="h-14 w-14 bg-black rounded-xl flex items-center p-1 justify-center overflow-hidden">
+            <img src={logo} alt="Logo" className="h-full w-full text-white" />
           </div>
           <div>
             <h1 className="text-white font-bold text-lg leading-tight">Morattu Coder</h1>

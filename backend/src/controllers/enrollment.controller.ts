@@ -54,7 +54,7 @@ class EnrollmentController {
     const statusFilter = req.query.status as string;
     const search = req.query.search as string;
 
-    const filter: any = { course: courseId };
+    const filter: any = { course: courseId ,isDeleted: false};
     if (statusFilter) filter.status = statusFilter;
 
     const skip = (page - 1) * limit;
@@ -131,7 +131,7 @@ class EnrollmentController {
   static getMyEnrollments = asyncHandler(async (req: Request, res: Response) => {
     const studentId = req.user?._id;
 
-    const enrollments = await Enrollment.find({ student: studentId })
+    const enrollments = await Enrollment.find({ student: studentId,isDeleted: false })
       .populate("course", "title description")
       .populate("moduleProgress.testSubmission", "totalScore maxScore completedAt")
       .sort({ createdAt: -1 });

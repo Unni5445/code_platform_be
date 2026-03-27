@@ -11,7 +11,7 @@ class OrganisationController {
   static createOrganisation = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { name } = req.body;
 
-    const existing = await Organisation.findOne({ name });
+    const existing = await Organisation.findOne({ name,isDeleted: false});
     if (existing) return next(new ErrorResponse("Organisation with this name already exists", 400));
 
     const organisation = await Organisation.create(req.body);
@@ -22,7 +22,7 @@ class OrganisationController {
   static getOrganisations = asyncHandler(async (req: Request, res: Response) => {
     const search = req.query.search as string;
 
-    const filter: any = {};
+    const filter: any = {isDeleted: false};
     if (search) filter.name = { $regex: search, $options: "i" };
 
     const organisations = await Organisation.find(filter)
@@ -87,7 +87,7 @@ class OrganisationController {
     const organisation = await Organisation.findById(id);
     if (!organisation) return next(new ErrorResponse("Organisation not found", 404));
 
-    await Organisation.findByIdAndDelete(id);
+    await Organisation.findByIdAndUpdate(id,{isDeleted: true});
     res.status(200).json(new ApiResponse(200, {}, "Organisation deleted successfully"));
   });
 }

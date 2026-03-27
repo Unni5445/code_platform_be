@@ -28,7 +28,7 @@ class CourseController {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const search = req.query.search as string;
 
-    const filter: any = {};
+    const filter: any = { isDeleted: false }; // Filter out deleted courses
     if (search) {
       filter.$and = [
         { $or: [
@@ -105,14 +105,16 @@ class CourseController {
     res.status(200).json(new ApiResponse(200, course, "Course updated successfully"));
   });
 
-  // ================= DELETE COURSE =================
+  // ================= DELETE COURSE (SOFT DELETE) =================
   static deleteCourse = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
     const course = await Course.findById(id);
     if (!course) return next(new ErrorResponse("Course not found", 404));
 
-    await Course.findByIdAndDelete(id);
+    // Soft delete: set isDeleted to true instead of removing from database
+    await Course.findByIdAndUpdate(id, { isDeleted: true });
+
     res.status(200).json(new ApiResponse(200, {}, "Course deleted successfully"));
   });
 

@@ -25,6 +25,12 @@ router
   .post(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.createUser);
 
 router
+  .route("/users/bulk-import")
+  .post(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.bulkImportUsers);
+
+router.get("/users/export", protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.exportUsers);
+
+router
   .route("/users/:id")
   .get(protect, UserController.getUserById)
   .put(protect, UserController.updateUser)

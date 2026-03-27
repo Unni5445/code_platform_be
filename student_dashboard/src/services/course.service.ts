@@ -32,4 +32,5 @@ export const courseService = {
 
   getCourseBatches: (courseId: string) =>
     api.get<ApiResponse<IBatch[]>>(`/courses/${courseId}/batches`),
+  
 };

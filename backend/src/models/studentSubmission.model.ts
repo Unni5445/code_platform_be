@@ -17,6 +17,7 @@ export interface IStudentSubmission extends Document {
   totalTestCases?: number;
   feedback?: string;                        // optional teacher/auto feedback
   attemptedAt: Date;
+  isDeleted: boolean;
 }
 
 const studentSubmissionSchema = new Schema<IStudentSubmission>(
@@ -33,6 +34,7 @@ const studentSubmissionSchema = new Schema<IStudentSubmission>(
     totalTestCases: { type: Number, default: 0 },
     feedback: { type: String },
     attemptedAt: { type: Date, default: Date.now },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
