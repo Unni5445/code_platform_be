@@ -10,7 +10,8 @@ import ErrorResponse from "../utils/errorResponse";
 // ── Helper: build public URL from uploaded file ───────────────────────────────
 // e.g.  https://yourdomain.com/uploads/pdfs/pdf-1234567890.pdf
 function getPdfUrl(req: Request, file: Express.Multer.File): string {
-  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+  // Use BASE_URL if defined, otherwise construct with HTTPS
+  const baseUrl = process.env.BASE_URL || `https://${req.get("host")}`;
   return `${baseUrl}/uploads/pdfs/${file.filename}`;
 }
 

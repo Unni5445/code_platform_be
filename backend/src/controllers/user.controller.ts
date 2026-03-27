@@ -306,6 +306,7 @@ class UserController {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
+      domain: ".morattucoder.com",
     });
 
     res.status(200).json(new ApiResponse(200, { token, _id: user._id, email: user.email, role: user.role }, "Login successful"));
@@ -317,6 +318,8 @@ class UserController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: ".morattucoder.com",
+      maxAge: 0,
     });
 
     res.status(200).json(new ApiResponse(200, {}, "Logout successful"));
