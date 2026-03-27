@@ -9,7 +9,6 @@ import {
   Award,
   Settings,
   LogOut,
-  GraduationCap,
   ShieldCheck,
   UserRound,
   ChevronDown,
@@ -17,6 +16,7 @@ import {
 import { PATHS } from "@/config/routes";
 import { useAuth } from "@/context/AuthContext";
 import clsx from "clsx";
+import logo from "../../assets/logo.jpeg"
 
 interface NavChild {
   path: string;
@@ -79,8 +79,8 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar flex flex-col z-40">
       {/* Brand */}
       <div className="px-6 py-6 flex items-center gap-3">
-        <div className="h-10 w-10 bg-primary-600 rounded-xl flex items-center justify-center">
-          <GraduationCap className="h-6 w-6 text-white" />
+        <div className="h-14 w-14 bg-black rounded-xl flex items-center p-1 justify-center overflow-hidden">
+          <img src={logo} alt="Logo" className="h-full w-full text-white" />
         </div>
         <div>
           <h1 className="text-white font-bold text-lg leading-tight">Skill & Brains</h1>

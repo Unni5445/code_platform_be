@@ -36,6 +36,12 @@ export const testService = {
 
   removeQuestionFromTest: (testId: string, questionId: string) =>
     api.delete<ApiResponse<object>>(`/tests/${testId}/questions/${questionId}`),
+
+  getTestSubmissions: (testId: string) =>
+    api.get<ApiResponse<any>>(`/tests/${testId}/submissions`),
+
+  getSubmissionById: (submissionId: string) =>
+    api.get<ApiResponse<any>>(`/tests/submissions/${submissionId}`),
 };
 
 export const questionService = {

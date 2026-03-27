@@ -42,7 +42,7 @@ export default function LoginPage() {
       {/* Heading */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-          Holla,<br />Welcome Back
+          Hello,<br />Welcome Back
         </h1>
         <p className="text-gray-500 mt-3">Hey, welcome back to your special place</p>
       </div>

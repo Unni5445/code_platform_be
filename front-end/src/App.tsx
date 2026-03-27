@@ -15,6 +15,8 @@ import CertificateDetailPage from "@/pages/CertificateDetailPage";
 import SystemPage from "@/pages/SystemPage";
 import CourseDetailPage from "@/pages/CourseDetailPage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import TestSubmissionsPage from "./pages/TestSubmissionsPage";
+import SubmissionDetailPage from "./pages/SubmissionDetailPage";
 
 function App() {
   return (
@@ -45,6 +47,8 @@ function App() {
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/tests" element={<TestsPage />} />
+              <Route path="/tests/:id/submissions" element={<TestSubmissionsPage />} />
+              <Route path="/tests/:id/submissions/:submissionId" element={<SubmissionDetailPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/certificates" element={<CertificatesPage />} />
               <Route path="/certificates/:id" element={<CertificateDetailPage />} />

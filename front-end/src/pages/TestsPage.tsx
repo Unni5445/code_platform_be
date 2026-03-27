@@ -3,7 +3,7 @@ import { Plus, Edit, Trash2, Code, CheckCircle, ListChecks, MessageSquare, Clock
 import { testService, questionService, courseService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
-import { Button, Badge, Modal, Input, Select, Tabs, ConfirmDialog, EmptyState, SearchInput, Spinner } from "@/components/ui";
+import { Button, Badge, Modal, Input, Select, Tabs, ConfirmDialog, EmptyState, SearchInput, Spinner, Pagination } from "@/components/ui";
 import { QuestionForm } from "@/components/tests/QuestionForm";
 import { useModal } from "@/hooks";
 import type { ITest, IQuestion, QuestionType } from "@/types";
@@ -24,6 +24,8 @@ export default function TestsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [diffFilter, setDiffFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [testToDelete, setTestToDelete] = useState<ITest | null>(null);
   const [questionToDelete, setQuestionToDelete] = useState<IQuestion | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<IQuestion | null>(null);
@@ -64,14 +66,16 @@ export default function TestsPage() {
       difficulty: diffFilter || undefined,
       course: "none",
       module: "none",
+      page: currentPage,
+      limit: itemsPerPage,
     }),
-    [debouncedSearch, typeFilter, diffFilter]
+    [debouncedSearch, typeFilter, diffFilter, currentPage, itemsPerPage]
   );
 
   const fetchCourses = useCallback(() => courseService.getCourses({ limit: 100 }), []);
 
   const { data: testsData, loading: testsLoading, refetch: refetchTests } = useApi(fetchTests, [debouncedSearch]);
-  const { data: questionsData, loading: questionsLoading, refetch: refetchQuestions } = useApi(fetchQuestions, [debouncedSearch, typeFilter, diffFilter]);
+  const { data: questionsData, loading: questionsLoading, refetch: refetchQuestions } = useApi(fetchQuestions, [debouncedSearch, typeFilter, diffFilter, currentPage, itemsPerPage]);
   const { data: coursesData } = useApi(fetchCourses, []);
 
   const tests = testsData?.tests ?? [];
@@ -567,65 +571,89 @@ export default function TestsPage() {
               {questions.length === 0 ? (
                 <EmptyState title="No questions found" description="Create your first question to get started." />
               ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-surface-secondary border-b border-surface-border">
-                      <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Question</th>
-                      <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Difficulty</th>
-                      <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
-                      <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Tags</th>
-                      {!isAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-surface-border">
-                    {questions.map((question) => {
-                      const config = questionTypeConfig[question.type];
-                      return (
-                        <tr key={question._id} className="hover:bg-primary-50/30 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="text-sm font-medium text-gray-900 line-clamp-1">{question.title}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge variant={config.variant}>
-                              <span className="flex items-center gap-1">{config.icon} {config.label}</span>
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 hidden md:table-cell">
-                            <Badge variant={question.difficulty === "Easy" ? "success" : question.difficulty === "Medium" ? "warning" : "danger"}>
-                              {question.difficulty}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 hidden lg:table-cell">
-                            <span className="text-sm font-medium text-gray-900">{question.points}</span>
-                          </td>
-                          <td className="px-6 py-4 hidden lg:table-cell">
-                            <div className="flex gap-1 flex-wrap">
-                              {question.tags?.slice(0, 2).map((tag) => (
-                                <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{tag}</span>
-                              ))}
-                              {(question.tags?.length || 0) > 2 && (
-                                <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{(question.tags?.length || 0) - 2}</span>
-                              )}
-                            </div>
-                          </td>
-                          {!isAdmin && (
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex justify-end gap-1">
-                                <button onClick={() => openEditQuestion(question)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                                <button onClick={() => { setQuestionToDelete(question); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                <>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-surface-secondary border-b border-surface-border">
+                        <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">S.No</th>
+                        <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Question</th>
+                        <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                        <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Difficulty</th>
+                        <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
+                        <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Tags</th>
+                        {!isAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-surface-border">
+                      {questions.map((question, index) => {
+                        const config = questionTypeConfig[question.type];
+                        const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
+                        return (
+                          <tr key={question._id} className="hover:bg-primary-50/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-medium text-gray-900">{serialNumber}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="text-sm font-medium text-gray-900 line-clamp-1">{question.title}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge variant={config.variant}>
+                                <span className="flex items-center gap-1">{config.icon} {config.label}</span>
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 hidden md:table-cell">
+                              <Badge variant={question.difficulty === "Easy" ? "success" : question.difficulty === "Medium" ? "warning" : "danger"}>
+                                {question.difficulty}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 hidden lg:table-cell">
+                              <span className="text-sm font-medium text-gray-900">{question.points}</span>
+                            </td>
+                            <td className="px-6 py-4 hidden lg:table-cell">
+                              <div className="flex gap-1 flex-wrap">
+                                {question.tags?.slice(0, 2).map((tag) => (
+                                  <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{tag}</span>
+                                ))}
+                                {(question.tags?.length || 0) > 2 && (
+                                  <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">+{(question.tags?.length || 0) - 2}</span>
+                                )}
                               </div>
                             </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            {!isAdmin && (
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-1">
+                                  <button onClick={() => openEditQuestion(question)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button onClick={() => { setQuestionToDelete(question); deleteModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  
+                  {/* Pagination */}
+                  {questionsData?.totalPages && questionsData.totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-surface-border flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        Showing {questions.length} of {questionsData.totalQuestions} questions
+                      </div>
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={questionsData.totalPages}
+                        onPageChange={(page) => {
+                          setCurrentPage(page);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

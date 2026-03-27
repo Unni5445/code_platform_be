@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Edit, Trash2, ChevronDown, ChevronRight,
   GripVertical, BookOpen, FileText, ClipboardList, HelpCircle,
-  UserMinus, Clock, Award, Search, Check,
+  UserMinus, Clock, Award, Search, Check, ToggleLeft, ToggleRight,
+  ExternalLink,
 } from "lucide-react";
 import { courseService, moduleService, submoduleService, enrollmentService, testService, questionService } from "@/services";
 import { useApi } from "@/hooks/useApi";
@@ -16,6 +17,7 @@ import { QuestionForm } from "@/components/tests/QuestionForm";
 import type { IModule, ISubmodule, IEnrollment, ITest, IQuestion } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
+import { PdfUpload } from "@/components/courses/PdfUpload";
 
 const ENROLLMENT_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "Active" },
@@ -24,12 +26,15 @@ const ENROLLMENT_STATUS_OPTIONS = [
   { value: "EXPIRED", label: "Expired" },
 ];
 
+const PICKER_LIMIT = 50;
+
 export default function CourseDetailPage() {
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("modules");
+  const [subPdf, setSubPdf] = useState<File|null>(null)
 
   // ─── Course fetch ───
   const fetchCourse = useCallback(() => courseService.getCourseById(courseId!), [courseId]);
@@ -48,6 +53,23 @@ export default function CourseDetailPage() {
     [courseId, enrollPage, enrollStatusFilter, enrollSearch]
   );
   const { data: enrollData, loading: enrollLoading, refetch: refetchEnrollments } = useApi(fetchEnrollments, [courseId, enrollPage, enrollStatusFilter, enrollSearch]);
+
+  // ─── Tests Tab ───
+  const [testsPage, setTestsPage] = useState(1);
+  const [testsSearch, setTestsSearch] = useState("");
+  const [testsStatusFilter, setTestsStatusFilter] = useState("");
+  const fetchAllTests = useCallback(
+    () => testService.getTests({
+      course: courseId!,
+      page: testsPage,
+    }),
+    [courseId, testsPage, testsSearch, testsStatusFilter]
+  );
+  const { data: testsData, loading: testsLoading, refetch: refetchTests } = useApi(fetchAllTests, [courseId, testsPage, testsSearch, testsStatusFilter]);
+
+  const allTests: ITest[] = testsData?.tests ?? [];
+  const testsTotalPages: number = testsData?.totalPages ?? 1;
+  const testsTotalCount: number = testsData?.totalTests ?? 0;
 
   // ─── Module State ───
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
@@ -79,9 +101,12 @@ export default function CourseDetailPage() {
   // ─── Test Form ───
   const addTestModal = useModal();
   const editTestModal = useModal();
+  const deleteTestModal = useModal();
   const [testForm, setTestForm] = useState({ title: "", description: "", duration: "", isActive: true });
   const [testModuleId, setTestModuleId] = useState("");
   const [editingTest, setEditingTest] = useState<ITest | null>(null);
+  const [testToDelete, setTestToDelete] = useState<ITest | null>(null);
+  const [togglingTestId, setTogglingTestId] = useState<string | null>(null);
 
   // ─── Question Form ───
   const addQuestionModal = useModal();
@@ -98,35 +123,78 @@ export default function CourseDetailPage() {
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerQuestions, setPickerQuestions] = useState<IQuestion[]>([]);
   const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerLoadingMore, setPickerLoadingMore] = useState(false);
+  const [pickerPage, setPickerPage] = useState(1);
+  const [pickerHasMore, setPickerHasMore] = useState(false);
+  const [pickerTotal, setPickerTotal] = useState(0);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
   const [addingQuestions, setAddingQuestions] = useState(false);
+  const pickerScrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const openQuestionPicker = (moduleId: string) => {
     setPickerModuleId(moduleId);
     setPickerSearch("");
     setSelectedQuestionIds(new Set());
     setPickerQuestions([]);
+    setPickerPage(1);
+    setPickerHasMore(false);
+    setPickerTotal(0);
     questionPickerModal.open();
   };
 
-  // Fetch unassigned questions when picker opens or search changes
   useEffect(() => {
     if (!questionPickerModal.isOpen) return;
-    const fetchQuestions = async () => {
+    const controller = new AbortController();
+    const fetchFirstPage = async () => {
       setPickerLoading(true);
+      setPickerPage(1);
+      setPickerQuestions([]);
       try {
-        const res = await questionService.getQuestions({
-          test: "none",
-          search: pickerSearch || undefined,
-          limit: 50,
-        });
-        setPickerQuestions(res.data.data.questions);
-      } catch { setPickerQuestions([]); }
+        const res = await questionService.getQuestions({ test: "none", search: pickerSearch || undefined, limit: PICKER_LIMIT, page: 1 });
+        const { questions, totalQuestions: total } = res.data.data;
+        setPickerQuestions(questions);
+        setPickerTotal(total);
+        setPickerHasMore(questions.length < total);
+      } catch {
+        setPickerQuestions([]);
+        setPickerHasMore(false);
+      }
       setPickerLoading(false);
     };
-    const timer = setTimeout(fetchQuestions, 300);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(fetchFirstPage, 300);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [questionPickerModal.isOpen, pickerSearch]);
+
+  useEffect(() => {
+    if (!pickerHasMore || pickerLoading || pickerLoadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMorePickerQuestions(); },
+      { threshold: 0.1 }
+    );
+    const sentinel = sentinelRef.current;
+    if (sentinel) observer.observe(sentinel);
+    return () => { if (sentinel) observer.unobserve(sentinel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickerHasMore, pickerLoading, pickerLoadingMore, pickerPage]);
+
+  const loadMorePickerQuestions = async () => {
+    if (pickerLoadingMore || !pickerHasMore) return;
+    const nextPage = pickerPage + 1;
+    setPickerLoadingMore(true);
+    try {
+      const res = await questionService.getQuestions({ test: "none", search: pickerSearch || undefined, limit: PICKER_LIMIT, page: nextPage });
+      const { questions, totalQuestions: total } = res.data.data;
+      setPickerQuestions((prev) => {
+        const existingIds = new Set(prev.map((q) => q._id));
+        return [...prev, ...questions.filter((q: IQuestion) => !existingIds.has(q._id))];
+      });
+      setPickerPage(nextPage);
+      setPickerTotal(total);
+      setPickerHasMore((pickerQuestions.length + questions.length) < total);
+    } catch { /* silent */ }
+    setPickerLoadingMore(false);
+  };
 
   const togglePickerQuestion = (id: string) => {
     setSelectedQuestionIds((prev) => {
@@ -160,7 +228,6 @@ export default function CourseDetailPage() {
       next.delete(moduleId);
     } else {
       next.add(moduleId);
-      // Load submodules
       if (!moduleSubmodules[moduleId]) {
         setLoadingSubmodules((prev) => new Set(prev).add(moduleId));
         try {
@@ -169,10 +236,7 @@ export default function CourseDetailPage() {
         } catch { /* empty */ }
         setLoadingSubmodules((prev) => { const s = new Set(prev); s.delete(moduleId); return s; });
       }
-      // Load test & questions for this module
-      if (!(moduleId in moduleTests)) {
-        fetchModuleTestAndQuestions(moduleId);
-      }
+      if (!(moduleId in moduleTests)) fetchModuleTestAndQuestions(moduleId);
     }
     setExpandedModules(next);
   };
@@ -184,8 +248,7 @@ export default function CourseDetailPage() {
       const tests = testRes.data.data.tests;
       const test = tests.length > 0 ? tests[0] : null;
       setModuleTests((prev) => ({ ...prev, [moduleId]: test }));
-
-      setModuleQuestions((prev) => ({ ...prev, [moduleId]: (test?.questions as unknown as IQuestion[] )|| [] }));
+      setModuleQuestions((prev) => ({ ...prev, [moduleId]: (test?.questions as unknown as IQuestion[]) || [] }));
     } catch {
       setModuleTests((prev) => ({ ...prev, [moduleId]: null }));
       setModuleQuestions((prev) => ({ ...prev, [moduleId]: [] }));
@@ -242,16 +305,29 @@ export default function CourseDetailPage() {
   const openAddSubmodule = (moduleId: string) => {
     setParentModuleId(moduleId);
     setSubForm({ title: "", description: "" });
+    setSubPdf(null);
     addSubmoduleModal.open();
   };
 
   const handleCreateSubmodule = async () => {
     try {
-      await submoduleService.createSubmodule({
+        const payload: Record<string, unknown> = {
         title: subForm.title,
         description: subForm.description,
         module: parentModuleId,
-      });
+      };
+      // If your service accepts FormData for file upload, build it here:
+      let body: FormData | typeof payload = payload;
+      if (subPdf instanceof File) {
+        const fd = new FormData();
+        fd.append("title", subForm.title);
+        fd.append("description", subForm.description);
+        fd.append("module", parentModuleId);
+        fd.append("pdf", subPdf);
+        body = fd;
+      }
+      await submoduleService.createSubmodule(body as any);
+      // await submoduleService.createSubmodule({ title: subForm.title, description: subForm.description, module: parentModuleId });
       addSubmoduleModal.close();
       toast.success("Submodule created");
       refreshSubmodules(parentModuleId);
@@ -263,16 +339,29 @@ export default function CourseDetailPage() {
     setSelectedSubmodule(sub);
     setParentModuleId(sub.module);
     setSubForm({ title: sub.title, description: sub.description || "" });
+    // (sub as any).pdfUrl is the existing URL from your backend
+    setSubPdf((sub as any).pdfUrl ?? null);
     editSubmoduleModal.open();
   };
 
   const handleUpdateSubmodule = async () => {
     if (!selectedSubmodule) return;
+    console.log(subPdf instanceof File)
+
     try {
-      await submoduleService.updateSubmodule(selectedSubmodule._id, {
-        title: subForm.title,
-        description: subForm.description,
-      });
+      let body: FormData | Record<string, unknown>;
+      if (subPdf instanceof File) {
+        const fd = new FormData();
+        fd.append("title", subForm.title);
+        fd.append("description", subForm.description);
+        fd.append("pdf", subPdf);
+        console.log(fd)
+        body = fd;
+      } else {
+        body = { title: subForm.title, description: subForm.description };
+      }
+      await submoduleService.updateSubmodule(selectedSubmodule._id, body as any);
+      // await submoduleService.updateSubmodule(selectedSubmodule._id, { title: subForm.title, description: subForm.description });
       editSubmoduleModal.close();
       toast.success("Submodule updated");
       refreshSubmodules(parentModuleId);
@@ -312,18 +401,14 @@ export default function CourseDetailPage() {
       toast.success("Test created");
       fetchModuleTestAndQuestions(testModuleId);
       refetchModules();
+      refetchTests();
     } catch { toast.error("Failed to create test"); }
   };
 
-  const openEditTest = (test: ITest, moduleId: string) => {
+  const openEditTest = (test: ITest, moduleId = "") => {
     setEditingTest(test);
-    setTestModuleId(moduleId);
-    setTestForm({
-      title: test.title,
-      description: test.description || "",
-      duration: test.duration?.toString() || "60",
-      isActive: test.isActive,
-    });
+    setTestModuleId(moduleId || (typeof test.module === "string" ? test.module : (test.module as any)?._id ?? ""));
+    setTestForm({ title: test.title, description: test.description || "", duration: test.duration?.toString() || "60", isActive: test.isActive });
     editTestModal.open();
   };
 
@@ -339,7 +424,37 @@ export default function CourseDetailPage() {
       editTestModal.close();
       toast.success("Test updated");
       fetchModuleTestAndQuestions(testModuleId);
+      refetchTests();
     } catch { toast.error("Failed to update test"); }
+  };
+
+  const handleDeleteTest = async () => {
+    if (!testToDelete) return;
+    try {
+      await testService.deleteTest(testToDelete._id);
+      deleteTestModal.close();
+      setTestToDelete(null);
+      toast.success("Test deleted");
+      refetchTests();
+      refetchModules();
+      const modId = typeof testToDelete.module === "string" ? testToDelete.module : (testToDelete.module as any)?._id;
+      if (modId) {
+        setModuleTests((prev) => ({ ...prev, [modId]: null }));
+        setModuleQuestions((prev) => ({ ...prev, [modId]: [] }));
+      }
+    } catch { toast.error("Failed to delete test"); }
+  };
+
+  const handleToggleTestStatus = async (test: ITest) => {
+    setTogglingTestId(test._id);
+    try {
+      await testService.updateTest(test._id, { isActive: !test.isActive });
+      toast.success(`Test ${!test.isActive ? "activated" : "deactivated"}`);
+      refetchTests();
+      const modId = typeof test.module === "string" ? test.module : (test.module as any)?._id;
+      if (modId && expandedModules.has(modId)) fetchModuleTestAndQuestions(modId);
+    } catch { toast.error("Failed to update test status"); }
+    setTogglingTestId(null);
   };
 
   // ─── Question CRUD ───
@@ -352,11 +467,7 @@ export default function CourseDetailPage() {
   const handleCreateQuestion = async (data: Partial<IQuestion>) => {
     setSavingQuestion(true);
     try {
-      await questionService.createQuestion({
-        ...data,
-        course: courseId,
-        module: questionModuleId,
-      });
+      await questionService.createQuestion({ ...data, course: courseId, module: questionModuleId });
       addQuestionModal.close();
       toast.success("Question created");
       fetchModuleTestAndQuestions(questionModuleId);
@@ -419,11 +530,17 @@ export default function CourseDetailPage() {
   const enrollments = enrollData?.enrollments ?? [];
   const enrollTotalPages = enrollData?.totalPages ?? 1;
 
-  // ─── Difficulty badge color ───
   const difficultyVariant = (d: string) => {
     if (d === "Easy") return "success";
     if (d === "Hard") return "danger";
     return "warning";
+  };
+
+  const resolveModuleName = (test: ITest) => {
+    if (!test.module) return "—";
+    if (typeof test.module === "object" && (test.module as any).title) return (test.module as any).title;
+    const found = moduleList.find((m) => m._id === test.module);
+    return found?.title ?? "—";
   };
 
   return (
@@ -443,6 +560,7 @@ export default function CourseDetailPage() {
       <Tabs
         tabs={[
           { id: "modules", label: "Modules", count: moduleList.length },
+          { id: "tests", label: "Tests", count: testsTotalCount || undefined },
           { id: "enrollments", label: "Enrollments", count: enrollData?.totalEnrollments },
         ]}
         activeTab={activeTab}
@@ -463,19 +581,20 @@ export default function CourseDetailPage() {
           {modulesLoading ? (
             <div className="flex items-center justify-center h-40"><Spinner size="lg" /></div>
           ) : moduleList.length === 0 ? (
-            <EmptyState title="No modules yet" description={isAdmin ? "No modules available for this course." : "Add the first module to structure this course."} action={!isAdmin ? <Button onClick={() => { setModuleForm({ title: "", description: "" }); addModuleModal.open(); }}>Add Module</Button> : undefined} />
+            <EmptyState
+              title="No modules yet"
+              description={isAdmin ? "No modules available for this course." : "Add the first module to structure this course."}
+              action={!isAdmin ? <Button onClick={() => { setModuleForm({ title: "", description: "" }); addModuleModal.open(); }}>Add Module</Button> : undefined}
+            />
           ) : (
             <div className="space-y-3">
               {moduleList.map((mod, index) => (
                 <Card key={mod._id} className="overflow-hidden">
-                  {/* Module header */}
                   <div className="flex items-center gap-3 cursor-pointer" onClick={() => toggleModule(mod._id)}>
                     <GripVertical className="h-4 w-4 text-gray-300 flex-shrink-0" />
-                    {expandedModules.has(mod._id) ? (
-                      <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    )}
+                    {expandedModules.has(mod._id)
+                      ? <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      : <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />}
                     <div className="p-2 bg-primary-100 rounded-lg">
                       <BookOpen className="h-4 w-4 text-primary-600" />
                     </div>
@@ -501,10 +620,9 @@ export default function CourseDetailPage() {
                     </div>
                   </div>
 
-                  {/* Expanded content */}
                   {expandedModules.has(mod._id) && (
                     <div className="mt-3 ml-12 space-y-4 border-t border-surface-border pt-3">
-                      {/* ── Submodules Section ── */}
+                      {/* Submodules */}
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <FileText className="h-3.5 w-3.5 text-gray-400" />
@@ -525,12 +643,8 @@ export default function CourseDetailPage() {
                                 </div>
                                 {!isAdmin && (
                                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openEditSubmodule(sub)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer">
-                                      <Edit className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button onClick={() => { setSubToDelete(sub); deleteSubmoduleModal.open(); }} className="p-1 rounded text-gray-400 hover:text-red-600 cursor-pointer">
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
+                                    <button onClick={() => openEditSubmodule(sub)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer"><Edit className="h-3.5 w-3.5" /></button>
+                                    <button onClick={() => { setSubToDelete(sub); deleteSubmoduleModal.open(); }} className="p-1 rounded text-gray-400 hover:text-red-600 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
                                   </div>
                                 )}
                               </div>
@@ -544,7 +658,7 @@ export default function CourseDetailPage() {
                         )}
                       </div>
 
-                      {/* ── Test Section ── */}
+                      {/* Test */}
                       <div className="border-t border-surface-border pt-3">
                         <div className="flex items-center gap-2 mb-2">
                           <ClipboardList className="h-3.5 w-3.5 text-gray-400" />
@@ -556,21 +670,15 @@ export default function CourseDetailPage() {
                           <div className="px-3 py-3 rounded-lg bg-blue-50/50 border border-blue-100">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="p-1.5 bg-blue-100 rounded-lg">
-                                  <ClipboardList className="h-4 w-4 text-blue-600" />
-                                </div>
+                                <div className="p-1.5 bg-blue-100 rounded-lg"><ClipboardList className="h-4 w-4 text-blue-600" /></div>
                                 <div>
                                   <h4 className="text-sm font-semibold text-gray-900">{moduleTests[mod._id]!.title}</h4>
                                   <div className="flex items-center gap-3 mt-0.5">
                                     {moduleTests[mod._id]!.duration && (
-                                      <span className="flex items-center gap-1 text-xs text-gray-500">
-                                        <Clock className="h-3 w-3" /> {moduleTests[mod._id]!.duration} min
-                                      </span>
+                                      <span className="flex items-center gap-1 text-xs text-gray-500"><Clock className="h-3 w-3" /> {moduleTests[mod._id]!.duration} min</span>
                                     )}
                                     {moduleTests[mod._id]!.totalPoints != null && (
-                                      <span className="flex items-center gap-1 text-xs text-gray-500">
-                                        <Award className="h-3 w-3" /> {moduleTests[mod._id]!.totalPoints} pts
-                                      </span>
+                                      <span className="flex items-center gap-1 text-xs text-gray-500"><Award className="h-3 w-3" /> {moduleTests[mod._id]!.totalPoints} pts</span>
                                     )}
                                     <Badge variant={moduleTests[mod._id]!.isActive ? "success" : "gray"} className="text-[10px]">
                                       {moduleTests[mod._id]!.isActive ? "Active" : "Inactive"}
@@ -579,20 +687,14 @@ export default function CourseDetailPage() {
                                 </div>
                               </div>
                               {!isAdmin && (
-                                <button
-                                  onClick={() => openEditTest(moduleTests[mod._id]!, mod._id)}
-                                  className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
-                                >
+                                <button onClick={() => openEditTest(moduleTests[mod._id]!, mod._id)} className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
                                   <Edit className="h-3.5 w-3.5" />
                                 </button>
                               )}
                             </div>
                           </div>
                         ) : !isAdmin ? (
-                          <button
-                            onClick={() => openCreateTest(mod._id)}
-                            className="flex items-center gap-2 px-3 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer w-full border border-dashed border-blue-200"
-                          >
+                          <button onClick={() => openCreateTest(mod._id)} className="flex items-center gap-2 px-3 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer w-full border border-dashed border-blue-200">
                             <Plus className="h-4 w-4" /> Create Test for this Module
                           </button>
                         ) : (
@@ -600,7 +702,7 @@ export default function CourseDetailPage() {
                         )}
                       </div>
 
-                      {/* ── Questions Section ── */}
+                      {/* Questions */}
                       <div className="border-t border-surface-border pt-3">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
@@ -612,17 +714,11 @@ export default function CourseDetailPage() {
                           {!isAdmin && (
                             <div className="flex items-center gap-1">
                               {moduleTests[mod._id] && (
-                                <button
-                                  onClick={() => openQuestionPicker(mod._id)}
-                                  className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                                >
+                                <button onClick={() => openQuestionPicker(mod._id)} className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer">
                                   <Search className="h-3 w-3" /> Choose Existing
                                 </button>
                               )}
-                              <button
-                                onClick={() => openAddQuestion(mod._id)}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer"
-                              >
+                              <button onClick={() => openAddQuestion(mod._id)} className="flex items-center gap-1 px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer">
                                 <Plus className="h-3 w-3" /> Add New
                               </button>
                             </div>
@@ -646,14 +742,10 @@ export default function CourseDetailPage() {
                                   </div>
                                 </div>
                                 {!isAdmin && (
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => openEditQuestion(q, mod._id)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer">
-                                    <Edit className="h-3.5 w-3.5" />
-                                  </button>
-                                  <button onClick={() => { setQuestionToDelete({ question: q, moduleId: mod._id }); deleteQuestionModal.open(); }} className="p-1 rounded text-gray-400 hover:text-red-600 cursor-pointer">
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
+                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => openEditQuestion(q, mod._id)} className="p-1 rounded text-gray-400 hover:text-primary-600 cursor-pointer"><Edit className="h-3.5 w-3.5" /></button>
+                                    <button onClick={() => { setQuestionToDelete({ question: q, moduleId: mod._id }); deleteQuestionModal.open(); }} className="p-1 rounded text-gray-400 hover:text-red-600 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
+                                  </div>
                                 )}
                               </div>
                             ))}
@@ -664,6 +756,160 @@ export default function CourseDetailPage() {
                   )}
                 </Card>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════ TESTS TAB ═══════════ */}
+      {activeTab === "tests" && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="w-64">
+              <SearchInput
+                placeholder="Search tests..."
+                value={testsSearch}
+                onChange={(e) => { setTestsSearch(e.target.value); setTestsPage(1); }}
+              />
+            </div>
+            <Select
+              options={[
+                { value: "", label: "All Statuses" },
+                { value: "active", label: "Active" },
+                { value: "inactive", label: "Inactive" },
+              ]}
+              value={testsStatusFilter}
+              onChange={(e) => { setTestsStatusFilter(e.target.value); setTestsPage(1); }}
+            />
+          </div>
+
+          {testsLoading ? (
+            <div className="flex items-center justify-center h-40"><Spinner size="lg" /></div>
+          ) : allTests.length === 0 ? (
+            <EmptyState
+              title="No tests found"
+              description="Tests created for modules in this course will appear here."
+            />
+          ) : (
+            <div className="bg-surface rounded-xl shadow-card border border-surface-border overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-secondary border-b border-surface-border">
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Test</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Module</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Duration</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">View Submissions</th>
+                    {!isAdmin && (
+                      <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border">
+                  {allTests.map((test) => (
+                    <tr key={test._id} className="hover:bg-primary-50/30 transition-colors">
+                      {/* Test info */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+                            <ClipboardList className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{test.title}</p>
+                            {test.description && (
+                              <p className="text-xs text-gray-400 truncate mt-0.5 max-w-[220px]">{test.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Module */}
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        <span className="text-sm text-gray-600">{resolveModuleName(test)}</span>
+                      </td>
+
+                      {/* Duration */}
+                      <td className="px-6 py-4 hidden lg:table-cell">
+                        {test.duration ? (
+                          <span className="flex items-center gap-1 text-sm text-gray-600">
+                            <Clock className="h-3.5 w-3.5 text-gray-400" /> {test.duration} min
+                          </span>
+                        ) : <span className="text-sm text-gray-400">—</span>}
+                      </td>
+
+                      {/* Points */}
+                      <td className="px-6 py-4 hidden lg:table-cell">
+                        {test.totalPoints != null ? (
+                          <span className="flex items-center gap-1 text-sm text-gray-600">
+                            <Award className="h-3.5 w-3.5 text-gray-400" /> {test.totalPoints} pts
+                          </span>
+                        ) : <span className="text-sm text-gray-400">—</span>}
+                      </td>
+
+                      {/* Status toggle */}
+                      <td className="px-6 py-4">
+                        {!isAdmin ? (
+                          <button
+                            onClick={() => handleToggleTestStatus(test)}
+                            disabled={togglingTestId === test._id}
+                            className="flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            title={test.isActive ? "Click to deactivate" : "Click to activate"}
+                          >
+                            {togglingTestId === test._id ? (
+                              <Spinner size="sm" />
+                            ) : test.isActive ? (
+                              <ToggleRight className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <ToggleLeft className="h-5 w-5 text-gray-400" />
+                            )}
+                            <Badge variant={test.isActive ? "success" : "gray"} className="text-[10px]">
+                              {test.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </button>
+                        ) : (
+                          <Badge variant={test.isActive ? "success" : "gray"} className="text-[10px]">
+                            {test.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        <span className="text-sm text-blue-600 flex justify-center items-center gap-2 cursor-pointer" onClick={()=>navigate(`/tests/${test?._id!}/submissions`)}>View Submissions <ExternalLink/></span>
+                      </td>
+
+                      {/* Actions */}
+                      {!isAdmin && (
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => openEditTest(test)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
+                              title="Edit test"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => { setTestToDelete(test); deleteTestModal.open(); }}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                              title="Delete test"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {!testsLoading && testsTotalPages > 1 && (
+            <div className="flex justify-center">
+              <Pagination currentPage={testsPage} totalPages={testsTotalPages} onPageChange={setTestsPage} />
             </div>
           )}
         </div>
@@ -711,23 +957,14 @@ export default function CourseDetailPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <select
-                            value={enrollment.status}
-                            onChange={(e) => handleChangeEnrollStatus(enrollment, e.target.value)}
-                            className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-white cursor-pointer"
-                          >
-                            {ENROLLMENT_STATUS_OPTIONS.map((opt) => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
+                          <select value={enrollment.status} onChange={(e) => handleChangeEnrollStatus(enrollment, e.target.value)} className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-white cursor-pointer">
+                            {ENROLLMENT_STATUS_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                           </select>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden max-w-[120px]">
-                              <div
-                                className="h-full bg-primary-500 rounded-full transition-all"
-                                style={{ width: `${enrollment.overallProgress}%` }}
-                              />
+                              <div className="h-full bg-primary-500 rounded-full transition-all" style={{ width: `${enrollment.overallProgress}%` }} />
                             </div>
                             <span className="text-xs text-gray-500">{enrollment.overallProgress}%</span>
                           </div>
@@ -736,11 +973,7 @@ export default function CourseDetailPage() {
                           <span className="text-sm text-gray-500">{new Date(enrollment.createdAt).toLocaleDateString()}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => { setEnrollToDelete(enrollment); deleteEnrollModal.open(); }}
-                            className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                            title="Remove enrollment"
-                          >
+                          <button onClick={() => { setEnrollToDelete(enrollment); deleteEnrollModal.open(); }} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Remove enrollment">
                             <UserMinus className="h-4 w-4" />
                           </button>
                         </td>
@@ -762,7 +995,6 @@ export default function CourseDetailPage() {
 
       {/* ═══════════ MODALS ═══════════ */}
 
-      {/* Add Module */}
       <Modal isOpen={addModuleModal.isOpen} onClose={addModuleModal.close} title="Add Module"
         footer={<><Button variant="ghost" onClick={addModuleModal.close}>Cancel</Button><Button onClick={handleCreateModule} disabled={!moduleForm.title.trim()}>Create</Button></>}>
         <div className="space-y-4">
@@ -774,7 +1006,6 @@ export default function CourseDetailPage() {
         </div>
       </Modal>
 
-      {/* Edit Module */}
       <Modal isOpen={editModuleModal.isOpen} onClose={editModuleModal.close} title="Edit Module"
         footer={<><Button variant="ghost" onClick={editModuleModal.close}>Cancel</Button><Button onClick={handleUpdateModule} disabled={!moduleForm.title.trim()}>Update</Button></>}>
         <div className="space-y-4">
@@ -786,7 +1017,6 @@ export default function CourseDetailPage() {
         </div>
       </Modal>
 
-      {/* Add Submodule */}
       <Modal isOpen={addSubmoduleModal.isOpen} onClose={addSubmoduleModal.close} title="Add Submodule"
         footer={<><Button variant="ghost" onClick={addSubmoduleModal.close}>Cancel</Button><Button onClick={handleCreateSubmodule} disabled={!subForm.title.trim()}>Create</Button></>}>
         <div className="space-y-4">
@@ -795,10 +1025,10 @@ export default function CourseDetailPage() {
             <label className="block text-sm font-medium text-gray-700">Description</label>
             <textarea value={subForm.description} onChange={(e) => setSubForm({ ...subForm, description: e.target.value })} rows={2} className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400 hover:border-gray-400 transition-colors" placeholder="Optional description..." />
           </div>
+          <PdfUpload value={subPdf} onChange={setSubPdf} label="PDF Attachment (optional)" />
         </div>
       </Modal>
 
-      {/* Edit Submodule */}
       <Modal isOpen={editSubmoduleModal.isOpen} onClose={editSubmoduleModal.close} title="Edit Submodule"
         footer={<><Button variant="ghost" onClick={editSubmoduleModal.close}>Cancel</Button><Button onClick={handleUpdateSubmodule} disabled={!subForm.title.trim()}>Update</Button></>}>
         <div className="space-y-4">
@@ -807,10 +1037,10 @@ export default function CourseDetailPage() {
             <label className="block text-sm font-medium text-gray-700">Description</label>
             <textarea value={subForm.description} onChange={(e) => setSubForm({ ...subForm, description: e.target.value })} rows={2} className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400 hover:border-gray-400 transition-colors" />
           </div>
+          <PdfUpload value={subPdf} onChange={setSubPdf} label="PDF Attachment (optional)" />
         </div>
       </Modal>
 
-      {/* Create Test */}
       <Modal isOpen={addTestModal.isOpen} onClose={addTestModal.close} title="Create Module Test"
         footer={<><Button variant="ghost" onClick={addTestModal.close}>Cancel</Button><Button onClick={handleCreateTest} disabled={!testForm.title.trim()}>Create</Button></>}>
         <div className="space-y-4">
@@ -827,7 +1057,6 @@ export default function CourseDetailPage() {
         </div>
       </Modal>
 
-      {/* Edit Test */}
       <Modal isOpen={editTestModal.isOpen} onClose={editTestModal.close} title="Edit Test"
         footer={<><Button variant="ghost" onClick={editTestModal.close}>Cancel</Button><Button onClick={handleUpdateTest} disabled={!testForm.title.trim()}>Update</Button></>}>
         <div className="space-y-4">
@@ -844,71 +1073,39 @@ export default function CourseDetailPage() {
         </div>
       </Modal>
 
-      {/* Add Question */}
       <Modal isOpen={addQuestionModal.isOpen} onClose={addQuestionModal.close} title="Add Question" size="lg">
-        <QuestionForm
-          onSubmit={handleCreateQuestion}
-          onCancel={addQuestionModal.close}
-          isLoading={savingQuestion}
-          fixedCourseId={courseId}
-          fixedTestId={moduleTests[questionModuleId]?._id}
-        />
+        <QuestionForm onSubmit={handleCreateQuestion} onCancel={addQuestionModal.close} isLoading={savingQuestion} fixedCourseId={courseId} fixedTestId={moduleTests[questionModuleId]?._id} />
       </Modal>
 
-      {/* Edit Question */}
       <Modal isOpen={editQuestionModal.isOpen} onClose={editQuestionModal.close} title="Edit Question" size="lg">
-        <QuestionForm
-          question={editingQuestion}
-          onSubmit={handleUpdateQuestion}
-          onCancel={editQuestionModal.close}
-          isLoading={savingQuestion}
-          fixedCourseId={courseId}
-          fixedTestId={moduleTests[questionModuleId]?._id}
-        />
+        <QuestionForm question={editingQuestion} onSubmit={handleUpdateQuestion} onCancel={editQuestionModal.close} isLoading={savingQuestion} fixedCourseId={courseId} fixedTestId={moduleTests[questionModuleId]?._id} />
       </Modal>
 
       {/* Choose Existing Questions */}
       <Modal isOpen={questionPickerModal.isOpen} onClose={questionPickerModal.close} title="Choose Existing Questions" size="lg"
-        footer={
-          <>
-            <Button variant="ghost" onClick={questionPickerModal.close}>Cancel</Button>
-            <Button onClick={handleAddExistingQuestions} disabled={selectedQuestionIds.size === 0} isLoading={addingQuestions}>
-              Add {selectedQuestionIds.size > 0 ? `${selectedQuestionIds.size} Question(s)` : "Selected"}
-            </Button>
-          </>
-        }>
-        <div className="space-y-4">
+        footer={<><Button variant="ghost" onClick={questionPickerModal.close}>Cancel</Button><Button onClick={handleAddExistingQuestions} disabled={selectedQuestionIds.size === 0} isLoading={addingQuestions}>Add {selectedQuestionIds.size > 0 ? `${selectedQuestionIds.size} Question(s)` : "Selected"}</Button></>}>
+        <div className="space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              value={pickerSearch}
-              onChange={(e) => setPickerSearch(e.target.value)}
-              placeholder="Search questions..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400"
-            />
+            <input type="text" value={pickerSearch} onChange={(e) => setPickerSearch(e.target.value)} placeholder="Search questions..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400" />
           </div>
+          {!pickerLoading && pickerTotal > 0 && (
+            <p className="text-xs text-gray-400">
+              Showing {pickerQuestions.length} of {pickerTotal} questions
+              {selectedQuestionIds.size > 0 && <span className="ml-2 text-primary-600 font-medium">· {selectedQuestionIds.size} selected</span>}
+            </p>
+          )}
           {pickerLoading ? (
-            <div className="flex justify-center py-8"><Spinner /></div>
+            <div className="flex justify-center py-10"><Spinner /></div>
           ) : pickerQuestions.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No unassigned questions found.</p>
+            <p className="text-sm text-gray-400 text-center py-10">No unassigned questions found.</p>
           ) : (
-            <div className="max-h-[400px] overflow-y-auto space-y-1">
+            <div ref={pickerScrollRef} className="max-h-[420px] overflow-y-auto space-y-1 pr-1">
               {pickerQuestions.map((q) => (
-                <div
-                  key={q._id}
-                  onClick={() => togglePickerQuestion(q._id)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                    selectedQuestionIds.has(q._id)
-                      ? "bg-primary-50 border border-primary-200"
-                      : "hover:bg-gray-50 border border-transparent"
-                  }`}
-                >
-                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                    selectedQuestionIds.has(q._id)
-                      ? "bg-primary-600 border-primary-600"
-                      : "border-gray-300"
-                  }`}>
+                <div key={q._id} onClick={() => togglePickerQuestion(q._id)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${selectedQuestionIds.has(q._id) ? "bg-primary-50 border border-primary-200" : "hover:bg-gray-50 border border-transparent"}`}>
+                  <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedQuestionIds.has(q._id) ? "bg-primary-600 border-primary-600" : "border-gray-300"}`}>
                     {selectedQuestionIds.has(q._id) && <Check className="h-3 w-3 text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -921,6 +1118,12 @@ export default function CourseDetailPage() {
                   </div>
                 </div>
               ))}
+              <div ref={sentinelRef} className="py-1 flex justify-center">
+                {pickerLoadingMore && <Spinner size="sm" />}
+                {!pickerLoadingMore && !pickerHasMore && pickerQuestions.length > 0 && (
+                  <p className="text-xs text-gray-300">All questions loaded</p>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -929,6 +1132,7 @@ export default function CourseDetailPage() {
       {/* Delete confirms */}
       <ConfirmDialog isOpen={deleteModuleModal.isOpen} onClose={() => { deleteModuleModal.close(); setModuleToDelete(null); }} onConfirm={handleDeleteModule} title="Delete Module" message={`Delete "${moduleToDelete?.title}"? All submodules under it will also be removed.`} />
       <ConfirmDialog isOpen={deleteSubmoduleModal.isOpen} onClose={() => { deleteSubmoduleModal.close(); setSubToDelete(null); }} onConfirm={handleDeleteSubmodule} title="Delete Submodule" message={`Delete "${subToDelete?.title}"?`} />
+      <ConfirmDialog isOpen={deleteTestModal.isOpen} onClose={() => { deleteTestModal.close(); setTestToDelete(null); }} onConfirm={handleDeleteTest} title="Delete Test" message={`Delete "${testToDelete?.title}"? All associated questions will be unlinked from this test.`} />
       <ConfirmDialog isOpen={deleteQuestionModal.isOpen} onClose={() => { deleteQuestionModal.close(); setQuestionToDelete(null); }} onConfirm={handleDeleteQuestion} title="Delete Question" message={`Delete "${questionToDelete?.question.title}"? This cannot be undone.`} />
       <ConfirmDialog isOpen={deleteEnrollModal.isOpen} onClose={() => { deleteEnrollModal.close(); setEnrollToDelete(null); }} onConfirm={handleRemoveEnrollment} title="Remove Enrollment" message="This will remove the student's enrollment and all progress data for this course." />
     </div>

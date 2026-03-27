@@ -23,4 +23,10 @@ export const userService = {
 
   deleteUser: (id: string) =>
     api.delete<ApiResponse<object>>(`/users/${id}`),
+
+  bulkImportUsers: (users: Partial<IUser>[]) =>
+      api.post<ApiResponse<{ imported: number; users: IUser[] }>>("/users/bulk-import", { users }),
+
+  exportUsers: () =>
+    api.get("/users/export", { responseType: "blob" }),
 };

@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
-import { GraduationCap, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
+import logo from '@/assets/logo.jpeg' 
 
 export default function AuthLayout() {
   return (
@@ -9,8 +10,8 @@ export default function AuthLayout() {
         <div className="w-full max-w-md mx-auto">
           {/* Logo */}
           <div className="flex items-center gap-2 mb-12">
-            <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-white" />
+            <div className="h-8 w-8 bg-black rounded-lg overflow-hidden p-1 flex items-center justify-center">
+              <img src={logo} alt="Logo" className="h-full w-full text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900">Skill & Brains</span>
           </div>

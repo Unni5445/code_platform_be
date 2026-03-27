@@ -46,7 +46,7 @@ export default function CertificateDetailPage() {
     ? (certificate.student as { name?: string }).name || "Student"
     : "Student";
   const courseTitle = typeof certificate.course === "object"
-    ? (certificate.course as { title?: string }).title || "Course"
+    ? (certificate.course as { title?: string })?.title || "Course"
     : "Course";
   const issuedDate = new Date(certificate.issuedAt).toLocaleDateString("en-IN", {
     day: "numeric",
@@ -83,7 +83,7 @@ export default function CertificateDetailPage() {
             {/* Header text */}
             <div className="space-y-2">
               <p className="text-sm font-semibold text-primary-600 uppercase tracking-widest">Certificate of Completion</p>
-              <h1 className="text-3xl font-bold text-gray-900">{certificate.title}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{certificate?.title}</h1>
             </div>
 
             {/* Divider */}

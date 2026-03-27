@@ -689,7 +689,7 @@ export default function SystemPage() {
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-gray-700">Allowed Programming Languages</label>
               <div className="flex flex-wrap gap-2">
-                {["JavaScript", "Python", "Java", "C++", "C#", "Ruby"].map((lang) => (
+                {["JavaScript", "Python", "Java", "C++", "C"].map((lang) => (
                   <span key={lang} className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium">{lang}</span>
                 ))}
               </div>
