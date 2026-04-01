@@ -25,6 +25,9 @@ export interface IUser {
   streak: number;
   maxStreak: number;
   activityLog: ActivityLogEntry[];
+  playerClass?: "Apprentice" | "Warrior" | "Champion";
+  dailyGoal?: number;
+  hasCompletedOnboarding: boolean;
   isActive: boolean;
   isDeleted: boolean;
   createdAt: string;

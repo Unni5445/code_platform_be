@@ -12,6 +12,7 @@ import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
+import OnboardingPage from "@/pages/OnboardingPage";
 import CourseDetailPage from "@/pages/CourseDetailPage";
 import TestsPage from "@/pages/TestsPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
@@ -60,8 +61,13 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           </Route>
 
+          {/* Onboarding route - restricted if already onboarded */}
+          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} requireNotOnboarded />}>
+            <Route path="/onboarding" element={<OnboardingPage />} />
+          </Route>
+
           {/* Test taking - fullscreen, no sidebar */}
-          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} requireOnboarding />}>
             <Route
               path="/tests/:id/take"
               element={
@@ -73,7 +79,7 @@ function App() {
           </Route>
 
           {/* Dashboard routes with sidebar */}
-          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} requireOnboarding />}>
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               {/* <Route path="/courses" element={<CoursesPage />} /> */}

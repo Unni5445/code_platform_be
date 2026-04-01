@@ -15,6 +15,11 @@ router.post("/verify-otp", UserController.verifyOtp);
 router.post("/reset-password", UserController.resetPassword);
 router.post("/sign-out", protect, UserController.signOut);
 router.get("/me", protect, UserController.getUserByToken);
+router.patch("/me/onboarding", protect, UserController.completeOnboarding);
+router.get("/me/stats", protect, UserController.getStudentStats);
+router.get("/me/quests", protect, UserController.getDailyQuests);
+router.post("/me/claim-xp", protect, UserController.claimXp);
+
 
 /**
  * ================= USER CRUD ROUTES

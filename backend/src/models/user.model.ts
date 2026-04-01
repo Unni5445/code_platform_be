@@ -34,6 +34,10 @@ export interface IUser extends Document {
   maxStreak: number;
   activityLog: ActivityLogEntry[];
 
+  playerClass?: "Apprentice" | "Warrior" | "Champion";
+  dailyGoal?: number;
+  hasCompletedOnboarding: boolean;
+
   isActive: boolean;
   isDeleted: boolean;
 
@@ -75,6 +79,10 @@ const userSchema = new Schema<IUser>(
         count: { type: Number, default: 0 },
       },
     ],
+
+    playerClass: { type: String, enum: ["Apprentice", "Warrior", "Champion"] },
+    dailyGoal: { type: Number },
+    hasCompletedOnboarding: { type: Boolean, default: false },
 
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },

@@ -39,6 +39,7 @@ interface AuthContextValue extends AuthState {
   signup: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  updateUserLocally: (user: IUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -92,8 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "LOGOUT" });
   };
 
+  const updateUserLocally = (user: IUser) => {
+    dispatch({ type: "SET_USER", payload: user });
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, login, signup, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ ...state, login, signup, loginWithGoogle, logout, updateUserLocally }}>
       {children}
     </AuthContext.Provider>
   );

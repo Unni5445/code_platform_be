@@ -6,6 +6,7 @@ import ErrorResponse from "../utils/errorResponse";
 import createJWTToken from "../utils/createJwtToken";
 import sendEmail from "../utils/sendEmail";
 import { Types } from "mongoose";
+import StudentSubmission from "../models/studentSubmission.model";
 
 class UserController {
   // ================= CREATE USER =================
@@ -312,6 +313,32 @@ class UserController {
     res.status(200).json(new ApiResponse(200, { token, _id: user._id, email: user.email, role: user.role }, "Login successful"));
   });
 
+  // ================= COMPLETE ONBOARDING =================
+  static completeOnboarding = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { playerClass, dailyGoal } = req.body;
+    
+    // allow partial updates, but must provide at least one if we want flexibility
+    // in this case we'll require both for simplicity.
+    if (!playerClass || !dailyGoal) {
+      return next(new ErrorResponse("Both player class and daily goal are required", 400));
+    }
+
+    const User = require("../models/user.model").default;
+    const user = await User.findById(req.user!._id);
+    
+    if (!user) {
+      return next(new ErrorResponse("User not found", 404));
+    }
+
+    user.playerClass = playerClass;
+    user.dailyGoal = dailyGoal;
+    user.hasCompletedOnboarding = true;
+
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, user, "Onboarding completed successfully"));
+  });
+
   static signOut = asyncHandler(async (_req: Request, res: Response) => {
     // Clear the token cookie
     res.clearCookie("token", {
@@ -333,6 +360,117 @@ class UserController {
       .select("-password -refreshToken -refreshTokenExpiry -otp -otpExpiry");
 
     res.json(new ApiResponse(200, user));
+  });
+
+  // ================= GET STUDENT DASHBOARD STATS =================
+  static getStudentStats = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json(new ApiResponse(404, {}, "User not found"));
+
+    const totalXp = user.points || 0;
+
+    const higherRankedUsers = await User.countDocuments({
+      role: "STUDENT",
+      isDeleted: false,
+      points: { $gt: totalXp },
+    });
+    const globalRank = higherRankedUsers + 1;
+
+    const submissions = await StudentSubmission.find({ student: userId, isDeleted: false });
+    
+    // Problems solved = unique questions with score > 0
+    const solvedQuestionIds = new Set(
+      submissions.filter((s) => s.score > 0).map((s) => s.question.toString())
+    );
+    const problemsSolved = solvedQuestionIds.size;
+
+    // Acceptance = attempts with positive score / total attempts
+    const successfulSubmissions = submissions.filter((s) => s.score > 0).length;
+    const totalSubmissions = submissions.length;
+    const acceptance = totalSubmissions > 0 ? Math.round((successfulSubmissions / totalSubmissions) * 100) : 0;
+
+    res.status(200).json(
+      new ApiResponse(200, {
+        problemsSolved,
+        totalXp,
+        globalRank,
+        acceptance,
+      }, "Student dashboard stats fetched")
+    );
+  });
+
+  // ================= CLAIM XP =================
+  static claimXp = asyncHandler(async (req: Request, res: Response) => {
+    const { amount } = req.body;
+    if (!amount || amount <= 0) {
+      return res.status(400).json(new ApiResponse(400, {}, "Invalid amount"));
+    }
+
+    const userId = req.user!._id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json(new ApiResponse(404, {}, "User not found"));
+
+    user.points = (user.points || 0) + amount;
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, user, `Claimed ${amount} XP`));
+  });
+
+  // ================= GET DAILY QUESTS =================
+  static getDailyQuests = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json(new ApiResponse(404, {}, "User not found"));
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const submissionsToday = await StudentSubmission.find({
+      student: userId,
+      isDeleted: false,
+      attemptedAt: { $gte: startOfToday }
+    });
+
+    const solvedQuestionsToday = new Set(
+      submissionsToday.filter(s => s.score > 0).map(s => s.question.toString())
+    );
+    const totalSolvedToday = solvedQuestionsToday.size;
+
+    const hasAnyPerfectSubmissionToday = submissionsToday.some(
+      s => s.score > 0 && s.score === s.maxScore
+    );
+
+    const dailyGoal = user.dailyGoal || 3;
+
+    const quests = [
+      {
+        id: 1,
+        title: "Log In",
+        desc: "Checking in to train.",
+        xp: 20,
+        completed: true,
+        iconName: "Flame",
+      },
+      {
+        id: 2,
+        title: "Daily Goal",
+        desc: `Solve ${dailyGoal} problems today.`,
+        xp: 150,
+        completed: totalSolvedToday >= dailyGoal,
+        iconName: "Target",
+      },
+      {
+        id: 3,
+        title: "First Blood",
+        desc: "Pass all test cases on a problem today.",
+        xp: 50,
+        completed: hasAnyPerfectSubmissionToday,
+        iconName: "CheckCircle2",
+      },
+    ];
+
+    res.status(200).json(new ApiResponse(200, quests, "Daily quests fetched"));
   });
 
   // ================= BULK IMPORT USERS =================

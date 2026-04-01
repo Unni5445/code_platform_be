@@ -5,9 +5,11 @@ import type { UserRole } from "@/types";
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
+  requireOnboarding?: boolean;
+  requireNotOnboarded?: boolean;
 }
 
-export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ allowedRoles, requireOnboarding, requireNotOnboarded }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -23,6 +25,14 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (requireOnboarding && user && !user.hasCompletedOnboarding) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (requireNotOnboarded && user && user.hasCompletedOnboarding) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {

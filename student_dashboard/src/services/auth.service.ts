@@ -32,4 +32,16 @@ export const authService = {
   signOut: () => api.post<ApiResponse<object>>("/sign-out"),
 
   getMe: () => api.get<ApiResponse<IUser>>("/me"),
+
+  completeOnboarding: (data: { playerClass: string; dailyGoal: number }) =>
+    api.patch<ApiResponse<IUser>>("/me/onboarding", data),
+
+  getStudentStats: () =>
+    api.get<ApiResponse<{ problemsSolved: number; totalXp: number; globalRank: number; acceptance: number }>>("/me/stats"),
+
+  getDailyQuests: () =>
+    api.get<ApiResponse<Array<{ id: number; title: string; desc: string; xp: number; completed: boolean; iconName: string }>>>("/me/quests"),
+
+  claimXp: (amount: number) =>
+    api.post<ApiResponse<IUser>>("/me/claim-xp", { amount }),
 };
