@@ -36,8 +36,12 @@ router.put("/my/enrollments/:id/progress", StudentController.updateProgress);
 router.get("/playground/questions", StudentController.getPlaygroundQuestions);
 router.get("/playground/questions/:id", StudentController.getPlaygroundQuestionById);
 router.post("/playground/questions/:id/submit", StudentController.submitPlaygroundSolution);
+router.get("/playground/questions/:id/submissions", StudentController.getPlaygroundSubmissions);
 
 // Submodules (for course detail page)
 router.get("/modules/:moduleId/submodules", StudentController.getSubmodulesByModule);
+
+// Profile Stats (gamified identity)
+router.get("/profile/stats", StudentController.getProfileStats);
 
 export default router;

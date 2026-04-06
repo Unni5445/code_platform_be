@@ -5,3 +5,5 @@ export { testService } from "./test.service";
 export { codeService } from "./code.service";
 export { dashboardService } from "./dashboard.service";
 export { playgroundService } from "./playground.service";
+export { contestService } from "./contest.service";
+export { interviewService } from "./interview.service";

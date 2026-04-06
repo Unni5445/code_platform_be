@@ -23,6 +23,17 @@ export interface PlaygroundSubmitResult {
   score: number;
 }
 
+export interface SubmissionHistoryItem {
+  _id: string;
+  code: string;
+  language: string;
+  score: number;
+  maxScore: number;
+  passedTestCases: number;
+  totalTestCases: number;
+  attemptedAt: string;
+}
+
 export const playgroundService = {
   getQuestions: (params?: {
     page?: number;
@@ -41,4 +52,7 @@ export const playgroundService = {
       language,
       code,
     }),
+
+  getSubmissions: (questionId: string) =>
+    api.get<ApiResponse<SubmissionHistoryItem[]>>(`/playground/questions/${questionId}/submissions`),
 };

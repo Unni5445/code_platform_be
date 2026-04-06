@@ -307,7 +307,7 @@ class UserController {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
-      domain: ".morattucoder.com",
+      // domain: ".morattucoder.com",
     });
 
     res.status(200).json(new ApiResponse(200, { token, _id: user._id, email: user.email, role: user.role }, "Login successful"));
@@ -316,7 +316,7 @@ class UserController {
   // ================= COMPLETE ONBOARDING =================
   static completeOnboarding = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { playerClass, dailyGoal } = req.body;
-    
+
     // allow partial updates, but must provide at least one if we want flexibility
     // in this case we'll require both for simplicity.
     if (!playerClass || !dailyGoal) {
@@ -325,7 +325,7 @@ class UserController {
 
     const User = require("../models/user.model").default;
     const user = await User.findById(req.user!._id);
-    
+
     if (!user) {
       return next(new ErrorResponse("User not found", 404));
     }
@@ -345,7 +345,7 @@ class UserController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: ".morattucoder.com",
+      // domain: ".morattucoder.com",
       maxAge: 0,
     });
 
@@ -378,7 +378,7 @@ class UserController {
     const globalRank = higherRankedUsers + 1;
 
     const submissions = await StudentSubmission.find({ student: userId, isDeleted: false });
-    
+
     // Problems solved = unique questions with score > 0
     const solvedQuestionIds = new Set(
       submissions.filter((s) => s.score > 0).map((s) => s.question.toString())

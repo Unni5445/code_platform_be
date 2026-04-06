@@ -784,6 +784,19 @@ class StudentController {
         }
       }
 
+      await StudentSubmission.create({
+        student: studentId,
+        question: questionId,
+        type: "CODING",
+        code,
+        language,
+        score,
+        maxScore: question.points || 0,
+        passedTestCases: passedCount,
+        totalTestCases: results.length,
+        attemptedAt: new Date(),
+      });
+
       res.status(200).json(
         new ApiResponse(200, {
           results: results.map((r) =>
@@ -796,6 +809,26 @@ class StudentController {
           allPassed,
           score,
         }, allPassed ? "All test cases passed!" : "Some test cases failed")
+      );
+    }
+  );
+
+  // ==================== GET PLAYGROUND SUBMISSIONS ====================
+  static getPlaygroundSubmissions = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id: questionId } = req.params;
+      const studentId = req.user!._id;
+
+      const submissions = await StudentSubmission.find({
+        student: studentId,
+        question: questionId,
+        type: "CODING"
+      })
+      .select("code language score maxScore passedTestCases totalTestCases attemptedAt")
+      .sort({ attemptedAt: -1 });
+
+      res.status(200).json(
+        new ApiResponse(200, submissions, "Submissions history retrieved successfully")
       );
     }
   );
@@ -845,6 +878,104 @@ class StudentController {
         .json(new ApiResponse(200, submission, "Submission retrieved"));
     }
   );
+
+  // ================= GET GAMIFIED PROFILE STATS =================
+  static getProfileStats = asyncHandler(
+    async (req: Request, res: Response) => {
+      const studentId = req.user!._id;
+      const user = await User.findById(studentId).lean();
+      if (!user) {
+        return res.status(404).json(new ApiResponse(404, null, "User not found"));
+      }
+
+      const points = user.points || 0;
+      const streak = user.streak || 0;
+      const maxStreak = user.maxStreak || 0;
+
+      // Level system
+      const levelThresholds = [
+        { min: 10000, level: 50, title: "Legendary Coder" },
+        { min: 5000, level: 40, title: "Grand Master" },
+        { min: 2000, level: 30, title: "Champion" },
+        { min: 1000, level: 20, title: "Warrior" },
+        { min: 500, level: 15, title: "Fighter" },
+        { min: 200, level: 10, title: "Apprentice" },
+        { min: 0, level: 1, title: "Novice" },
+      ];
+      const levelInfo = levelThresholds.find((t) => points >= t.min) || levelThresholds[levelThresholds.length - 1];
+      const nextThreshold = levelThresholds
+        .slice()
+        .reverse()
+        .find((t) => t.min > points);
+      const nextLevelXP = nextThreshold ? nextThreshold.min : points + 1000;
+
+      // Count completed courses from enrollments
+      const completedCourses = await Enrollment.countDocuments({
+        student: studentId,
+        status: "COMPLETED",
+      });
+
+      // Badges
+      const badges = [
+        { id: "first-blood", name: "First Blood", description: "Complete your first quest", icon: "⚔️", earned: points > 0, rarity: "common" },
+        { id: "streak-3", name: "On Fire", description: "Achieve a 3-day streak", icon: "🔥", earned: maxStreak >= 3, rarity: "common" },
+        { id: "streak-7", name: "Unstoppable", description: "Achieve a 7-day streak", icon: "💪", earned: maxStreak >= 7, rarity: "rare" },
+        { id: "streak-30", name: "Iron Will", description: "Achieve a 30-day streak", icon: "🏆", earned: maxStreak >= 30, rarity: "epic" },
+        { id: "xp-500", name: "Rising Star", description: "Earn 500 XP", icon: "⭐", earned: points >= 500, rarity: "common" },
+        { id: "xp-2000", name: "Code Warrior", description: "Earn 2000 XP", icon: "🗡️", earned: points >= 2000, rarity: "rare" },
+        { id: "xp-5000", name: "Grand Master", description: "Earn 5000 XP", icon: "👑", earned: points >= 5000, rarity: "epic" },
+        { id: "xp-10000", name: "Legend", description: "Earn 10000 XP", icon: "🐉", earned: points >= 10000, rarity: "legendary" },
+        { id: "course-1", name: "Scholar", description: "Complete a course", icon: "📚", earned: completedCourses >= 1, rarity: "common" },
+        { id: "course-3", name: "Knowledge Seeker", description: "Complete 3 courses", icon: "🎓", earned: completedCourses >= 3, rarity: "rare" },
+        { id: "hot-streak", name: "Hot Streak", description: "Current streak of 5+", icon: "🌟", earned: streak >= 5, rarity: "rare" },
+      ];
+
+      // Skill radar from submissions by tags
+      const submissions = await StudentSubmission.find({
+        student: studentId,
+        isDeleted: false,
+        type: "CODING",
+      })
+        .populate("question", "tags")
+        .lean();
+
+      const tagScores = new Map<string, { total: number; count: number }>();
+      for (const sub of submissions) {
+        const question = sub.question as any;
+        if (question?.tags) {
+          for (const tag of question.tags) {
+            const existing = tagScores.get(tag) || { total: 0, count: 0 };
+            existing.total += (sub.score / sub.maxScore) * 100;
+            existing.count++;
+            tagScores.set(tag, existing);
+          }
+        }
+      }
+
+      const skillRadar = Array.from(tagScores.entries())
+        .map(([name, { total, count }]) => ({
+          name,
+          value: Math.round(total / count),
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 8);
+
+      res.status(200).json(
+        new ApiResponse(200, {
+          level: levelInfo.level,
+          title: levelInfo.title,
+          xp: points,
+          nextLevelXP,
+          streak,
+          maxStreak,
+          badges,
+          skillRadar,
+          completedCourses,
+        }, "Profile stats fetched successfully")
+      );
+    }
+  );
 }
 
 export default StudentController;
+

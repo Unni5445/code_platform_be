@@ -9,6 +9,10 @@ import DashboardPage from "@/pages/DashboardPage";
 import UsersPage from "@/pages/UsersPage";
 import CoursesPage from "@/pages/CoursesPage";
 import TestsPage from "@/pages/TestsPage";
+import ContestsPage from "@/pages/ContestsPage";
+import ContestSubmissionsPage from "@/pages/ContestSubmissionsPage";
+import MockInterviewsPage from "@/pages/MockInterviewsPage";
+import MockInterviewAttemptsPage from "@/pages/MockInterviewAttemptsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import CertificatesPage from "@/pages/CertificatesPage";
 import CertificateDetailPage from "@/pages/CertificateDetailPage";
@@ -49,6 +53,10 @@ function App() {
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/tests/:id/submissions" element={<TestSubmissionsPage />} />
               <Route path="/tests/:id/submissions/:submissionId" element={<SubmissionDetailPage />} />
+              <Route path="/contests" element={<ContestsPage />} />
+              <Route path="/contests/:id/submissions" element={<ContestSubmissionsPage />} />
+              <Route path="/interviews" element={<MockInterviewsPage />} />
+              <Route path="/interviews/:id/attempts" element={<MockInterviewAttemptsPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/certificates" element={<CertificatesPage />} />
               <Route path="/certificates/:id" element={<CertificateDetailPage />} />

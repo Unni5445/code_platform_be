@@ -4,6 +4,8 @@ export const PATHS = {
   USERS: "/users",
   COURSES: "/courses",
   TESTS: "/tests",
+  CONTESTS: "/contests",
+  INTERVIEWS: "/interviews",
   ANALYTICS: "/analytics",
   CERTIFICATES: "/certificates",
   SYSTEM: "/system",

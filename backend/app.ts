@@ -18,6 +18,8 @@ import moduleRoute from "./src/routes/module.routes";
 import submoduleRoute from "./src/routes/submodule.routes";
 import enrollmentRoute from "./src/routes/enrollment.routes";
 import studentRoute from "./src/routes/student.routes";
+import contestRoute from "./src/routes/contest.routes";
+import interviewRoute from "./src/routes/interview.routes";
 import uploadRoute from "./src/routes/upload.routes";
 import { apiKeyProtect } from "./src/middlewares/apiKeyProtect";
 
@@ -69,6 +71,8 @@ app.use("/api/v1", moduleRoute);
 app.use("/api/v1", submoduleRoute);
 app.use("/api/v1", enrollmentRoute);
 app.use("/api/v1", studentRoute);
+app.use("/api/v1", contestRoute);
+app.use("/api/v1", interviewRoute);
 // Database Connection
 mongoose
   .connect(process.env.MONGO_DB||"",)

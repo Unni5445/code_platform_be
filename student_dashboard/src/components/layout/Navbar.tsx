@@ -4,9 +4,10 @@ import {
   BookOpen,
   FileQuestion,
   Trophy,
-  Calendar,
   LogOut,
-  Code2,
+  Swords,
+  Shield,
+  Medal,
   Menu,
   X,
 } from "lucide-react";
@@ -25,11 +26,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: PATHS.DASHBOARD, label: "Dashboard", icon: LayoutDashboard },
-  { path: PATHS.PLAYGROUND, label: "Practice", icon: Code2 },
-  { path: PATHS.COURSES, label: "My Courses", icon: BookOpen },
+  { path: PATHS.QUESTS, label: "Quests", icon: Swords },
+  { path: PATHS.CONTESTS, label: "Contests", icon: Medal },
+  { path: PATHS.MOCK_INTERVIEWS, label: "Interviews", icon: Shield },
+  { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
   { path: PATHS.TESTS, label: "Tests", icon: FileQuestion },
   { path: PATHS.LEADERBOARD, label: "Leaderboard", icon: Trophy },
-  { path: PATHS.ACTIVITY, label: "Activity", icon: Calendar },
 ];
 
 export function Navbar() {

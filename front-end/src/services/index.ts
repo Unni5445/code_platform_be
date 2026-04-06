@@ -15,3 +15,8 @@ export type {
 } from "./dashboard.service";
 export { moduleService, submoduleService } from "./module.service";
 export { enrollmentService } from "./enrollment.service";
+export { contestService } from "./contest.service";
+export type { IContest, ContestListResponse, ContestLeaderboardEntry, IContestSubmission, IContestSubmissionsResponse } from "./contest.service";
+
+export { interviewService } from "./interview.service";
+export type { IMockInterview, IMockInterviewListResponse, IInterviewAttempt, IInterviewAttemptsResponse } from "./interview.service";

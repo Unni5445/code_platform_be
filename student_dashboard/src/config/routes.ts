@@ -7,7 +7,9 @@ export const PATHS = {
   TEST_TAKE: "/tests/:id/take",
   LEADERBOARD: "/leaderboard",
   ACTIVITY: "/activity",
-  PLAYGROUND: "/playground",
-  PLAYGROUND_PRACTICE: "/playground/:id",
+  QUESTS: "/quests",
+  ARENA: "/arena/:id",
+  CONTESTS: "/contests",
+  MOCK_INTERVIEWS: "/interviews",
   PROFILE: "/profile",
 } as const;

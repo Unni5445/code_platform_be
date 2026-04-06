@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   UserRound,
   ChevronDown,
+  Trophy,
+  Briefcase,
 } from "lucide-react";
 import { PATHS } from "@/config/routes";
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +46,8 @@ const superAdminNavItems: NavItem[] = [
   },
   { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
   { path: PATHS.TESTS, label: "Questions", icon: FileQuestion },
+  { path: PATHS.CONTESTS, label: "Contests", icon: Trophy },
+  { path: PATHS.INTERVIEWS, label: "Interviews", icon: Briefcase },
   { path: PATHS.ANALYTICS, label: "Analytics", icon: BarChart3 },
   { path: PATHS.CERTIFICATES, label: "Certificates", icon: Award },
   { path: PATHS.SYSTEM, label: "System", icon: Settings },

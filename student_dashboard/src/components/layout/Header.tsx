@@ -7,8 +7,10 @@ const pageTitles: Record<string, string> = {
   [PATHS.TESTS]: "Tests",
   [PATHS.LEADERBOARD]: "Leaderboard",
   [PATHS.ACTIVITY]: "Activity",
-  [PATHS.PROFILE]: "Profile",
-  [PATHS.PLAYGROUND]: "Playground",
+  [PATHS.PROFILE]: "Developer Identity",
+  [PATHS.QUESTS]: "Quest Map",
+  [PATHS.CONTESTS]: "Contest Arena",
+  [PATHS.MOCK_INTERVIEWS]: "Boss Battles",
 };
 
 export function Header() {
@@ -17,7 +19,7 @@ export function Header() {
   const pageTitle =
     pageTitles[location.pathname] ||
     (location.pathname.startsWith("/courses/") ? "Course Details" :
-     location.pathname.startsWith("/playground/") ? "Practice" : "Dashboard");
+     location.pathname.startsWith("/arena/") ? "Code Arena" : "Dashboard");
 
   return (
     <header className="py-4 px-4 sm:px-6 lg:px-8 bg-transparent">

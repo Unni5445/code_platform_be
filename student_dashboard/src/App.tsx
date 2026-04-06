@@ -21,8 +21,11 @@ import ProfilePage from "@/pages/ProfilePage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import AllCoursesPage from "./pages/AllCoursesPage";
 import CertificatePage from "@/pages/CertificatePage";
-import PlaygroundPage from "@/pages/PlaygroundPage";
-import PlaygroundPracticePage from "@/pages/PlaygroundPracticePage";
+import QuestMapPage from "@/pages/QuestMapPage";
+import ArenaPage from "@/pages/ArenaPage";
+import ContestArenaPage from "@/pages/ContestArenaPage";
+import ContestBattlePage from "@/pages/ContestBattlePage";
+import MockInterviewsPage from "@/pages/MockInterviewsPage";
 import TestResultPage from "@/pages/TestResultPage";
 
 const TestTakePage = lazy(() => import("@/pages/TestTakePage"));
@@ -78,6 +81,18 @@ function App() {
             />
           </Route>
 
+          {/* Contest taking - fullscreen, no sidebar */}
+          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} requireOnboarding />}>
+            <Route
+              path="/contests/:id/battle"
+              element={
+                <Suspense fallback={<LazyFallback />}>
+                  <ContestBattlePage />
+                </Suspense>
+              }
+            />
+          </Route>
+
           {/* Dashboard routes with sidebar */}
           <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} requireOnboarding />}>
             <Route element={<DashboardLayout />}>
@@ -87,8 +102,10 @@ function App() {
               <Route path="/certificates/:courseId" element={<CertificatePage />} />
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/tests/results/:id" element={<TestResultPage />} />
-              <Route path="/playground" element={<PlaygroundPage />} />
-              <Route path="/playground/:id" element={<PlaygroundPracticePage />} />
+              <Route path="/quests" element={<QuestMapPage />} />
+              <Route path="/arena/:id" element={<ArenaPage />} />
+              <Route path="/contests" element={<ContestArenaPage />} />
+              <Route path="/interviews" element={<MockInterviewsPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/profile" element={<ProfilePage />} />
