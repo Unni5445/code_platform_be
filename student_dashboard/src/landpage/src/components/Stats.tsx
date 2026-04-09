@@ -61,7 +61,7 @@ export default function Stats() {
   ];
 
   return (
-    <section className="px-6 pt-6 pb-18 max-md:px-[1.15rem]" id="stats">
+    <section className=" text-white px-6 pt-6 pb-18 max-md:px-[1.15rem]" id="stats">
       <div className="landing-reveal mx-auto max-w-[1120px] rounded-[26px] border border-blue-600/60 bg-[radial-gradient(circle_at_top,#020617,#020617)] px-8 py-10 shadow-[0_26px_80px_rgba(15,23,42,1)] max-md:px-5">
         <div className="mb-8 text-center">
           <h2 className="mb-2 text-2xl font-bold">Trusted by a Growing Community</h2>

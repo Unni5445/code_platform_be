@@ -160,21 +160,21 @@ export default function PlaygroundPracticePage() {
       <div className="flex items-start gap-4">
         <button
           onClick={() => navigate("/playground")}
-          className="mt-1 rounded-xl border border-slate-800/90 bg-slate-900/80 p-2 text-slate-300 hover:border-sky-400/80 hover:text-white hover:bg-slate-900/90 transition-colors cursor-pointer"
+          className="mt-1 rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:border-primary-500 hover:text-primary-600 transition-all cursor-pointer shadow-sm"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-slate-50">{question.title}</h1>
+            <h1 className="text-xl font-bold text-slate-900">{question.title}</h1>
             <Badge variant={DIFFICULTY_COLORS[question.difficulty]}>
               {question.difficulty}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 text-sm text-slate-400">
+          <div className="flex items-center gap-4 text-sm font-medium text-slate-500">
             {question.points > 0 && (
               <span className="flex items-center gap-1">
-                <Zap className="h-3.5 w-3.5 text-amber-300" />
+                <Zap className="h-3.5 w-3.5 text-amber-600" />
                 {question.points} pts
               </span>
             )}
@@ -192,10 +192,10 @@ export default function PlaygroundPracticePage() {
         {/* Left - Question Description */}
         <div className="space-y-4">
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-slate-50">Description</h2>
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">Description</h2>
             {question.description ? (
               <div
-                className="prose prose-sm max-w-none text-slate-200 prose-headings:text-slate-100 prose-p:text-slate-300 prose-strong:text-slate-100 prose-code:text-sky-300"
+                className="prose prose-sm max-w-none text-slate-700 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-code:text-primary-600 prose-pre:bg-slate-50 prose-pre:text-slate-800"
                 dangerouslySetInnerHTML={{ __html: question.description }}
               />
             ) : (
@@ -206,23 +206,23 @@ export default function PlaygroundPracticePage() {
           {/* Sample Test Cases (visible ones) */}
           {question.testCases && question.testCases.length > 0 && (
             <Card>
-              <h2 className="mb-3 text-sm font-semibold text-slate-50">Examples</h2>
-              <div className="space-y-3">
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">Examples</h2>
+              <div className="space-y-4">
                 {question.testCases.map((tc, i) => (
-                  <div key={i} className="space-y-2 rounded-xl bg-slate-900/80 p-3">
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                  <div key={i} className="space-y-3 rounded-xl bg-slate-50 p-4 border border-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wide">
                       Example {i + 1}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="mb-1 text-xs text-slate-400">Input</p>
-                        <pre className="code-font whitespace-pre-wrap rounded border border-slate-800 bg-slate-950/70 p-2 text-xs text-slate-100">
+                        <p className="mb-1.5 text-xs font-bold text-slate-400">INPUT</p>
+                        <pre className="code-font whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-900 shadow-sm">
                           {tc.input || "(empty)"}
                         </pre>
                       </div>
                       <div>
-                        <p className="mb-1 text-xs text-slate-400">Expected Output</p>
-                        <pre className="code-font whitespace-pre-wrap rounded border border-slate-800 bg-slate-950/70 p-2 text-xs text-emerald-200">
+                        <p className="mb-1.5 text-xs font-bold text-slate-400">EXPECTED OUTPUT</p>
+                        <pre className="code-font whitespace-pre-wrap rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800 shadow-sm font-bold">
                           {tc.output}
                         </pre>
                       </div>
@@ -241,7 +241,7 @@ export default function PlaygroundPracticePage() {
             <select
               value={language}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 shadow-sm"
             >
               {(question.languages || ["javascript"]).map((lang) => (
                 <option key={lang} value={lang}>
@@ -261,7 +261,7 @@ export default function PlaygroundPracticePage() {
                   )
                 }
                 size="sm"
-                variant="ghost"
+                variant="secondary"
               >
                 {isRunning ? "Running..." : "Run"}
               </Button>
@@ -283,13 +283,13 @@ export default function PlaygroundPracticePage() {
           </div>
 
           {/* Editor */}
-          <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <Editor
               height="400px"
               language={MONACO_LANGUAGE_MAP[language] || language}
               value={code}
               onChange={(value) => setCode(value || "")}
-              theme="vs-dark"
+              theme="light"
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
@@ -304,29 +304,29 @@ export default function PlaygroundPracticePage() {
           </div>
 
           {/* Custom Input */}
-          <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
-            <div className="border-b border-slate-800/80 bg-slate-900/80 px-4 py-2">
-              <span className="text-sm font-semibold text-slate-100">Custom Input</span>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 bg-slate-50 px-4 py-2">
+              <span className="text-sm font-bold text-slate-700">Custom Input</span>
             </div>
             <textarea
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
               placeholder="Enter input for your code here..."
-              className="w-full resize-none bg-transparent px-4 py-3 font-mono text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+              className="w-full resize-none bg-transparent px-4 py-3 font-mono text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
               rows={3}
             />
           </div>
 
           {/* Run Output */}
           {runOutput && (
-            <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
-              <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-2">
-                <span className="text-sm font-semibold text-slate-100">Output</span>
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm mt-4">
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+                <span className="text-sm font-bold text-slate-700">Output</span>
                 {runHasError && (
-                  <span className="text-xs font-medium text-red-400">Error</span>
+                  <span className="text-xs font-bold text-red-600">Error</span>
                 )}
               </div>
-              <pre className={`max-h-48 overflow-y-auto whitespace-pre-wrap px-4 py-3 font-mono text-sm ${runHasError ? "text-red-400" : "text-slate-100"}`}>
+              <pre className={`max-h-48 overflow-y-auto whitespace-pre-wrap px-4 py-3 font-mono text-sm ${runHasError ? "text-red-600 bg-red-50" : "text-slate-800 bg-slate-50"}`}>
                 {runOutput}
               </pre>
             </div>
@@ -334,13 +334,13 @@ export default function PlaygroundPracticePage() {
 
           {/* Submit success banner */}
           {submitResult?.allPassed && (
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
-                <Trophy className="h-5 w-5 text-emerald-300" />
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <Trophy className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-emerald-200">Solution Accepted!</p>
-                <p className="mt-0.5 flex items-center gap-3 text-xs text-emerald-200/80">
+                <p className="text-sm font-bold text-emerald-800">Solution Accepted!</p>
+                <p className="mt-0.5 flex items-center gap-3 text-xs font-medium text-emerald-700">
                   <span className="flex items-center gap-1">
                     <Zap className="h-3 w-3" /> +{submitResult.score} points
                   </span>
@@ -354,31 +354,31 @@ export default function PlaygroundPracticePage() {
 
           {/* Test Results */}
           {activeResults && (
-            <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/80">
-              <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-3">
-                <span className="text-sm font-semibold text-slate-100">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
+                <span className="text-sm font-bold text-slate-700">
                   Submission Results
                 </span>
                 <span
-                  className={`text-sm font-semibold ${
-                    activePassed === activeTotal ? "text-emerald-300" : "text-amber-300"
+                  className={`text-sm font-bold ${
+                    activePassed === activeTotal ? "text-emerald-600" : "text-amber-600"
                   }`}
                 >
                   {activePassed}/{activeTotal} Passed
                 </span>
               </div>
-              <div className="divide-y divide-slate-800/80">
+              <div className="divide-y divide-slate-100">
                 {activeResults.map((tc, i) => (
                   <div key={i} className="p-3">
                     <div className="mb-2 flex items-center gap-2">
                       {tc.passed ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-400" />
+                        <XCircle className="h-4 w-4 text-red-600" />
                       )}
                       <span
-                        className={`text-sm font-medium ${
-                          tc.passed ? "text-emerald-200" : "text-red-300"
+                        className={`text-sm font-bold ${
+                          tc.passed ? "text-emerald-700" : "text-red-700"
                         }`}
                       >
                         Test Case {i + 1}
@@ -387,22 +387,22 @@ export default function PlaygroundPracticePage() {
                     {!tc.hidden && (
                       <div className="grid grid-cols-3 gap-3 text-xs code-font">
                         <div>
-                          <p className="mb-1 font-sans text-slate-400">Input</p>
-                          <pre className="whitespace-pre-wrap rounded bg-slate-900/80 p-2 text-slate-100">
+                          <p className="mb-1 font-bold text-slate-400">INPUT</p>
+                          <pre className="whitespace-pre-wrap rounded-lg bg-slate-50 border border-slate-100 p-2 text-slate-800">
                             {tc.input || "(empty)"}
                           </pre>
                         </div>
                         <div>
-                          <p className="mb-1 font-sans text-slate-400">Expected</p>
-                          <pre className="whitespace-pre-wrap rounded bg-slate-900/80 p-2 text-emerald-200">
+                          <p className="mb-1 font-bold text-slate-400">EXPECTED</p>
+                          <pre className="whitespace-pre-wrap rounded-lg bg-emerald-50 border border-emerald-100 p-2 text-emerald-800 font-bold">
                             {tc.expected}
                           </pre>
                         </div>
                         <div>
-                          <p className="mb-1 font-sans text-slate-400">Actual</p>
+                          <p className="mb-1 font-bold text-slate-400">ACTUAL</p>
                           <pre
-                            className={`whitespace-pre-wrap rounded p-2 ${
-                              tc.passed ? "bg-emerald-500/10 text-emerald-200" : "bg-red-500/10 text-red-200"
+                            className={`whitespace-pre-wrap rounded-lg p-2 border ${
+                              tc.passed ? "bg-emerald-50 border-emerald-100 text-emerald-800 font-bold" : "bg-red-50 border-red-100 text-red-800 font-bold"
                             }`}
                           >
                             {tc.actual || "(empty)"}

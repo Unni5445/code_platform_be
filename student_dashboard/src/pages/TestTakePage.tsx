@@ -168,7 +168,7 @@ export default function TestTakePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Spinner size="lg" />
       </div>
     );
@@ -178,11 +178,11 @@ export default function TestTakePage() {
   if (showResults && results) {
     const percentage = Math.round((results.totalScore / results.maxScore) * 100);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
-        <Card className="max-w-md w-full mx-4">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="max-w-md w-full shadow-2xl border-slate-200">
           <div className="text-center">
             <div
-              className={`text-6xl font-bold mb-2 ${
+              className={`text-6xl font-extrabold mb-4 ${
                 percentage >= 70
                   ? "text-emerald-600"
                   : percentage >= 40
@@ -192,19 +192,19 @@ export default function TestTakePage() {
             >
               {percentage}%
             </div>
-            <p className="text-gray-500 mb-1">Your Score</p>
-            <p className="text-2xl font-bold text-white mb-6">
-              {results.totalScore} / {results.maxScore}
+            <p className="text-slate-500 font-bold uppercase tracking-wider text-xs mb-1">Your Final Score</p>
+            <p className="text-3xl font-extrabold text-slate-900 mb-8">
+              {results.totalScore} <span className="text-slate-400 text-lg font-medium">/ {results.maxScore}</span>
             </p>
             <Badge
               variant={percentage >= 70 ? "success" : percentage >= 40 ? "warning" : "danger"}
-              className="text-sm px-4 py-1 mb-6"
+              className="text-sm px-6 py-1.5 mb-8 rounded-full font-bold uppercase tracking-wide"
             >
-              {percentage >= 70 ? "Passed" : percentage >= 40 ? "Needs Improvement" : "Failed"}
+              {percentage >= 70 ? "PASSED" : percentage >= 40 ? "NEEDS IMPROVEMENT" : "FAILED"}
             </Badge>
-            <div className="mt-6">
-              <Button onClick={() => navigate("/tests")} className="w-full">
-                Back to Tests
+            <div className="mt-4">
+              <Button onClick={() => navigate("/tests")} className="w-full font-bold py-4 rounded-2xl shadow-lg shadow-primary-500/20">
+                Back to Tests Dashboard
               </Button>
             </div>
           </div>
@@ -216,43 +216,41 @@ export default function TestTakePage() {
   // Start screen
   if (!hasStarted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
-        <Card className="max-w-lg w-full mx-4">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="max-w-xl w-full shadow-2xl border-slate-200">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white mb-2">{test?.title}</h1>
-            {test?.description && <p className="text-gray-500 mb-6">{test.description}</p>}
-            <div className="flex items-center justify-center gap-6 mb-8 text-sm text-gray-600">
-              <div>
-                <span className="block text-2xl font-bold text-white">{questions.length}</span>
-                Questions
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-3">{test?.title}</h1>
+            {test?.description && <p className="text-slate-500 font-medium text-sm mb-8 leading-relaxed px-4">{test.description}</p>}
+            <div className="grid grid-cols-3 gap-4 mb-10">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <span className="block text-2xl font-extrabold text-slate-900">{questions.length}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Questions</span>
               </div>
-              <div className="h-10 w-px bg-gray-200" />
-              <div>
-                <span className="block text-2xl font-bold text-white">{test?.duration || 60}</span>
-                Minutes
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <span className="block text-2xl font-extrabold text-slate-900">{test?.duration || 60}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minutes</span>
               </div>
-              <div className="h-10 w-px bg-gray-200" />
-              <div>
-                <span className="block text-2xl font-bold text-white">{test?.totalPoints || 0}</span>
-                Points
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <span className="block text-2xl font-extrabold text-slate-900">{test?.totalPoints || 0}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Points</span>
               </div>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-              <div className="flex items-start gap-2">
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-8 text-left shadow-xs">
+              <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-800">
-                  <p className="font-medium mb-1">Before you begin:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>The timer starts once you begin the test</li>
-                    <li>You can navigate between questions freely</li>
-                    <li>The test auto-submits when time runs out</li>
-                    <li>Do not close or refresh the tab during the test</li>
+                <div className="text-sm text-amber-900">
+                  <p className="font-bold mb-2 uppercase tracking-wide text-xs">Important Guidelines:</p>
+                  <ul className="space-y-1.5 font-medium opacity-90">
+                    <li className="flex items-center gap-2 text-xs"><div className="h-1 w-1 rounded-full bg-amber-400" /> The timer starts immediately</li>
+                    <li className="flex items-center gap-2 text-xs"><div className="h-1 w-1 rounded-full bg-amber-400" /> Free navigation between tasks</li>
+                    <li className="flex items-center gap-2 text-xs"><div className="h-1 w-1 rounded-full bg-amber-400" /> Auto-submission on timeout</li>
+                    <li className="flex items-center gap-2 text-xs"><div className="h-1 w-1 rounded-full bg-amber-400" /> Do not close or refresh the browser</li>
                   </ul>
                 </div>
               </div>
             </div>
-            <Button onClick={handleStart} size="lg" className="w-full">
-              Start Test
+            <Button onClick={handleStart} size="lg" className="w-full font-bold py-4 rounded-2xl shadow-xl shadow-primary-500/20">
+              Start Challenge Now
             </Button>
           </div>
         </Card>
@@ -261,13 +259,13 @@ export default function TestTakePage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-secondary">
+    <div className="min-h-screen bg-slate-50">
       {/* Top Bar */}
-      <div className="sticky top-0 z-30 bg-surface border-b border-surface-border px-6 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div>
-          <h1 className="font-bold text-white">{test?.title}</h1>
-          <p className="text-xs text-gray-500">
-            Question {currentIndex + 1} of {questions.length}
+          <h1 className="font-bold text-slate-900">{test?.title}</h1>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+            Question {currentIndex + 1} <span className="text-slate-300">/</span> {questions.length}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -275,19 +273,19 @@ export default function TestTakePage() {
 
           {/* Fullscreen toggle */}
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            className="text-slate-600 font-bold bg-slate-100 hover:bg-slate-200 shadow-xs"
             leftIcon={
               isFullscreen ? (
-                <Minimize className="h-4 w-4" />
+                <Minimize className="h-3.5 w-3.5" />
               ) : (
-                <Maximize className="h-4 w-4" />
+                <Maximize className="h-3.5 w-3.5" />
               )
             }
           >
-            {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            {isFullscreen ? "Exit" : "Full View"}
           </Button>
 
           <Button
@@ -303,23 +301,23 @@ export default function TestTakePage() {
 
       <div className="flex">
         {/* Question Navigator Sidebar */}
-        <div className="w-64 shrink-0 p-4 border-r border-surface-border bg-surface min-h-[calc(100vh-64px)]">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Questions</h3>
+        <div className="w-64 shrink-0 p-6 border-r border-slate-200 bg-white min-h-[calc(100vh-64px)] shadow-sm">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Questions</h3>
           <QuestionNavigator
             total={questions.length}
             current={currentIndex}
             answeredIndices={answeredIndices}
             onNavigate={setCurrentIndex}
           />
-          <div className="mt-4 space-y-1 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded bg-primary-600" /> Current
+          <div className="mt-8 space-y-2 text-[10px] font-bold text-slate-500 border-t border-slate-50 pt-6">
+            <div className="flex items-center gap-2.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary-600 shadow-sm shadow-primary-500/30" /> CURRENT
             </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded bg-emerald-100" /> Answered
+            <div className="flex items-center gap-2.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30" /> ANSWERED
             </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded bg-gray-100" /> Unanswered
+            <div className="flex items-center gap-2.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-slate-200" /> UNANSWERED
             </div>
           </div>
         </div>
@@ -344,12 +342,12 @@ export default function TestTakePage() {
                   >
                     {currentQuestion.difficulty}
                   </Badge>
-                  <span className="text-sm text-gray-500">{currentQuestion.points} pts</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{currentQuestion.points} POINTS</span>
                 </div>
-                <h2 className="text-lg font-semibold text-white">{currentQuestion.title}</h2>
+                <h2 className="text-xl font-bold text-slate-900 leading-tight">{currentQuestion.title}</h2>
                 {currentQuestion.description && (
                   <div
-                    className="text-sm text-gray-600 mt-2 prose prose-sm max-w-none"
+                    className="text-sm font-medium text-slate-600 mt-3 prose prose-slate max-w-none"
                     dangerouslySetInnerHTML={{ __html: currentQuestion.description }}
                   />
                 )}
@@ -385,11 +383,12 @@ export default function TestTakePage() {
               />
 
               {/* Navigation Buttons */}
-              <div className="flex items-center justify-between pt-4 border-t border-surface-border">
+              <div className="flex items-center justify-between pt-6 border-t border-slate-100">
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
                   disabled={currentIndex === 0}
+                  className="font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
                   leftIcon={<ChevronLeft className="h-4 w-4" />}
                 >
                   Previous
@@ -397,9 +396,10 @@ export default function TestTakePage() {
                 <Button
                   onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
                   disabled={currentIndex === questions.length - 1}
+                  className="font-bold px-8 shadow-md"
                   rightIcon={<ChevronRight className="h-4 w-4" />}
                 >
-                  Next
+                  Next Task
                 </Button>
               </div>
             </div>
@@ -423,20 +423,20 @@ export default function TestTakePage() {
           </>
         }
       >
-        <div className="space-y-4">
-          <p className="text-gray-600">Are you sure you want to submit your test?</p>
-          <div className="rounded-xl p-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Answered:</span>
-              <span className="font-medium text-white">
+        <div className="space-y-6">
+          <p className="text-slate-600 font-medium">Are you sure you want to finish your assessment and submit all answers?</p>
+          <div className="rounded-2xl bg-slate-50 border border-slate-100 p-5 shadow-inner">
+            <div className="flex justify-between items-center text-sm mb-3">
+              <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Total Answered</span>
+              <span className="font-extrabold text-slate-900 border bg-white px-3 py-1 rounded-lg">
                 {answeredIndices.size} / {questions.length}
               </span>
             </div>
             {answeredIndices.size < questions.length && (
-              <p className="text-amber-600 text-sm mt-2 flex items-center gap-1">
+              <div className="bg-red-50 text-red-600 text-[11px] font-bold p-3 rounded-xl flex items-center gap-2 border border-red-100">
                 <AlertTriangle className="h-4 w-4" />
-                You have {questions.length - answeredIndices.size} unanswered question(s)
-              </p>
+                Missing {questions.length - answeredIndices.size} answers in your assessment
+              </div>
             )}
           </div>
         </div>

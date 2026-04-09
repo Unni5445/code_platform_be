@@ -13,12 +13,12 @@ export function TestTimer({ formatted, timeLeft }: TestTimerProps) {
   return (
     <div
       className={clsx(
-        "flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-lg font-bold",
+        "flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-lg font-bold border shadow-sm",
         isCritical
-          ? "bg-red-100 text-red-700 animate-pulse"
+          ? "bg-red-50 text-red-700 border-red-100 animate-pulse"
           : isWarning
-          ? "bg-amber-100 text-amber-700"
-          : "bg-gray-100 text-gray-700"
+          ? "bg-amber-50 text-amber-700 border-amber-100"
+          : "bg-white text-slate-700 border-slate-200"
       )}
     >
       <Clock className="h-5 w-5" />

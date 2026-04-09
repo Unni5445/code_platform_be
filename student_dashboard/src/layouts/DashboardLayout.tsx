@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 
 export default function DashboardLayout() {
   return (
-    <div className="min-h-screen mc-page flex flex-col bg-slate-950">
+    <div className="min-h-screen mc-page flex flex-col bg-slate-50">
       <Navbar />
       <div className="flex-1 w-full max-w-[1600px] mx-auto">
         <Header />

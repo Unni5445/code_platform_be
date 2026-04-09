@@ -12,7 +12,7 @@ export default function Hero() {
           <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-green-500/50 bg-green-600/12 px-3 py-0.5 text-xs text-green-200">
             New &bull; Mock Contests Every Week
           </span>
-          <h1 className="mb-4 text-[clamp(2.35rem,4vw,3rem)] leading-[1.1] max-[480px]:text-[2rem]">
+          <h1 className="mb-4 text-[clamp(2.35rem,4vw,3rem)] leading-[1.1] max-[480px]:text-[2rem] text-white">
             Level Up Your{" "}
             <span className="bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent">
               Coding Skills

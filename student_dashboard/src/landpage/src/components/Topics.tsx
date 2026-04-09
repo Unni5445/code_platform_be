@@ -9,7 +9,7 @@ export default function Topics() {
   ];
 
   return (
-    <section className="px-6 py-18 max-md:px-[1.15rem]" id="topics">
+    <section className=" text-white px-6 py-18 max-md:px-[1.15rem]" id="topics">
       <div className="landing-reveal mb-11 text-center">
         <h2 className="mb-2.5 text-[1.6rem] font-bold">Popular Topics</h2>
         <p className="text-[0.95rem] text-gray-400">Sharpen your skills on the most asked topics in coding interviews.</p>

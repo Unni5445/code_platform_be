@@ -6,7 +6,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="border-t border-blue-800/80 bg-[radial-gradient(circle_at_top,#020617,#020617)]">
+    <footer className="text-white border-t border-blue-800/80 bg-[radial-gradient(circle_at_top,#020617,#020617)]">
       <div className="mx-auto grid max-w-[1120px] grid-cols-[minmax(0,1.3fr)_repeat(2,minmax(0,1fr))] gap-10 px-6 pt-9 pb-6 max-md:grid-cols-1">
         <div>
           <div className="inline-flex items-center gap-2.5">

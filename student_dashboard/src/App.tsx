@@ -48,9 +48,12 @@ function App() {
             duration: 3000,
             style: {
               borderRadius: "12px",
-              background: "#1f2937",
-              color: "#fff",
+              background: "#fff",
+              color: "#0f172a",
+              border: "1px solid #e2e8f0",
               fontSize: "14px",
+              fontWeight: "500",
+              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
             },
           }}
         />

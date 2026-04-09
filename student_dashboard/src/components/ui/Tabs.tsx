@@ -14,7 +14,7 @@ interface TabsProps {
 
 export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
   return (
-    <div className="flex gap-1 bg-slate-800/60 p-1 rounded-xl w-fit border border-slate-700/60">
+    <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit border border-slate-200 shadow-sm">
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -22,18 +22,18 @@ export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
           className={clsx(
             "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer",
             activeTab === tab.id
-              ? "bg-primary-500/30 text-white border border-primary-500/50 shadow-lg shadow-primary-500/10"
-              : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+              ? "bg-white text-primary-700 border border-primary-100 shadow-sm"
+              : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
           )}
         >
           {tab.label}
           {tab.count !== undefined && (
             <span
               className={clsx(
-                "ml-2 px-2 py-0.5 rounded-full text-xs",
+                "ml-2 px-2 py-0.5 rounded-full text-xs font-bold",
                 activeTab === tab.id
-                  ? "bg-primary-500/40 text-white"
-                  : "bg-slate-700/80 text-slate-400"
+                  ? "bg-primary-100 text-primary-700"
+                  : "bg-slate-200 text-slate-500"
               )}
             >
               {tab.count}

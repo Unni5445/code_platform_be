@@ -41,7 +41,7 @@ export default function Features() {
             <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-[14px] text-[1.1rem] ${f.iconClass}`}>
               <span>{f.icon}</span>
             </div>
-            <h3 className="mb-2 text-[1.05rem] font-bold">{f.title}</h3>
+            <h3 className="mb-2 text-[1.05rem] font-bold text-white">{f.title}</h3>
             <p className="mb-4 text-sm text-gray-400">{f.desc}</p>
             <button className="cursor-pointer rounded-full border border-slate-400/70 bg-slate-900/90 px-4 py-2 text-[0.78rem] font-medium text-gray-200 transition-all duration-300 hover:-translate-y-0.5 hover:border-green-500/90 hover:bg-[radial-gradient(circle,rgba(34,197,94,0.3),transparent)] hover:shadow-[0_16px_32px_rgba(34,197,94,0.45)]">
               {f.btn}

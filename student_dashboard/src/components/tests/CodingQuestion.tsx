@@ -116,7 +116,7 @@ export function CodingQuestion({
           options={languageOptions}
           value={language}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleLanguageChange(e.target.value)}
-          className="w-48"
+          className="w-48 font-bold border-slate-200"
         />
         <div className="flex gap-2">
           <Button
@@ -124,7 +124,7 @@ export function CodingQuestion({
             disabled={isRunning || isSubmitting || !code.trim()}
             leftIcon={isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             size="sm"
-            variant="ghost"
+            variant="secondary"
           >
             {isRunning ? "Running..." : "Run Code"}
           </Button>
@@ -140,13 +140,13 @@ export function CodingQuestion({
       </div>
 
       {/* Code Editor */}
-      <div className="rounded-xl overflow-hidden border border-surface-border">
+      <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
         <Editor
           height="400px"
           language={MONACO_LANGUAGE_MAP[language] || language}
           value={code}
           onChange={(value) => onCodeChange(value || "")}
-          theme="vs-dark"
+          theme="light"
           options={{
             minimap: { enabled: false },
             fontSize: 14,
@@ -160,29 +160,29 @@ export function CodingQuestion({
       </div>
 
       {/* Custom Input */}
-      <div className="rounded-xl border border-surface-border overflow-hidden">
-        <div className="px-4 py-2 bg-slate-900/80 border-b border-surface-border">
-          <span className="text-sm font-medium text-slate-100">Custom Input</span>
+      <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="px-4 py-2 bg-slate-50 border-b border-slate-100">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">Custom Input</span>
         </div>
         <textarea
           value={customInput}
           onChange={(e) => setCustomInput(e.target.value)}
           placeholder="Enter input for your code here..."
-          className="w-full resize-none bg-slate-950 px-4 py-3 font-mono text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+          className="w-full resize-none bg-white px-4 py-3 font-mono text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
           rows={3}
         />
       </div>
 
       {/* Run Output */}
       {output && (
-        <div className="rounded-xl border border-surface-border overflow-hidden">
-          <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-100">Output</span>
+        <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-4">
+          <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">Output</span>
             {hasError && (
-              <span className="text-xs font-medium text-red-600">Error</span>
+              <span className="text-xs font-bold text-red-600">Execution Error</span>
             )}
           </div>
-          <pre className={`p-4 text-sm font-mono whitespace-pre-wrap max-h-48 overflow-y-auto ${hasError ? "text-red-600" : "text-slate-100"}`}>
+          <pre className={`p-4 text-sm font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed ${hasError ? "text-red-700 bg-red-50" : "text-slate-800 bg-white"}`}>
             {output}
           </pre>
         </div>
@@ -190,46 +190,46 @@ export function CodingQuestion({
 
       {/* Test Case Results (after Submit) */}
       {testCaseResults && (
-        <div className="rounded-xl border border-surface-border overflow-hidden">
-          <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-100">Test Cases</span>
-            <span className={`text-sm font-semibold ${passedCount === totalCount ? "text-emerald-400" : "text-amber-400"}`}>
-              {passedCount}/{totalCount} Passed
+        <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-4">
+          <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">Test Results</span>
+            <span className={`text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border ${passedCount === totalCount ? "text-emerald-700 bg-emerald-50 border-emerald-100" : "text-amber-700 bg-amber-50 border-amber-100"}`}>
+              {passedCount} / {totalCount} Passed
             </span>
           </div>
-          <div className="divide-y divide-surface-border">
+          <div className="divide-y divide-slate-100">
             {testCaseResults.map((tc, i) => (
-              <div key={i} className="p-3">
-                <div className="flex items-center gap-2 mb-2">
+              <div key={i} className="p-4 bg-white">
+                <div className="flex items-center gap-2 mb-3">
                   {tc.passed ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-red-400" />
+                    <XCircle className="h-4 w-4 text-red-600" />
                   )}
-                  <span className={`text-sm font-medium ${tc.passed ? "text-emerald-300" : "text-red-300"}`}>
+                  <span className={`text-sm font-bold ${tc.passed ? "text-emerald-700" : "text-red-700"}`}>
                     Test Case {i + 1}
                   </span>
                 </div>
                 {!tc.hidden && (
-                  <div className="grid grid-cols-3 gap-3 text-xs font-mono">
+                  <div className="grid grid-cols-3 gap-4 text-[10px] font-bold">
                     <div>
-                      <p className="text-slate-400 mb-1 font-sans">Input</p>
-                      <pre className="bg-slate-900/80 rounded p-2 whitespace-pre-wrap text-slate-100">{tc.input || "(empty)"}</pre>
+                      <p className="text-slate-400 mb-1.5 uppercase tracking-wider">Input</p>
+                      <pre className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 whitespace-pre-wrap text-slate-900 shadow-sm">{tc.input || "(empty)"}</pre>
                     </div>
                     <div>
-                      <p className="text-slate-400 mb-1 font-sans">Expected</p>
-                      <pre className="bg-slate-900/80 rounded p-2 whitespace-pre-wrap text-emerald-200">{tc.expected}</pre>
+                      <p className="text-slate-400 mb-1.5 uppercase tracking-wider">Expected</p>
+                      <pre className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 whitespace-pre-wrap text-emerald-900 shadow-sm">{tc.expected}</pre>
                     </div>
                     <div>
-                      <p className="text-slate-400 mb-1 font-sans">Actual</p>
-                      <pre className={`rounded p-2 whitespace-pre-wrap ${tc.passed ? "bg-emerald-500/10 text-emerald-200" : "bg-red-500/10 text-red-200"}`}>
+                      <p className="text-slate-400 mb-1.5 uppercase tracking-wider">Actual</p>
+                      <pre className={`rounded-lg p-2.5 whitespace-pre-wrap border shadow-sm ${tc.passed ? "bg-emerald-50 border-emerald-200 text-emerald-900" : "bg-red-50 border-red-200 text-red-900"}`}>
                         {tc.actual || "(empty)"}
                       </pre>
                     </div>
                   </div>
                 )}
                 {tc.hidden && !tc.passed && (
-                  <p className="text-xs text-slate-500 ml-6">Hidden test case — wrong answer</p>
+                  <p className="text-xs font-medium text-slate-400 ml-6 italic">Hidden test case failed</p>
                 )}
               </div>
             ))}

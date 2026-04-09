@@ -40,7 +40,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800/80">
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/60">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Brand */}
@@ -49,8 +49,8 @@ export function Navbar() {
               <img src={logo} alt="Logo" className="h-full w-full text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-white font-bold text-sm leading-tight">Morattu Coder</h1>
-              <p className="text-slate-400 text-[10px]">Student Portal</p>
+              <h1 className="text-slate-900 font-bold text-sm leading-tight">Morattu Coder</h1>
+              <p className="text-slate-500 text-[10px]">Student Portal</p>
             </div>
           </div>
 
@@ -68,8 +68,8 @@ export function Navbar() {
                   className={clsx(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary-500/20 text-white border border-primary-500/40 shadow-[0_0_15px_rgba(var(--primary-500),0.1)]"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                      ? "bg-primary-50 text-primary-700 border border-primary-200 shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   )}
                 >
                   <item.icon
@@ -83,13 +83,16 @@ export function Navbar() {
 
           {/* Right section: Profile & Mobile Toggle */}
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-3 pr-4 border-r border-slate-700/80">
+            <NavLink 
+              to="/profile"
+              className="hidden sm:flex items-center gap-3 pr-4 border-r border-slate-200 hover:opacity-80 transition-opacity cursor-pointer"
+            >
               <div className="text-right">
-                <p className="text-sm font-medium text-white">{user?.name || "Student"}</p>
-                <p className="text-xs text-slate-400">{user?.email || ""}</p>
+                <p className="text-sm font-medium text-slate-900">{user?.name || "Student"}</p>
+                <p className="text-xs text-slate-500">{user?.email || ""}</p>
               </div>
               <Avatar name={user?.name || "Student"} size="sm" />
-            </div>
+            </NavLink>
 
             <button
               onClick={() => logout()}
@@ -103,7 +106,7 @@ export function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-200 cursor-pointer"
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 cursor-pointer shadow-sm"
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -113,7 +116,7 @@ export function Navbar() {
 
       {/* Mobile Navigation */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-slate-800/80 bg-slate-900/95 backdrop-blur-xl">
+        <div className="lg:hidden border-t border-slate-100 bg-white shadow-xl">
           <div className="px-4 py-4 space-y-1">
             {navItems.map((item) => {
               const isActive =
@@ -128,8 +131,8 @@ export function Navbar() {
                   className={clsx(
                     "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary-500/20 text-white border border-primary-500/40"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                      ? "bg-primary-50 text-primary-700 border border-primary-200"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   )}
                 >
                   <item.icon
@@ -140,13 +143,17 @@ export function Navbar() {
               );
             })}
             
-            <div className="mt-4 pt-4 border-t border-slate-800/80 text-center flex flex-col items-center">
+            <NavLink 
+              to="/profile"
+              onClick={() => setMobileOpen(false)}
+              className="mt-4 pt-4 border-t border-slate-100 text-center flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+            >
                  <Avatar name={user?.name || "Student"} size="md" />
                   <div className="mt-2 text-center">
-                    <p className="text-sm font-medium text-white">{user?.name || "Student"}</p>
-                    <p className="text-xs text-slate-400">{user?.email || ""}</p>
+                    <p className="text-sm font-medium text-slate-900">{user?.name || "Student"}</p>
+                    <p className="text-xs text-slate-500">{user?.email || ""}</p>
                   </div>
-            </div>
+            </NavLink>
             
             <button
               onClick={() => {

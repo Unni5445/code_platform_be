@@ -98,12 +98,12 @@ export default function ForgotPasswordPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold leading-tight text-white">
+        <h1 className="text-4xl font-extrabold leading-tight text-slate-900">
           {step === "email" && "Forgot\nPassword?"}
           {step === "otp" && "Enter\nOTP"}
           {step === "reset" && "New\nPassword"}
         </h1>
-        <p className="mt-3 text-slate-400">
+        <p className="mt-3 text-sm font-medium text-slate-500">
           {step === "email" &&
             "Enter your email and we'll send you an OTP to reset your password"}
           {step === "otp" && `We've sent a 6-digit OTP to ${email}`}
@@ -118,14 +118,14 @@ export default function ForgotPasswordPage() {
             className={`h-1.5 flex-1 rounded-full transition-colors ${
               i <= ["email", "otp", "reset"].indexOf(step)
                 ? "bg-primary-500"
-                : "bg-slate-700"
+                : "bg-slate-100"
             }`}
           />
         ))}
       </div>
 
       {error && (
-        <div className="mb-5 rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
           {error}
         </div>
       )}
@@ -140,11 +140,11 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium transition-all"
             />
           </div>
 
-          <Button type="submit" isLoading={isLoading} className="w-full !rounded-xl !py-3">
+          <Button type="submit" isLoading={isLoading} className="w-full rounded-xl! py-3!">
             Send OTP
           </Button>
         </form>
@@ -161,7 +161,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
               required
               maxLength={6}
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-center font-mono text-lg tracking-widest text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-center font-mono text-lg tracking-widest text-slate-900 placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
@@ -169,7 +169,7 @@ export default function ForgotPasswordPage() {
             type="submit"
             isLoading={isLoading}
             disabled={otp.length !== 6}
-            className="w-full !rounded-xl !py-3"
+            className="w-full rounded-xl! py-3!"
           >
             Verify OTP
           </Button>
@@ -181,7 +181,7 @@ export default function ForgotPasswordPage() {
               setOtp("");
               setError("");
             }}
-            className="w-full cursor-pointer text-sm text-slate-400 hover:text-primary-400"
+            className="w-full cursor-pointer text-sm font-medium text-slate-500 hover:text-primary-600"
           >
             Didn&apos;t receive the OTP? Try again
           </button>
@@ -198,12 +198,12 @@ export default function ForgotPasswordPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -217,20 +217,20 @@ export default function ForgotPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium transition-all"
             />
           </div>
 
-          <Button type="submit" isLoading={isLoading} className="w-full !rounded-xl !py-3">
+          <Button type="submit" isLoading={isLoading} className="w-full rounded-xl! py-3!">
             Reset Password
           </Button>
         </form>
       )}
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-slate-500 font-medium">
         <Link
           to="/login"
-          className="inline-flex items-center gap-1 font-medium text-primary-400 hover:text-primary-300"
+          className="inline-flex items-center gap-1 font-bold text-primary-600 hover:text-primary-700"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In
         </Link>

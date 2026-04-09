@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function CTA() {
   return (
-    <section className="px-6 pt-12 pb-18 max-md:px-[1.15rem]" id="cta">
+    <section className=" text-white px-6 pt-12 pb-18 max-md:px-[1.15rem]" id="cta">
       <div className="landing-reveal mx-auto flex max-w-[1120px] items-center justify-between gap-8 rounded-[26px] border border-slate-400/60 bg-[radial-gradient(circle_at_0_0,rgba(34,197,94,0.2),transparent_55%),radial-gradient(circle_at_100%_0,rgba(59,130,246,0.2),transparent_55%),linear-gradient(135deg,#020617,#020617)] px-8 py-10 shadow-[0_24px_70px_rgba(15,23,42,1)] max-[960px]:flex-col max-[960px]:items-start max-md:px-5">
         <div>
           <h2 className="mb-2 text-2xl font-bold">Join Thousands of Coders Improving Their Skills!</h2>

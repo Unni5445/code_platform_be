@@ -91,8 +91,8 @@ export default function PlaygroundPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Playground</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="text-2xl font-extrabold text-slate-900">Playground</h1>
+        <p className="mt-1 text-sm font-medium text-slate-500">
           Practice coding questions to sharpen your skills and build your streak
         </p>
       </div>
@@ -101,13 +101,13 @@ export default function PlaygroundPage() {
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search questions..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-xs"
               />
             </div>
           </div>
@@ -152,22 +152,22 @@ export default function PlaygroundPage() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="px-3 py-2.5 text-sm text-slate-400 hover:text-white cursor-pointer"
+              className="px-3 py-2.5 text-sm font-bold text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
             >
-              Clear
+              Clear All
             </button>
           )}
         </div>
       </Card>
 
-      <div className="flex items-center gap-4 text-sm text-slate-400">
+      <div className="flex items-center gap-4 text-sm font-bold text-slate-400">
         <span className="flex items-center gap-1.5">
-          <Code2 className="h-4 w-4" />
-          {totalQuestions} question{totalQuestions !== 1 ? "s" : ""} available
+          <Code2 className="h-4 w-4 text-primary-500" />
+          {totalQuestions} questions available
         </span>
         {hasFilters && (
-          <span className="flex items-center gap-1.5">
-            <Filter className="h-4 w-4" />
+          <span className="flex items-center gap-1.5 text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full text-[11px] uppercase tracking-wide">
+            <Filter className="h-3 w-3" />
             Filtered
           </span>
         )}
@@ -179,7 +179,7 @@ export default function PlaygroundPage() {
         </div>
       ) : questions.length === 0 ? (
         <EmptyState
-          icon={<Code2 className="h-10 w-10 text-primary-400" />}
+          icon={<Code2 className="h-12 w-12 text-slate-300" />}
           title="No questions found"
           description={
             hasFilters ? "Try adjusting your filters" : "No coding questions available yet"
@@ -188,9 +188,9 @@ export default function PlaygroundPage() {
             hasFilters ? (
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-sm font-medium text-primary-400 hover:text-primary-300 cursor-pointer"
+                className="px-4 py-2 text-sm font-bold text-primary-600 hover:text-primary-700 cursor-pointer border border-primary-100 bg-primary-50 rounded-xl transition-all"
               >
-                Clear Filters
+                Clear All Filters
               </button>
             ) : undefined
           }
@@ -201,32 +201,32 @@ export default function PlaygroundPage() {
             <button
               key={q._id}
               onClick={() => navigate(`/playground/${q._id}`)}
-              className="w-full text-left rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 transition-all duration-200 hover:border-primary-500/40 hover:bg-slate-800/60 cursor-pointer group"
+              className="w-full text-left rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-300 hover:border-primary-500/40 hover:bg-slate-50 cursor-pointer group shadow-sm hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <h3 className="text-base font-semibold text-white truncate group-hover:text-primary-300 transition-colors">
+                  <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                    <h3 className="text-base font-bold text-slate-900 truncate group-hover:text-primary-600 transition-colors">
                       {q.title}
                     </h3>
                     <Badge variant={DIFFICULTY_COLORS[q.difficulty]}>{q.difficulty}</Badge>
                   </div>
                   {q.description && (
-                    <p className="text-sm text-slate-400 line-clamp-2 mb-3">
+                    <p className="text-sm font-medium text-slate-500 line-clamp-2 mb-4 leading-relaxed">
                       {q.description.replace(/<[^>]*>/g, "").slice(0, 150)}
                     </p>
                   )}
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-4 flex-wrap">
                     {q.submissionCount != null && q.submissionCount > 0 && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-400">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        {q.submissionCount} submission{q.submissionCount !== 1 ? "s" : ""}
+                        {q.submissionCount} submissions
                       </span>
                     )}
                     {q.points > 0 && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-amber-300">
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
                         <Zap className="h-3.5 w-3.5" />
-                        {q.points} pts
+                        {q.points} XP
                       </span>
                     )}
                     {q.languages && q.languages.length > 0 && (
@@ -234,13 +234,13 @@ export default function PlaygroundPage() {
                         {q.languages.slice(0, 3).map((lang) => (
                           <span
                             key={lang}
-                            className="rounded bg-slate-800/80 px-2 py-0.5 text-xs font-medium text-slate-300"
+                            className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 uppercase tracking-wide border border-slate-200"
                           >
                             {lang}
                           </span>
                         ))}
                         {q.languages.length > 3 && (
-                          <span className="text-xs text-slate-500">+{q.languages.length - 3}</span>
+                          <span className="text-[10px] font-bold text-slate-400">+{q.languages.length - 3} MORE</span>
                         )}
                       </div>
                     )}
@@ -256,8 +256,8 @@ export default function PlaygroundPage() {
                     )}
                   </div>
                 </div>
-                <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/20 group-hover:bg-primary-500/30 transition-colors">
-                  <Code2 className="h-5 w-5 text-primary-400" />
+                <div className="shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 text-primary-600 border border-primary-100 group-hover:bg-primary-600 group-hover:text-white transition-all shadow-sm">
+                  <Code2 className="h-6 w-6" />
                 </div>
               </div>
             </button>
@@ -274,14 +274,14 @@ export default function PlaygroundPage() {
             <button
               onClick={() => fetchQuestions(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="rounded-xl border border-slate-700 p-2 text-slate-400 hover:bg-slate-800/80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-50 hover:text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-sm"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchQuestions(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="rounded-xl border border-slate-700 p-2 text-slate-400 hover:bg-slate-800/80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-50 hover:text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shadow-sm"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

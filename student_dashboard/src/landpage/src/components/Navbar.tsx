@@ -15,7 +15,7 @@ export default function Navbar() {
             <div className="h-14 w-14 bg-black rounded-xl flex items-center p-1 justify-center overflow-hidden">
               <img src={logo} alt="Logo" className="h-full w-full text-white" />
             </div>
-            <span className="font-semibold tracking-wide">
+            <span className="font-semibold tracking-wide text-white">
               Morattu{" "}
               <span className="bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent">
                 Coder

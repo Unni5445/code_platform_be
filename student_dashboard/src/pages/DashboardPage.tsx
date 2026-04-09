@@ -53,16 +53,16 @@ export default function DashboardPage() {
             header={
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-lg font-semibold text-white">My Courses</h3>
+                  <h3 className="text-lg font-semibold text-slate-900">My Courses</h3>
                   {totalCourses > 0 && (
-                    <Badge variant="primary" className="bg-primary-500/10 text-primary-400 border-primary-500/20">
+                    <Badge variant="primary" className="bg-primary-50 text-primary-600 border-primary-100">
                       {totalCourses} Active
                     </Badge>
                   )}
                 </div>
                 <Link
                   to="/courses"
-                  className="flex items-center gap-1 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                  className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   View All <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -72,7 +72,7 @@ export default function DashboardPage() {
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-28 rounded-xl border border-slate-800 bg-slate-900/40 animate-pulse" />
+                  <div key={i} className="h-28 rounded-xl border border-slate-100 bg-slate-50 animate-pulse" />
                 ))}
               </div>
             ) : !enrollments?.length ? (
@@ -88,10 +88,10 @@ export default function DashboardPage() {
                     <Link
                       key={enrollment._id}
                       to={`/courses/${typeof enrollment.course === "object" ? enrollment.course._id : enrollment.course}`}
-                      className="block rounded-xl border border-slate-800/80 bg-slate-900/40 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary-500/40 hover:bg-slate-800/60 hover:shadow-lg hover:shadow-primary-500/10"
+                      className="block rounded-xl border border-slate-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 shadow-sm"
                     >
                       <div className="mb-4 flex items-start justify-between">
-                        <h4 className="line-clamp-1 font-bold text-white pr-2">
+                        <h4 className="line-clamp-1 font-bold text-slate-900 pr-2">
                           {course?.title || "Course"}
                         </h4>
                         <Badge

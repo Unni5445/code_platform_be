@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Shield,
 } from "lucide-react";
-import { Badge, Spinner, EmptyState, Select } from "@/components/ui";
+import { Badge, Spinner, EmptyState, Select, Card, Button } from "@/components/ui";
 import { playgroundService } from "@/services";
 import type { IQuestion } from "@/types";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -43,10 +43,10 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
       onClick={onClick}
       className={`w-full text-left rounded-2xl border p-5 transition-all duration-300 cursor-pointer group relative overflow-hidden ${
         isSolved
-          ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-400/50"
+          ? "border-emerald-200 bg-emerald-50 hover:border-emerald-300"
           : isHot
-          ? "border-amber-500/40 bg-gradient-to-br from-amber-500/5 to-orange-500/5 hover:border-amber-400/60 hover:shadow-[0_0_30px_rgba(245,158,11,0.08)]"
-          : "border-slate-800/80 bg-slate-900/60 hover:border-primary-500/40 hover:bg-slate-800/60"
+          ? "border-amber-200 bg-linear-to-br from-amber-50 to-orange-50 hover:border-amber-300 hover:shadow-md"
+          : "border-slate-200 bg-white hover:border-primary-300 hover:shadow-sm"
       }`}
     >
       {/* Hot glow effect */}
@@ -64,17 +64,17 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
           {/* Quest badges row */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {isHot && !isSolved && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500/25 to-orange-500/25 text-amber-300 border border-amber-500/30 animate-pulse">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200 animate-pulse">
                 <Flame className="h-3 w-3" /> Hot
               </span>
             )}
             {isBonusXP && !isSolved && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-purple-500/25 to-violet-500/25 text-purple-300 border border-purple-500/30">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200">
                 <Star className="h-3 w-3" /> Bonus XP
               </span>
             )}
             {isSolved && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
                 <CheckCircle2 className="h-3 w-3" /> Conquered
               </span>
             )}
@@ -83,7 +83,7 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
           {/* Title + Difficulty */}
           <div className="flex items-center gap-2 mb-1.5">
             <h3 className={`text-base font-semibold truncate transition-colors ${
-              isSolved ? "text-emerald-200 group-hover:text-emerald-100" : "text-white group-hover:text-primary-300"
+              isSolved ? "text-emerald-800 group-hover:text-emerald-900" : "text-slate-900 group-hover:text-primary-700"
             }`}>
               {q.title}
             </h3>
@@ -92,7 +92,7 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
 
           {/* Description */}
           {q.description && (
-            <p className="text-sm text-slate-400 line-clamp-2 mb-3">
+            <p className="text-sm text-slate-500 line-clamp-2 mb-3">
               {q.description.replace(/<[^>]*>/g, "").slice(0, 150)}
             </p>
           )}
@@ -103,8 +103,8 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
             {q.points > 0 && (
               <span className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${
                 isBonusXP
-                  ? "bg-gradient-to-r from-purple-500/20 to-amber-500/20 text-amber-200 border border-amber-500/20"
-                  : "bg-amber-500/15 text-amber-300 border border-amber-500/20"
+                  ? "bg-linear-to-r from-purple-100 to-amber-100 text-orange-800 border border-orange-200"
+                  : "bg-amber-50 text-amber-700 border border-amber-200"
               }`}>
                 <Zap className="h-3.5 w-3.5" />
                 {q.points * xpMultiplier} XP
@@ -113,7 +113,7 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
 
             {/* Submission count */}
             {q.submissionCount != null && q.submissionCount > 0 && (
-              <span className="flex items-center gap-1 text-xs font-medium text-emerald-400">
+              <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 {q.submissionCount} attempt{q.submissionCount !== 1 ? "s" : ""}
               </span>
@@ -125,7 +125,7 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
                 {q.languages.slice(0, 3).map((lang) => (
                   <span
                     key={lang}
-                    className="rounded-md bg-slate-800/80 px-2 py-0.5 text-xs font-medium text-slate-300"
+                    className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200"
                   >
                     {lang}
                   </span>
@@ -153,13 +153,13 @@ function QuestCard({ q, onClick }: { q: IQuestion & { submissionCount?: number }
         {/* Right icon */}
         <div className={`shrink-0 flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 ${
           isSolved
-            ? "bg-emerald-500/20 group-hover:bg-emerald-500/30"
-            : "bg-primary-500/20 group-hover:bg-primary-500/30 group-hover:scale-110"
+            ? "bg-emerald-50 border border-emerald-100"
+            : "bg-primary-50 border border-primary-100 group-hover:scale-110"
         }`}>
           {isSolved ? (
-            <Shield className="h-5 w-5 text-emerald-400" />
+            <Shield className="h-5 w-5 text-emerald-600" />
           ) : (
-            <Swords className="h-5 w-5 text-primary-400" />
+            <Swords className="h-5 w-5 text-primary-600" />
           )}
         </div>
       </div>
@@ -235,42 +235,53 @@ export default function QuestMapPage() {
   const hasFilters = search || difficulty || language || tag;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl mc-glass p-6">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary-500/10 rounded-full blur-3xl" />
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/20 border border-primary-500/30">
-              <MapPin className="h-5 w-5 text-primary-400" />
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-xl p-8 group">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
+        <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-secondary-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 border border-primary-100 shadow-inner">
+              <MapPin className="h-8 w-8 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Quest Map</h1>
-              <p className="text-sm text-slate-400">
-                Choose your quest, earn XP, and climb the ranks
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">The Quest Map</h1>
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                Explore algorithmic challenges, conquer nodes, and earn legendary XP.
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm self-start md:self-center">
+            <span className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <Swords className="h-4 w-4 text-primary-500" />
+              {totalQuestions} Active Quests
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4">
-        <div className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      {/* Filters Board */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl relative z-20">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[300px]">
+             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Search Keywords</label>
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Search quests by topic, company..."
+                placeholder="Find challenges by title, company, or concept..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50 pl-12 pr-4 py-3.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:bg-white transition-all shadow-inner"
               />
             </div>
           </div>
-          <div className="w-36">
+          
+          <div className="w-full sm:w-44">
+             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Difficulty</label>
             <Select
               options={[
                 { value: "", label: "All Levels" },
@@ -280,9 +291,12 @@ export default function QuestMapPage() {
               ]}
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
+              className="bg-slate-50 border-slate-100 font-bold p-3.5 rounded-2xl"
             />
           </div>
-          <div className="w-40">
+
+          <div className="w-full sm:w-48">
+             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Language</label>
             <Select
               options={[
                 { value: "", label: "All Languages" },
@@ -294,74 +308,77 @@ export default function QuestMapPage() {
               ]}
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
+              className="bg-slate-50 border-slate-100 font-bold p-3.5 rounded-2xl"
             />
           </div>
+
           {availableTags.length > 0 && (
-            <div className="w-40">
+            <div className="w-full sm:w-48">
+               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
               <Select
                 options={[
-                  { value: "", label: "All Tags" },
+                  { value: "", label: "All Topics" },
                   ...availableTags.map((t) => ({ value: t, label: t })),
                 ]}
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
+                className="bg-slate-50 border-slate-100 font-bold p-3.5 rounded-2xl"
               />
             </div>
           )}
+
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="px-3 py-2.5 text-sm text-slate-400 hover:text-white cursor-pointer transition-colors"
+              className="px-6 py-3.5 text-xs font-bold text-slate-500 hover:text-red-600 cursor-pointer transition-colors uppercase tracking-widest flex items-center gap-2"
             >
-              Clear
+              Reset Filters
             </button>
           )}
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="flex items-center gap-4 text-sm text-slate-400">
-        <span className="flex items-center gap-1.5">
-          <Swords className="h-4 w-4 text-primary-400" />
-          {totalQuestions} quest{totalQuestions !== 1 ? "s" : ""} available
-        </span>
+      {/* Rewards Info Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <TrendingUp className="h-4 w-4 text-emerald-500" />
+          Higher Difficulty = <span className="text-primary-600 ml-1">Up to 3x XP Rewards</span>
+        </div>
         {hasFilters && (
-          <span className="flex items-center gap-1.5">
-            <Filter className="h-4 w-4" />
-            Filtered
-          </span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-primary-50 text-primary-700 text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary-100">
+            <Filter className="h-3 w-3" /> Filters Applied
+          </div>
         )}
-        <span className="flex items-center gap-1.5 ml-auto">
-          <TrendingUp className="h-4 w-4 text-amber-400" />
-          <span className="text-amber-300 font-medium">Hard = 3x XP</span>
-        </span>
       </div>
 
       {/* Quest List */}
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center items-center py-32 bg-white rounded-3xl border border-slate-100 shadow-sm">
           <Spinner size="lg" />
         </div>
       ) : questions.length === 0 ? (
-        <EmptyState
-          icon={<MapPin className="h-10 w-10 text-primary-400" />}
-          title="No quests found"
-          description={
-            hasFilters ? "Try adjusting your filters" : "No quests available yet"
-          }
-          action={
-            hasFilters ? (
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 text-sm font-medium text-primary-400 hover:text-primary-300 cursor-pointer"
-              >
-                Clear Filters
-              </button>
-            ) : undefined
-          }
-        />
+        <Card className="bg-white border-slate-200 shadow-xl py-20 text-center">
+          <EmptyState
+            icon={<MapPin className="h-16 w-16 text-slate-200 mx-auto" />}
+            title="Beyond the Known Map"
+            description={
+              hasFilters ? "No quests match your current visibility filters. Try clearing some constraints!" : "The quest board is currently empty. Check back for new deployments soon."
+            }
+            action={
+              hasFilters ? (
+                <Button
+                  onClick={clearFilters}
+                  variant="primary"
+                  className="font-bold rounded-2xl px-8 shadow-lg shadow-primary-500/20"
+                >
+                  Clear All Filters
+                </Button>
+              ) : undefined
+            }
+          />
+        </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-4">
           {questions.map((q) => (
             <QuestCard
               key={q._id}
@@ -372,26 +389,26 @@ export default function QuestMapPage() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination Container */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-sm text-slate-400">
-            Page {currentPage} of {totalPages}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 px-4">
+          <p className="text-xs font-extrabold text-slate-400 uppercase tracking-[0.2em]">
+            Node <span className="text-slate-900">{currentPage}</span> of {totalPages} in the sector
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               onClick={() => fetchQuestions(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="rounded-xl border border-slate-700 p-2 text-slate-400 hover:bg-slate-800/80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center w-12 h-12 rounded-2xl border border-slate-200 bg-white text-slate-600 hover:text-primary-600 hover:border-primary-300 hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 shadow-sm"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => fetchQuestions(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="rounded-xl border border-slate-700 p-2 text-slate-400 hover:bg-slate-800/80 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center w-12 h-12 rounded-2xl border border-slate-200 bg-white text-slate-600 hover:text-primary-600 hover:border-primary-300 hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 shadow-sm"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         </div>

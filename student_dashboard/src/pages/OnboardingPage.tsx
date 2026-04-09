@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services";
-import { Button } from "@/components/ui";
+import { Button, Badge, Card } from "@/components/ui";
 import toast from "react-hot-toast";
 import {
   Swords,
@@ -15,6 +15,7 @@ import {
   Flame,
   CheckCircle2,
   Zap,
+  Loader2,
 } from "lucide-react";
 
 type ClassType = "Apprentice" | "Warrior" | "Champion";
@@ -142,76 +143,49 @@ export default function OnboardingPage() {
     }, 650);
   };
 
-  const selectedCls = CLASSES.find(c => c.id === playerClass);
-
   return (
-    <div className="mc-page min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
-
-      {/* ── Floating ambient particles (from theme) ── */}
-      <div className="mc-hero-particles">
-        <span style={{ width: 420, height: 420, top: "5%", left: "8%", animationDuration: "18s" }} />
-        <span style={{ width: 320, height: 320, bottom: "8%", right: "6%", animationDuration: "22s" }} />
-        <span style={{ width: 240, height: 240, top: "55%", left: "55%", animationDuration: "26s" }} />
-      </div>
-
-      {/* ── Reactive class glow ── */}
-      {selectedCls && (
-        <div
-          className="pointer-events-none fixed inset-0 transition-all duration-1000"
-          style={{
-            background: `radial-gradient(ellipse at 15% 80%, ${selectedCls.iconColor}18 0%, transparent 55%),
-                         radial-gradient(ellipse at 85% 15%, ${selectedCls.iconColor}0d 0%, transparent 50%)`,
-          }}
-        />
-      )}
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+      {/* ── Background decoration ── */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-100/30 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-100/30 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
       <div className="w-full max-w-4xl relative z-10">
 
         {/* ══ STEP TRACKER ══ */}
-        <div className="flex items-start justify-center gap-0 mb-14 mc-fade-up">
+        <div className="flex items-center justify-center gap-1 mb-16 max-w-xl mx-auto">
           {STEP_META.map((s, i) => {
             const n = i + 1 as StepType;
             const active = step === n;
             const done = step > n;
             return (
-              <div key={s.label} className="flex items-center">
-                <div className="flex flex-col items-center w-28">
+              <div key={s.label} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
                   {/* Node */}
                   <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300"
-                    style={{
-                      borderColor: done || active ? "#00e5a8" : "rgba(148,163,184,0.2)",
-                      background: done ? "linear-gradient(135deg,#00e5a8,#2d9cff)"
-                        : active ? "rgba(0,229,168,0.12)"
-                          : "rgba(15,23,42,0.6)",
-                      color: done ? "#0b1220"
-                        : active ? "#00e5a8"
-                          : "rgba(148,163,184,0.4)",
-                      boxShadow: active ? "0 0 18px rgba(0,229,168,0.35)" : done ? "0 0 14px rgba(0,229,168,0.25)" : "none",
-                    }}
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black border-2 transition-all duration-500 ${
+                      done
+                        ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                        : active
+                        ? "bg-white border-primary-500 text-primary-600 shadow-xl shadow-primary-500/10"
+                        : "bg-white border-slate-200 text-slate-300"
+                    }`}
                   >
-                    {done ? <CheckCircle2 className="w-4 h-4" /> : n}
+                    {done ? <CheckCircle2 className="w-6 h-6" /> : n}
                   </div>
                   {/* Labels */}
-                  <p className="mt-2 text-xs font-semibold transition-colors duration-300"
-                    style={{ color: active ? "#e5e7eb" : done ? "rgba(0,229,168,0.6)" : "rgba(148,163,184,0.35)" }}>
-                    {s.label}
-                  </p>
-                  <p className="text-[10px] transition-colors duration-300"
-                    style={{ color: active ? "#6b7280" : "rgba(148,163,184,0.2)" }}>
-                    {s.sub}
-                  </p>
+                  <div className="mt-3 text-center">
+                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${active ? 'text-primary-600' : done ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {s.label}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Connector */}
                 {i < STEP_META.length - 1 && (
                   <div
-                    className="w-16 h-px mx-1 mb-6 transition-all duration-500"
-                    style={{
-                      background: done
-                        ? "linear-gradient(90deg,#00e5a8,#2d9cff)"
-                        : "rgba(148,163,184,0.1)",
-                    }}
+                    className={`flex-1 h-1 mx-2 rounded-full transition-all duration-700 ${
+                      done ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" : "bg-slate-200"
+                    }`}
                   />
                 )}
               </div>
@@ -223,17 +197,17 @@ export default function OnboardingPage() {
             STEP 1 — CLASS SELECTION
         ══════════════════════════════════════ */}
         {step === 1 && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
-            <div className="text-center mb-10">
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3">
-                <span className="mc-gradient-text">Choose Your Class</span>
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="text-center mb-12">
+              <h1 className="text-5xl font-black text-slate-900 tracking-tighter mb-4">
+                Choose Your Legend
               </h1>
-              <p className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed">
-                Every legend has a beginning. Pick the path that matches your current experience level.
+              <p className="text-slate-500 text-lg font-medium max-w-xl mx-auto leading-relaxed">
+                Determine your starting trajectory. This choice calibrates your initial missions and XP scaling.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {CLASSES.map(cls => {
                 const isSelected = playerClass === cls.id;
                 const Icon = cls.icon;
@@ -241,181 +215,161 @@ export default function OnboardingPage() {
                   <button
                     key={cls.id}
                     onClick={() => setPlayerClass(cls.id)}
-                    className="text-left flex flex-col p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
-                    style={{
-                      borderColor: isSelected ? cls.borderActive : cls.borderIdle,
-                      background: isSelected ? cls.activeBg : "rgba(15,23,42,0.6)",
-                      boxShadow: isSelected ? cls.glow : "0 8px 32px rgba(15,23,42,0.5)",
-                      backdropFilter: "blur(14px)",
-                      transform: isSelected ? "translateY(-4px) scale(1.02)" : undefined,
-                    }}
+                    className={`text-left flex flex-col p-8 rounded-[32px] border-2 transition-all duration-500 relative overflow-hidden group/card bg-white ${
+                      isSelected
+                        ? "border-primary-500 shadow-2xl shadow-primary-500/10 -translate-y-2"
+                        : "border-slate-100 hover:border-slate-300 hover:-translate-y-1 shadow-sm"
+                    }`}
                   >
-                    {/* Selected badge */}
-                    {isSelected && (
-                      <span
-                        className="absolute top-4 right-4 text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full border"
-                        style={{ borderColor: cls.borderActive, color: cls.iconColor, background: "rgba(15,23,42,0.8)" }}
-                      >
-                        SELECTED
-                      </span>
-                    )}
-
-                    {/* Left accent bar */}
-                    {isSelected && (
-                      <div
-                        className="absolute left-0 inset-y-0 w-0.5 rounded-full"
-                        style={{ background: cls.borderActive, boxShadow: `0 0 8px ${cls.iconColor}` }}
-                      />
-                    )}
-
-                    {/* Icon */}
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-all duration-300"
-                      style={{ background: cls.iconBg, boxShadow: isSelected ? `0 0 16px ${cls.iconColor}40` : "none" }}
-                    >
-                      <Icon className="w-6 h-6" style={{ color: cls.iconColor }} />
+                    {/* Selected Indicator */}
+                    <div className={`absolute top-4 right-4 transition-all duration-500 ${isSelected ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`}>
+                      <Badge variant="success" className="font-black text-[9px] uppercase tracking-widest px-3 py-1">DEPLOYED</Badge>
                     </div>
 
-                    <p className="text-lg font-bold text-white mb-0.5">{cls.title}</p>
-                    <p className="text-[11px] font-semibold tracking-widest mb-3 uppercase" style={{ color: "rgba(148,163,184,0.5)" }}>
+                    {/* Left Accent Glow */}
+                    {isSelected && (
+                      <div className="absolute left-0 inset-y-0 w-1.5 bg-primary-500 shadow-[2px_0_15px_rgba(0,229,168,0.5)]" />
+                    )}
+
+                    {/* Icon Container */}
+                    <div
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 border ${
+                        isSelected
+                          ? "bg-primary-50 border-primary-200 shadow-inner"
+                          : "bg-slate-50 border-slate-200 group-hover/card:bg-white group-hover/card:border-primary-100"
+                      }`}
+                    >
+                      <Icon className={`w-8 h-8 ${isSelected ? 'text-primary-600' : 'text-slate-400 group-hover/card:text-primary-400'}`} />
+                    </div>
+
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-1">{cls.title}</h3>
+                    <p className={`text-[10px] font-black tracking-[0.2em] mb-4 uppercase ${isSelected ? 'text-primary-500' : 'text-slate-400'}`}>
                       {cls.subtitle}
                     </p>
-                    <p className="text-sm text-slate-400 leading-relaxed mb-5 flex-1">{cls.desc}</p>
+                    <p className="text-slate-500 font-medium leading-relaxed mb-6 flex-1 text-sm">{cls.desc}</p>
 
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2">
+                    {/* Action Area */}
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-50">
                       {cls.tags.map(tag => (
-                        <span key={tag} className="text-[11px] font-medium px-2.5 py-0.5 rounded-full" style={cls.tagStyle}>
+                        <span key={tag} className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
                           {tag}
                         </span>
                       ))}
                     </div>
 
-                    {/* Shimmer */}
-                    <div className="absolute inset-0 -translate-x-full hover:translate-x-full bg-gradient-to-r from-transparent via-white/[0.04] to-transparent skew-x-[-20deg] transition-transform duration-700 pointer-events-none" />
+                    {/* Hover Shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-50/10 to-transparent -translate-x-full group-hover/card:translate-x-full transition-transform duration-1000 pointer-events-none" />
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-10 flex justify-center">
-              <button
+            <div className="mt-14 flex justify-center">
+              <Button
                 onClick={handleNextStep}
                 disabled={!playerClass}
-                className="mc-btn-gradient flex items-center gap-2 px-10 py-3 rounded-full text-base font-semibold disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none"
+                size="lg"
+                className="px-12 py-6 rounded-3xl font-black text-xl uppercase tracking-widest bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-95 transition-all disabled:opacity-20"
               >
-                Forge Path <ChevronRight className="w-5 h-5" />
-              </button>
+                Assemble Profile <ChevronRight className="w-6 h-6 ml-2" />
+              </Button>
             </div>
           </div>
         )}
 
         {/* ══════════════════════════════════════
-            STEP 2 — APTITUDE TEST
+            STEP 2 — ASSESSMENT
         ══════════════════════════════════════ */}
         {step === 2 && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-500 max-w-2xl mx-auto w-full">
-            <div className="text-center mb-8">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}
-              >
-                <Brain className="w-7 h-7" style={{ color: "#8b5cf6" }} />
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-2xl mx-auto w-full">
+            <div className="text-center mb-10">
+              <div className="w-20 h-20 rounded-3xl bg-purple-50 border border-purple-100 flex items-center justify-center mx-auto mb-6 shadow-inner text-purple-600">
+                <Brain className="w-10 h-10" />
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">Aptitude Check</h1>
-              <p className="text-slate-400 text-sm">Calibrating your starting rank. Answer honestly!</p>
+              <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Cognitive Benchmark</h1>
+              <p className="text-slate-500 font-medium text-lg">Initial calibration. Analyze the patterns and execute.</p>
             </div>
 
             {!testComplete ? (
-              <div className="mc-glass rounded-2xl p-6 sm:p-8">
-                {/* Progress row */}
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#00e5a8" }}>
-                    Question {currentQuestion + 1} / {TEST_QUESTIONS.length}
-                  </span>
-                  <div className="flex gap-1.5">
-                    {TEST_QUESTIONS.map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-1.5 w-8 rounded-full transition-all duration-300"
-                        style={{
-                          background: i < currentQuestion ? "linear-gradient(90deg,#00e5a8,#2d9cff)"
-                            : i === currentQuestion ? "rgba(0,229,168,0.5)"
-                              : "rgba(148,163,184,0.12)",
-                        }}
-                      />
-                    ))}
-                  </div>
+              <Card className="bg-white border-slate-200 shadow-2xl p-8 sm:p-12 rounded-[40px] relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-2 bg-slate-50">
+                   <div 
+                    className="h-full bg-primary-500 transition-all duration-700 shadow-[0_0_15px_rgba(0,229,168,0.5)]" 
+                    style={{ width: `${((currentQuestion + 1) / TEST_QUESTIONS.length) * 100}%` }}
+                   />
                 </div>
 
-                <h2 className="text-lg sm:text-xl font-semibold text-white leading-snug mb-7">
+                <div className="flex items-center justify-between mb-10">
+                  <span className="text-[10px] font-black tracking-[0.3em] uppercase text-primary-600 bg-primary-50 px-4 py-1.5 rounded-2xl border border-primary-100">
+                    Node {currentQuestion + 1} of {TEST_QUESTIONS.length}
+                  </span>
+                </div>
+
+                <h2 className="text-2xl font-black text-slate-900 leading-tight mb-10">
                   {TEST_QUESTIONS[currentQuestion].q}
                 </h2>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {TEST_QUESTIONS[currentQuestion].a.map((ans, idx) => {
                     const isCorrect = idx === TEST_QUESTIONS[currentQuestion].answer;
                     const isAnswered = answeredIdx !== null;
                     const isThisOne = answeredIdx === idx;
-
-                    let borderColor = "rgba(148,163,184,0.15)";
-                    let bgColor = "rgba(15,23,42,0.4)";
-                    let textColor = "#94a3b8";
-                    let letterBg = "rgba(15,23,42,0.6)";
-
-                    if (!isAnswered) {
-                      borderColor = "rgba(148,163,184,0.15)";
-                      textColor = "#cbd5e1";
-                    } else if (isThisOne && isCorrect) {
-                      borderColor = "#00e5a8"; bgColor = "rgba(0,229,168,0.08)"; textColor = "#00e5a8"; letterBg = "rgba(0,229,168,0.15)";
-                    } else if (isThisOne && !isCorrect) {
-                      borderColor = "#f87171"; bgColor = "rgba(248,113,113,0.08)"; textColor = "#f87171"; letterBg = "rgba(248,113,113,0.15)";
-                    } else if (!isThisOne && isCorrect) {
-                      borderColor = "rgba(0,229,168,0.3)"; textColor = "rgba(0,229,168,0.5)";
-                    } else {
-                      borderColor = "rgba(148,163,184,0.07)"; textColor = "rgba(148,163,184,0.3)";
-                    }
 
                     return (
                       <button
                         key={idx}
                         onClick={() => handleAnswer(idx)}
                         disabled={isAnswered}
-                        className="w-full flex items-center gap-3.5 p-4 rounded-xl border text-left text-sm font-medium transition-all duration-200 hover:enabled:border-primary-500/40 hover:enabled:bg-slate-800/60"
-                        style={{ borderColor, background: bgColor, color: textColor }}
+                        className={`w-full flex items-center gap-4 p-5 rounded-3xl border-2 text-left font-bold transition-all duration-300 relative group/opt ${
+                          !isAnswered
+                            ? "bg-white border-slate-100 hover:border-primary-500 hover:bg-primary-50/30 hover:translate-x-2"
+                            : isThisOne && isCorrect
+                            ? "bg-emerald-50 border-emerald-500 text-emerald-900"
+                            : isThisOne && !isCorrect
+                            ? "bg-red-50 border-red-500 text-red-900"
+                            : !isThisOne && isCorrect
+                            ? "bg-emerald-50/50 border-emerald-200 text-emerald-700 opacity-60"
+                            : "bg-slate-50 border-slate-100 text-slate-300 opacity-40"
+                        }`}
                       >
-                        <span
-                          className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center text-xs font-bold"
-                          style={{ background: letterBg, color: textColor }}
-                        >
+                        <span className={`w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black transition-colors ${
+                             !isAnswered ? 'bg-slate-100 text-slate-500 group-hover/opt:bg-primary-500 group-hover/opt:text-white' 
+                             : isThisOne && isCorrect ? 'bg-emerald-500 text-white'
+                             : isThisOne && !isCorrect ? 'bg-red-500 text-white'
+                             : 'bg-slate-200 text-slate-400'
+                        }`}>
                           {String.fromCharCode(65 + idx)}
                         </span>
-                        {ans}
+                        <span className="text-lg">{ans}</span>
+                        
+                        {isAnswered && isThisOne && isCorrect && <CheckCircle2 className="ml-auto h-6 w-6 text-emerald-500" />}
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </Card>
             ) : (
-              <div className="mc-glass rounded-2xl p-10 text-center">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-                  style={{ background: "rgba(0,229,168,0.1)", border: "1px solid rgba(0,229,168,0.25)" }}
-                >
-                  <CheckCircle2 className="w-8 h-8" style={{ color: "#00e5a8" }} />
+              <Card className="bg-white border-slate-200 shadow-2xl p-12 text-center rounded-[40px] relative overflow-hidden">
+                <div className="absolute inset-0 bg-primary-50 opacity-20 pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="w-24 h-24 rounded-[32px] bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-emerald-500/10">
+                    <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+                  </div>
+                  <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Diagnostics Sync</h2>
+                  <div className="inline-block p-6 rounded-3xl bg-slate-50 border border-slate-100 mb-8">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Proficiency Score</p>
+                    <p className="text-5xl font-black text-primary-600 tracking-tighter">{score} / {TEST_QUESTIONS.length}</p>
+                  </div>
+                  <p className="text-slate-500 font-medium text-lg mb-10 max-w-sm mx-auto leading-relaxed">Intelligence verified. Data has been successfully integrated into your profile.</p>
+                  <Button
+                    onClick={handleNextStep}
+                    size="lg"
+                    className="px-12 py-6 rounded-3xl font-black text-xl uppercase tracking-widest bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-95 transition-all"
+                  >
+                    Set Targets <ChevronRight className="w-6 h-6 ml-2" />
+                  </Button>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Assessment Complete</h2>
-                <p className="text-slate-400 text-sm mb-1">
-                  You scored <span className="font-semibold text-white">{score} / {TEST_QUESTIONS.length}</span>
-                </p>
-                <p className="text-slate-500 text-xs mb-8">Baseline stats recorded. Your journey will be calibrated accordingly.</p>
-                <button
-                  onClick={handleNextStep}
-                  className="mc-btn-gradient inline-flex items-center gap-2 px-10 py-3 rounded-full font-semibold"
-                >
-                  Set Your Goals <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+              </Card>
             )}
           </div>
         )}
@@ -424,23 +378,20 @@ export default function OnboardingPage() {
             STEP 3 — DAILY GOAL
         ══════════════════════════════════════ */}
         {step === 3 && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
-            <div className="text-center mb-10">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.2)" }}
-              >
-                <Target className="w-7 h-7" style={{ color: "#fb923c" }} />
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="text-center mb-12">
+              <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto mb-6 shadow-inner text-amber-600">
+                <Target className="w-10 h-10" />
               </div>
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3">
-                <span className="mc-gradient-text">Vow of Consistency</span>
+              <h1 className="text-5xl font-black text-slate-900 tracking-tighter mb-4">
+                Daily Vow
               </h1>
-              <p className="text-slate-400 text-base max-w-md mx-auto leading-relaxed">
-                Mastery is earned one problem at a time. Set your daily target — adjust it anytime.
+              <p className="text-slate-500 text-lg font-medium max-w-xl mx-auto leading-relaxed">
+                Consistency builds the legend. Select a daily mission intensity that matches your hunger for mastery.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {GOALS.map(g => {
                 const isSelected = dailyGoal === g.value;
                 const Icon = g.icon;
@@ -448,98 +399,86 @@ export default function OnboardingPage() {
                   <button
                     key={g.value}
                     onClick={() => setDailyGoal(g.value)}
-                    className="relative flex flex-col items-start p-6 rounded-2xl border text-left transition-all duration-300 hover:-translate-y-1"
-                    style={{
-                      borderColor: isSelected ? "#00e5a8" : "rgba(0,229,168,0.12)",
-                      background: isSelected
-                        ? "linear-gradient(160deg, rgba(0,229,168,0.08) 0%, rgba(45,156,255,0.04) 100%)"
-                        : "rgba(15,23,42,0.6)",
-                      boxShadow: isSelected ? "0 0 32px rgba(0,229,168,0.15)" : "0 8px 32px rgba(15,23,42,0.5)",
-                      backdropFilter: "blur(14px)",
-                      transform: isSelected ? "translateY(-4px) scale(1.02)" : undefined,
-                    }}
+                    className={`relative flex flex-col items-start p-8 rounded-[32px] border-2 text-left bg-white transition-all duration-500 group/goal ${
+                      isSelected
+                        ? "border-amber-500 shadow-2xl shadow-amber-500/10 -translate-y-2"
+                        : "border-slate-100 hover:border-slate-300 hover:-translate-y-1 shadow-sm"
+                    }`}
                   >
-                    {isSelected && (
-                      <div className="absolute inset-y-0 left-0 w-0.5 rounded-full"
-                        style={{ background: "linear-gradient(180deg,#00e5a8,#2d9cff)", boxShadow: "0 0 8px #00e5a8" }} />
-                    )}
-                    {isSelected && (
-                      <span className="absolute top-4 right-4 text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full border"
-                        style={{ borderColor: "#00e5a8", color: "#00e5a8", background: "rgba(15,23,42,0.8)" }}>
-                        ACTIVE
-                      </span>
-                    )}
-
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-all duration-300"
-                      style={{
-                        background: isSelected ? "rgba(0,229,168,0.12)" : "rgba(15,23,42,0.8)",
-                        border: `1px solid ${isSelected ? "rgba(0,229,168,0.25)" : "rgba(148,163,184,0.1)"}`,
-                      }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: g.iconColor }} />
+                    {/* Status Pill */}
+                    <div className={`absolute top-4 right-4 transition-all duration-500 ${isSelected ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`}>
+                       <Badge variant="warning" className="font-black text-[9px] uppercase tracking-widest px-3 py-1">ACTIVE VOW</Badge>
                     </div>
 
-                    <p className="text-lg font-bold text-white mb-0.5">{g.title}</p>
-                    <p className="text-sm font-medium mb-2" style={{ color: "#94a3b8" }}>{g.desc}</p>
-                    <p className="text-xs text-slate-500 leading-relaxed mb-4 flex-1">{g.sub}</p>
-
-                    {/* XP pill */}
                     <div
-                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors duration-300"
-                      style={{
-                        background: isSelected ? "rgba(0,229,168,0.12)" : "rgba(148,163,184,0.07)",
-                        color: isSelected ? "#00e5a8" : "#64748b",
-                      }}
+                      className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 border ${
+                        isSelected 
+                          ? "bg-amber-50 border-amber-200 shadow-inner" 
+                          : "bg-slate-50 border-slate-200 group-hover/goal:bg-white"
+                      }`}
                     >
-                      <Zap className="w-3 h-3" /> {g.xp}
+                      <Icon className={`w-7 h-7 ${isSelected ? 'text-amber-600' : 'text-slate-400 group-hover/goal:text-amber-400'}`} />
+                    </div>
+
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-1">{g.title}</h3>
+                    <p className={`text-[10px] font-black tracking-[0.2em] mb-4 uppercase ${isSelected ? 'text-amber-500' : 'text-slate-400'}`}>{g.desc}</p>
+                    <p className="text-slate-500 font-medium leading-relaxed mb-8 flex-1 text-sm">{g.sub}</p>
+
+                    {/* XP Indicator */}
+                    <div
+                      className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all duration-500 shadow-sm border ${
+                        isSelected ? "bg-amber-100 text-amber-900 border-amber-200" : "bg-slate-50 text-slate-400 border-slate-100"
+                      }`}
+                    >
+                      <Zap className={`w-4 h-4 ${isSelected ? 'animate-pulse' : ''}`} /> {g.xp}
                     </div>
                   </button>
                 );
               })}
             </div>
 
-            {/* Profile summary */}
-            <div
-              className="max-w-sm mx-auto mb-10 rounded-2xl p-5"
-              style={{
-                background: "rgba(15,23,42,0.7)",
-                border: "1px solid rgba(148,163,184,0.12)",
-                backdropFilter: "blur(14px)",
-              }}
-            >
-              <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: "rgba(0,229,168,0.5)" }}>
-                Profile Summary
-              </p>
-              <div className="space-y-2.5 text-sm">
-                {[
-                  ["Class", playerClass ?? "—"],
-                  ["Aptitude", `${score} / ${TEST_QUESTIONS.length}`],
-                  ["Daily Goal", GOALS.find(g => g.value === dailyGoal)?.desc ?? "—"],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between items-center">
-                    <span className="text-slate-500">{k}</span>
-                    <span className="font-semibold text-white">{v}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Profile sync board */}
+            <div className="max-w-md mx-auto mb-14 bg-white border border-slate-200 rounded-[32px] p-8 shadow-2xl relative overflow-hidden group/board">
+               <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover/board:opacity-[0.08] transition-opacity">
+                  <Shield className="h-24 w-24 text-primary-900" />
+               </div>
+               <div className="relative z-10">
+                <p className="text-[10px] font-black tracking-[0.3em] uppercase text-primary-600 mb-6 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-500" /> Identity Matrix
+                </p>
+                <div className="space-y-4">
+                  {[
+                    ["Class", playerClass ?? "—", "text-slate-900 font-black"],
+                    ["Performance", `${score} / ${TEST_QUESTIONS.length}`, "text-primary-600 font-black"],
+                    ["Daily Vow", GOALS.find(g => g.value === dailyGoal)?.desc ?? "—", "text-amber-600 font-black"],
+                  ].map(([k, v, s]) => (
+                    <div key={k} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
+                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{k}</span>
+                      <span className={`text-sm ${s}`}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+               </div>
             </div>
 
             <div className="flex justify-center">
-              <button
+              <Button
                 onClick={submitOnboarding}
                 disabled={isSubmitting}
-                className="mc-btn-gradient flex items-center gap-2 px-12 py-3.5 rounded-full text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                size="lg"
+                className="px-14 py-7 rounded-[32px] font-black text-xl uppercase tracking-widest bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-95 transition-all shadow-slate-900/40"
               >
                 {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    Initializing…
-                  </>
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    Initializing Sector…
+                  </div>
                 ) : (
-                  <>Initialize Dashboard <Sparkles className="w-5 h-5" /></>
+                  <div className="flex items-center gap-3">
+                    Initialize Deployment <Sparkles className="w-6 h-6" />
+                  </div>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         )}

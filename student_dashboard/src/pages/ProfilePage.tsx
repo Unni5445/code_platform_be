@@ -22,7 +22,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useApi } from "@/hooks/useApi";
 import { enrollmentService } from "@/services";
-import { Card, Avatar, Badge, StatCard, Spinner, Button } from "@/components/ui";
+import { Card, Avatar, Badge, StatCard, Spinner, Button, EmptyState } from "@/components/ui";
 import { ActivityHeatmap } from "@/components/activity/ActivityHeatmap";
 import type { IEnrollment } from "@/types";
 import type { ICertificate } from "@/services/enrollment.service";
@@ -30,13 +30,13 @@ import toast from "react-hot-toast";
 
 // ─── Level System ───
 function getLevel(points: number) {
-  if (points >= 10000) return { level: 50, title: "Legendary Coder", color: "text-amber-300", bg: "from-amber-500/30 to-orange-500/30", border: "border-amber-500/40" };
-  if (points >= 5000) return { level: 40, title: "Grand Master", color: "text-purple-300", bg: "from-purple-500/30 to-pink-500/30", border: "border-purple-500/40" };
-  if (points >= 2000) return { level: 30, title: "Champion", color: "text-emerald-300", bg: "from-emerald-500/30 to-teal-500/30", border: "border-emerald-500/40" };
-  if (points >= 1000) return { level: 20, title: "Warrior", color: "text-sky-300", bg: "from-sky-500/30 to-blue-500/30", border: "border-sky-500/40" };
-  if (points >= 500) return { level: 15, title: "Fighter", color: "text-primary-300", bg: "from-primary-500/30 to-secondary-500/30", border: "border-primary-500/40" };
-  if (points >= 200) return { level: 10, title: "Apprentice", color: "text-slate-200", bg: "from-slate-500/30 to-zinc-500/30", border: "border-slate-500/40" };
-  return { level: Math.max(1, Math.floor(points / 20)), title: "Novice", color: "text-slate-300", bg: "from-slate-600/30 to-slate-700/30", border: "border-slate-600/40" };
+  if (points >= 10000) return { level: 50, title: "Legendary Coder", color: "text-amber-700", bg: "from-amber-100 to-orange-100", border: "border-amber-200" };
+  if (points >= 5000) return { level: 40, title: "Grand Master", color: "text-purple-700", bg: "from-purple-100 to-pink-100", border: "border-purple-200" };
+  if (points >= 2000) return { level: 30, title: "Champion", color: "text-emerald-700", bg: "from-emerald-100 to-teal-100", border: "border-emerald-200" };
+  if (points >= 1000) return { level: 20, title: "Warrior", color: "text-sky-700", bg: "from-sky-100 to-blue-100", border: "border-sky-200" };
+  if (points >= 500) return { level: 15, title: "Fighter", color: "text-primary-700", bg: "from-primary-100 to-secondary-100", border: "border-primary-200" };
+  if (points >= 200) return { level: 10, title: "Apprentice", color: "text-slate-700", bg: "from-slate-100 to-zinc-100", border: "border-slate-200" };
+  return { level: Math.max(1, Math.floor(points / 20)), title: "Novice", color: "text-slate-600", bg: "from-slate-50 to-slate-100", border: "border-slate-200" };
 }
 
 function getNextLevelXP(points: number) {
@@ -75,17 +75,17 @@ function getBadges(points: number, streak: number, maxStreak: number, completedC
 }
 
 const rarityBorder: Record<string, string> = {
-  common: "border-slate-600/50",
-  rare: "border-sky-500/40",
-  epic: "border-purple-500/40",
-  legendary: "border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.1)]",
+  common: "border-slate-200",
+  rare: "border-sky-300",
+  epic: "border-purple-300",
+  legendary: "border-amber-300 shadow-[0_4px_15px_rgba(245,158,11,0.1)]",
 };
 
 const rarityBg: Record<string, string> = {
-  common: "bg-slate-800/60",
-  rare: "bg-sky-500/5",
-  epic: "bg-purple-500/5",
-  legendary: "bg-amber-500/5",
+  common: "bg-slate-100",
+  rare: "bg-sky-100",
+  epic: "bg-purple-100",
+  legendary: "bg-amber-100",
 };
 
 // ─── Skill Radar (CSS-based) ───
@@ -101,20 +101,20 @@ function SkillRadar() {
 
   return (
     <Card>
-      <h3 className="text-sm font-semibold text-slate-50 mb-4 flex items-center gap-2">
-        <Target className="h-4 w-4 text-primary-400" />
+      <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <Target className="h-4 w-4 text-primary-500" />
         Skill Radar
       </h3>
       <div className="space-y-3">
         {skills.map((skill) => (
           <div key={skill.name}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-300">{skill.name}</span>
-              <span className="text-xs font-medium text-slate-400">{skill.value}%</span>
+              <span className="text-xs text-slate-600">{skill.name}</span>
+              <span className="text-xs font-medium text-slate-500">{skill.value}%</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-700"
+                className="h-full rounded-full bg-linear-to-r from-primary-500 to-secondary-500 transition-all duration-700"
                 style={{ width: `${skill.value}%` }}
               />
             </div>
@@ -143,7 +143,6 @@ export default function ProfilePage() {
   const streak = user?.streak || 0;
   const maxStreak = user?.maxStreak || 0;
   const completedCount = enrollments?.filter((e) => e.status === "COMPLETED").length || 0;
-  const activeCount = enrollments?.filter((e) => e.status === "ACTIVE").length || 0;
 
   const level = getLevel(points);
   const nextLevelXP = getNextLevelXP(points);
@@ -185,134 +184,146 @@ export default function ProfilePage() {
   ].filter((item) => item.value);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10">
       {/* Hero Card - Level + Identity */}
-      <div className="relative overflow-hidden rounded-2xl mc-glass p-6">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary-500/10 rounded-full blur-3xl" />
-
-        <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6">
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-xl p-8 transition-all duration-500 hover:shadow-2xl group">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
+        <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-secondary-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
+ 
+        <div className="relative flex flex-col md:flex-row items-start md:items-center gap-8">
           {/* Avatar + Level ring */}
-          <div className="relative">
-            <div className={`absolute -inset-1.5 rounded-full bg-gradient-to-br ${level.bg} ${level.border} border-2`} />
-            <Avatar name={user?.name} size="lg" className="relative h-20 w-20 text-2xl" />
-            <div className={`absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 border-2 ${level.border}`}>
-              <span className="text-xs font-bold text-white">{level.level}</span>
+          <div className="relative shrink-0">
+            <div className={`absolute -inset-2 rounded-full bg-linear-to-br ${level.bg} ${level.border} border-2 shadow-lg shadow-primary-500/10`} />
+            <Avatar name={user?.name} size="lg" className="relative h-24 w-24 text-3xl border-4 border-white shadow-sm" />
+            <div className={`absolute -bottom-1 right-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-white border-2 border-slate-200 shadow-xl ${level.border}`}>
+              <span className="text-xs font-extra-black text-slate-900">{level.level}</span>
             </div>
           </div>
-
+ 
           {/* Name + Class */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap mb-1">
-              <h1 className="text-2xl font-bold text-white">{user?.name || "Student"}</h1>
-              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border bg-gradient-to-r ${level.bg} ${level.border} ${level.color}`}>
-                <Crown className="h-3 w-3" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-4 flex-wrap mb-2">
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{user?.name || "Student"}</h1>
+              <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest border bg-linear-to-r shadow-sm ${level.bg} ${level.border} ${level.color}`}>
+                <Crown className="h-3.5 w-3.5" />
                 {level.title}
               </span>
             </div>
-            <p className="text-slate-400 text-sm mb-2">{user?.email}</p>
-
+            <p className="text-slate-500 font-medium mb-5">{user?.email}</p>
+ 
             {/* XP Progress */}
-            <div className="max-w-sm">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-slate-400 flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-amber-400" />
-                  {points} / {nextLevelXP} XP
+            <div className="max-w-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Zap className="h-4 w-4 text-amber-500 fill-amber-500/20" />
+                  <span className="text-slate-900">{points.toLocaleString()}</span> / {nextLevelXP.toLocaleString()} XP
                 </span>
-                <span className="text-xs text-slate-500">Next level</span>
+                <span className="text-[10px] font-extrabold text-primary-600 uppercase tracking-widest">Next level</span>
               </div>
-              <div className="h-2.5 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-3.5 rounded-full bg-slate-100 border border-slate-200/50 shadow-inner overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-700"
+                  className="h-full rounded-full bg-linear-to-r from-primary-600 to-indigo-600 transition-all duration-1000 ease-out shadow-[0_2px_10px_rgba(79,70,229,0.3)]"
                   style={{ width: `${progressToNext}%` }}
                 />
               </div>
             </div>
           </div>
-
+ 
           {/* Share Button */}
-          <Button
-            onClick={handleCopyLink}
-            variant="outline"
-            size="sm"
-            leftIcon={linkCopied ? <CheckCircle className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-          >
-            {linkCopied ? "Copied!" : "Share Profile"}
-          </Button>
+          <div className="shrink-0 self-center">
+            <Button
+              onClick={handleCopyLink}
+              variant="secondary"
+              className="font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all"
+              leftIcon={linkCopied ? <CheckCircle className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
+            >
+              {linkCopied ? "Copied!" : "Public Profile"}
+            </Button>
+          </div>
         </div>
       </div>
-
+ 
       {/* Stats Row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard
           icon={Zap}
           label="Total XP"
           value={points}
-          color="bg-amber-500/20 text-amber-300"
+          color="bg-amber-50 text-amber-600 border-amber-100"
         />
         <StatCard
           icon={Flame}
-          label="Streak"
+          label="Current Streak"
           value={streak}
-          color="bg-orange-500/20 text-orange-300"
+          color="bg-orange-50 text-orange-600 border-orange-100"
         />
         <StatCard
           icon={Trophy}
-          label="Max Streak"
+          label="Best Streak"
           value={maxStreak}
-          color="bg-red-500/20 text-red-300"
+          color="bg-red-50 text-red-600 border-red-100"
         />
         <StatCard
           icon={Award}
           label="Badges"
           value={earnedBadges.length}
-          color="bg-purple-500/20 text-purple-300"
+          color="bg-purple-50 text-purple-600 border-purple-100"
         />
         <StatCard
           icon={BookOpen}
           label="Courses"
           value={enrollments?.length || 0}
-          color="bg-sky-500/20 text-sky-300"
+          color="bg-sky-50 text-sky-600 border-sky-100"
         />
         <StatCard
           icon={CheckCircle}
           label="Completed"
           value={completedCount}
-          color="bg-emerald-500/20 text-emerald-300"
+          color="bg-emerald-50 text-emerald-600 border-emerald-100"
         />
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+ 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           {/* Badge Collection */}
-          <Card header={
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-400" />
-                Badge Collection
-              </h3>
-              <span className="text-xs text-slate-400">{earnedBadges.length}/{badges.length} earned</span>
-            </div>
-          }>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <Card 
+            className="bg-white border-slate-200 shadow-xl"
+            header={
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight">
+                  <Sparkles className="h-6 w-6 text-purple-600 drop-shadow-sm" />
+                  Achievement Gallery
+                </h3>
+                <Badge variant="primary" className="font-bold text-[10px] uppercase tracking-widest px-3 py-1">
+                  {earnedBadges.length} / {badges.length} Unlocked
+                </Badge>
+              </div>
+            }
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {badges.map((badge) => (
                 <div
                   key={badge.id}
-                  className={`rounded-xl border p-3 text-center transition-all duration-300 ${
+                  className={`rounded-2xl border p-4 text-center transition-all duration-500 relative group/badge ${
                     badge.earned
-                      ? `${rarityBg[badge.rarity]} ${rarityBorder[badge.rarity]} hover:scale-105`
-                      : "border-slate-800/40 bg-slate-900/30 opacity-40 grayscale"
+                      ? `${rarityBg[badge.rarity]} ${rarityBorder[badge.rarity]} hover:shadow-xl hover:-translate-y-1 cursor-pointer`
+                      : "border-slate-100 bg-slate-50/50 opacity-40 grayscale"
                   }`}
                 >
-                  <div className="text-2xl mb-1">{badge.icon}</div>
-                  <p className="text-xs font-medium text-white truncate">{badge.name}</p>
-                  <p className="text-[10px] text-slate-400 line-clamp-1">{badge.description}</p>
+                  {badge.earned && badge.rarity === "legendary" && (
+                     <div className="absolute -top-1.5 -right-1.5">
+                       <Zap className="h-5 w-5 text-amber-500 fill-amber-500 animate-pulse" />
+                     </div>
+                  )}
+                  <div className="text-3xl mb-2 filter drop-shadow-md group-hover/badge:scale-110 transition-transform">{badge.icon}</div>
+                  <p className="text-xs font-extrabold text-slate-900 truncate uppercase tracking-wider">{badge.name}</p>
+                  <p className="text-[10px] font-medium text-slate-500 line-clamp-1 mt-1">{badge.description}</p>
                   {badge.earned && (
-                    <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wider ${
-                      badge.rarity === "legendary" ? "text-amber-400" :
-                      badge.rarity === "epic" ? "text-purple-400" :
-                      badge.rarity === "rare" ? "text-sky-400" : "text-slate-500"
+                    <span className={`inline-block mt-2 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border bg-white ${
+                      badge.rarity === "legendary" ? "text-amber-700 border-amber-200" :
+                      badge.rarity === "epic" ? "text-purple-700 border-purple-200" :
+                      badge.rarity === "rare" ? "text-sky-700 border-sky-200" : "text-slate-500 border-slate-200"
                     }`}>
                       {badge.rarity}
                     </span>
@@ -321,32 +332,42 @@ export default function ProfilePage() {
               ))}
             </div>
           </Card>
-
+ 
           {/* Activity Heatmap */}
-          <Card header={<h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Flame className="h-5 w-5 text-emerald-400" />
-            Activity Heatmap
-          </h3>}>
-            <ActivityHeatmap data={user?.activityLog || []} />
+          <Card 
+            className="bg-white border-slate-200 shadow-xl"
+            header={
+              <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight">
+                <Flame className="h-6 w-6 text-orange-600 fill-orange-500/20" />
+                Evolution Matrix
+              </h3>
+            }
+          >
+            <div className="p-2 overflow-x-auto">
+              <ActivityHeatmap data={user?.activityLog || []} />
+            </div>
           </Card>
-
+ 
           {/* Personal Info */}
-          <Card header={<h3 className="text-lg font-semibold text-white">Personal Information</h3>}>
+          <Card 
+            className="bg-white border-slate-200 shadow-xl"
+            header={<h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Profile Details</h3>}
+          >
             {infoItems.length === 0 ? (
-              <p className="text-sm text-slate-400">No personal information available</p>
+              <EmptyState title="No details shared" description="Your profile information will appear here." />
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {infoItems.map((item) => (
                   <div
                     key={item.label}
-                    className="flex items-center gap-3 rounded-xl bg-slate-800/60 p-3"
+                    className="flex items-center gap-4 rounded-2xl bg-white p-4 border border-slate-100 shadow-sm transition-all hover:border-primary-200 hover:shadow-md"
                   >
-                    <div className="rounded-lg bg-slate-900/80 p-2">
-                      <item.icon className="h-5 w-5 text-slate-400" />
+                    <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 shadow-inner shrink-0">
+                      <item.icon className="h-6 w-6 text-slate-500" />
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-400">{item.label}</p>
-                      <p className="text-sm font-medium text-white">{String(item.value)}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400 mb-0.5">{item.label}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">{String(item.value)}</p>
                     </div>
                   </div>
                 ))}
@@ -354,29 +375,35 @@ export default function ProfilePage() {
             )}
           </Card>
         </div>
-
+ 
         {/* Right Column */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Skill Radar */}
           <SkillRadar />
-
+ 
           {/* Certificates */}
-          <Card header={
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Award className="h-5 w-5 text-emerald-400" />
-              Certificates
-            </h3>
-          }>
+          <Card 
+            className="bg-white border-slate-200 shadow-xl overflow-hidden"
+            header={
+              <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight">
+                <Award className="h-6 w-6 text-emerald-600 drop-shadow-sm" />
+                Official Credentials
+              </h3>
+            }
+          >
             {certsLoading ? (
-              <div className="flex justify-center py-6">
+              <div className="flex justify-center py-10">
                 <Spinner size="md" />
               </div>
             ) : !certificates?.length ? (
-              <p className="text-sm text-slate-400">
-                Complete a course to earn your first certificate!
-              </p>
+              <div className="py-6 text-center">
+                <Award className="h-12 w-12 text-slate-200 mx-auto mb-3" />
+                <p className="text-sm font-bold text-slate-400 px-4">
+                  Complete your courses to unlock professional certifications!
+                </p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {certificates.map((cert) => {
                   const courseTitle =
                     typeof cert.course === "object" ? cert.course.title : "Course";
@@ -386,15 +413,15 @@ export default function ProfilePage() {
                     <Link
                       key={cert._id}
                       to={`/certificates/${courseId}`}
-                      className="flex items-center gap-3 rounded-xl bg-emerald-500/10 p-3 transition-colors hover:bg-emerald-500/20"
+                      className="group/cert flex items-center gap-4 rounded-2xl bg-slate-50 border border-slate-100 p-4 transition-all hover:bg-white hover:border-emerald-300 hover:shadow-emerald-500/10 hover:shadow-lg"
                     >
-                      <div className="rounded-lg bg-slate-900/80 p-2">
-                        <Award className="h-5 w-5 text-emerald-400" />
+                      <div className="rounded-xl bg-white border border-slate-200 p-2.5 shadow-sm group-hover/cert:bg-emerald-50 group-hover/cert:border-emerald-200 transition-colors">
+                        <Award className="h-6 w-6 text-emerald-500" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-white">{cert.title}</p>
-                        <p className="text-xs text-slate-400">
-                          {courseTitle} - {formatDate(cert.issuedAt)}
+                        <p className="truncate text-sm font-extrabold text-slate-900 group-hover/cert:text-emerald-700 transition-colors">{cert.title}</p>
+                        <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                          {courseTitle} <span className="mx-1.5 opacity-50">•</span> {formatDate(cert.issuedAt)}
                         </p>
                       </div>
                     </Link>

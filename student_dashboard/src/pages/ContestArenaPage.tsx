@@ -46,10 +46,10 @@ function ContestCard({
     <div
       className={`rounded-2xl border p-5 transition-all duration-300 relative overflow-hidden group ${
         isLive
-          ? "border-red-500/40 bg-linear-to-br from-red-500/5 to-orange-500/5 shadow-[0_0_30px_rgba(239,68,68,0.06)]"
+          ? "border-red-200 bg-linear-to-br from-red-50 to-orange-50 shadow-sm"
           : isEnded
-          ? "border-slate-700/60 bg-slate-900/40 opacity-70"
-          : "border-slate-800/80 bg-slate-900/60 hover:border-primary-500/40"
+          ? "border-slate-100 bg-slate-50 opacity-70"
+          : "border-slate-200 bg-white hover:border-primary-300 shadow-sm"
       }`}
     >
       {/* Live pulse */}
@@ -59,7 +59,7 @@ function ContestCard({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
           </span>
-          <span className="text-xs font-bold text-red-400 uppercase tracking-wider">
+          <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
             Live Now
           </span>
         </div>
@@ -68,8 +68,8 @@ function ContestCard({
       {/* Sponsor badge */}
       {contest.sponsor && (
         <div className="flex items-center gap-1.5 mb-3">
-          <Building2 className="h-3.5 w-3.5 text-purple-400" />
-          <span className="text-xs font-medium text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/20">
+          <Building2 className="h-3.5 w-3.5 text-purple-600" />
+          <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
             Sponsored by {contest.sponsor}
           </span>
         </div>
@@ -78,17 +78,17 @@ function ContestCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <h3 className="text-base font-semibold text-white">{contest.title}</h3>
+            <h3 className="text-base font-semibold text-slate-900">{contest.title}</h3>
             <Badge variant={difficultyColor[contest.difficulty]}>
               {contest.difficulty}
             </Badge>
           </div>
           {contest.description && (
-            <p className="text-sm text-slate-400 mb-3">{contest.description}</p>
+            <p className="text-sm text-slate-500 mb-3">{contest.description}</p>
           )}
 
           {/* Meta info */}
-          <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400">
+          <div className="flex items-center gap-4 flex-wrap text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" />
               {isEnded
@@ -126,11 +126,11 @@ function ContestCard({
           {/* Rewards */}
           {contest.rewards?.length > 0 && (
             <div className="flex items-center gap-2 mt-3 flex-wrap">
-              <Gift className="h-3.5 w-3.5 text-amber-400" />
+              <Gift className="h-3.5 w-3.5 text-amber-600" />
               {contest.rewards.map((reward, i) => (
                 <span
                   key={i}
-                  className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/15"
+                  className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100"
                 >
                   {reward}
                 </span>
@@ -144,7 +144,7 @@ function ContestCard({
             contest.isRegistered ? (
               <button 
                 onClick={() => navigate(`/contests/${contest._id}/battle`)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm font-medium hover:bg-red-500/30 transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors cursor-pointer"
               >
                 <Swords className="h-4 w-4" />
                 Enter Battle
@@ -153,7 +153,7 @@ function ContestCard({
               <button
                 onClick={() => onRegister(contest._id)}
                 disabled={registering === contest._id}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm font-medium hover:bg-red-500/30 transition-colors cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {registering === contest._id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -164,12 +164,12 @@ function ContestCard({
               </button>
             )
           ) : isEnded ? (
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700/50 text-slate-400 text-sm font-medium cursor-pointer">
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm font-medium cursor-pointer hover:bg-white shadow-sm transition-all">
               View Results
               <ChevronRight className="h-4 w-4" />
             </button>
           ) : contest.isRegistered ? (
-            <span className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-sm font-medium">
+            <span className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-sm font-medium">
               ✓ Registered
             </span>
           ) : (
@@ -228,83 +228,81 @@ export default function ContestArenaPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl mc-glass p-6">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/20 border border-red-500/30">
-              <Trophy className="h-5 w-5 text-red-400" />
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-xl p-8 group">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
+        <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-amber-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 border border-red-100 shadow-inner">
+              <Trophy className="h-8 w-8 text-red-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Contest Arena</h1>
-              <p className="text-sm text-slate-400">
-                Compete in live battles, win rewards, and climb the ranks
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">The Contest Arena</h1>
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                Compete in legendary code battles, earn massive XP, and dominate the rankings.
               </p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-xs text-slate-400">Your Rank</p>
-              <p className="text-lg font-bold text-amber-300 flex items-center gap-1">
-                <Crown className="h-4 w-4" /> —
+
+          <div className="flex items-center gap-6 self-start md:self-center">
+            <div className="text-right border-r border-slate-200 pr-6">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Standing</p>
+              <p className="text-2xl font-black text-amber-600 flex items-center gap-1.5 justify-end">
+                <Crown className="h-5 w-5" /> —
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-400">Total XP</p>
-              <p className="text-lg font-bold text-primary-300 flex items-center gap-1">
-                <Zap className="h-4 w-4" /> {user?.points || 0}
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Battle Points</p>
+              <p className="text-2xl font-black text-primary-600 flex items-center gap-1.5 justify-end">
+                <Zap className="h-5 w-5" /> {user?.points || 0}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-slate-800/60 p-1 rounded-xl w-fit border border-slate-700/60">
+      {/* Navigation Tabs */}
+      <div className="flex gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-2xl w-fit shadow-inner relative z-10">
         {(["all", "live", "upcoming", "past"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+            className={`px-6 py-2.5 text-xs font-black rounded-xl transition-all duration-300 cursor-pointer uppercase tracking-widest flex items-center gap-2.5 ${
               tab === t
-                ? "bg-primary-500/30 text-white border border-primary-500/50 shadow-lg shadow-primary-500/10"
-                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                ? "bg-white text-primary-600 shadow-lg shadow-primary-500/10 border border-slate-100"
+                : "text-slate-400 hover:text-slate-900 hover:bg-white/50"
             }`}
           >
-            {t === "all" && "All Contests"}
             {t === "live" && (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-                </span>
-                Live ({liveCount})
-              </>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
             )}
-            {t === "upcoming" && "Upcoming"}
-            {t === "past" && "Past"}
+            {t === "all" ? "All Contests" : t}
+            {t === "live" && `(${liveCount})`}
           </button>
         ))}
       </div>
 
       {/* Contest List */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
+        <div className="flex justify-center items-center py-32 bg-white rounded-3xl border border-slate-100 shadow-sm">
           <Spinner size="lg" />
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
           {contests.length === 0 ? (
-            <div className="text-center py-12">
-              <Trophy className="h-10 w-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No contests in this category</p>
-              <p className="text-xs text-slate-500 mt-1">
-                Check back later for new contests!
+            <Card className="bg-white border-slate-200 shadow-xl py-20 text-center">
+              <Trophy className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+              <p className="text-lg font-extrabold text-slate-900">Arena is Quiet...</p>
+              <p className="text-sm font-medium text-slate-500 mt-1 max-w-xs mx-auto">
+                No active battles found in this sector. Sharpen your skills and prepare for deployment!
               </p>
-            </div>
+            </Card>
           ) : (
             contests.map((contest) => (
               <ContestCard
@@ -318,24 +316,30 @@ export default function ContestArenaPage() {
         </div>
       )}
 
-      {/* Leaderboard preview — only if contests exist */}
+      {/* Leaderboard Preview */}
       {contests.length > 0 && (
         <Card
+          className="bg-white border-slate-200 shadow-xl overflow-hidden"
           header={
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Medal className="h-5 w-5 text-amber-400" />
-                Contest Leaderboard
+              <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight">
+                <Medal className="h-6 w-6 text-amber-500 drop-shadow-sm" />
+                Global Battleground Leaderboard
               </h3>
-              <span className="text-xs text-slate-400">
-                Top performers across all contests
-              </span>
+              <Badge variant="primary" className="font-bold text-[10px] uppercase tracking-widest px-3 py-1">
+                Top Performers
+              </Badge>
             </div>
           }
         >
-          <div className="text-center py-6 text-slate-400 text-sm">
-            <Star className="h-8 w-8 mx-auto mb-2 text-slate-600" />
-            <p>Complete a contest to appear on the leaderboard!</p>
+          <div className="text-center py-12 px-6">
+            <div className="relative inline-block mb-4">
+               <Star className="h-12 w-12 text-slate-100 scale-150 rotate-12" />
+               <Star className="h-8 w-8 text-slate-200 absolute inset-0 m-auto" />
+            </div>
+            <p className="text-sm font-bold text-slate-400 max-w-sm mx-auto">
+              Deployment in progress. Complete an arena challenge to benchmark your performance against the community!
+            </p>
           </div>
         </Card>
       )}

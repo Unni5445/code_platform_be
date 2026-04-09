@@ -23,13 +23,13 @@ export function ProgressBar({
     <div className={clsx("w-full", className)}>
       {showLabel && (
         <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-slate-400">Progress</span>
-          <span className="text-xs font-medium text-white">{percentage}%</span>
+          <span className="text-xs font-medium text-slate-500">Progress</span>
+          <span className="text-xs font-bold text-slate-900">{percentage}%</span>
         </div>
       )}
       <div
         className={clsx(
-          "w-full bg-slate-800 rounded-full overflow-hidden",
+          "w-full bg-slate-100 rounded-full overflow-hidden",
           size === "sm" ? "h-1.5" : "h-2.5"
         )}
       >

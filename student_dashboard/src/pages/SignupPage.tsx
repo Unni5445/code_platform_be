@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui";
@@ -7,7 +7,13 @@ import toast from "react-hot-toast";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup, loginWithGoogle, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -74,15 +80,15 @@ export default function SignupPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold leading-tight text-white">
+        <h1 className="text-4xl font-extrabold leading-tight text-slate-900">
           Create<br />Account
         </h1>
-        <p className="mt-3 text-slate-400">Sign up to start your learning journey</p>
+        <p className="mt-3 text-sm font-medium text-slate-500">Sign up to start your learning journey</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
             {error}
           </div>
         )}
@@ -95,7 +101,7 @@ export default function SignupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
         </div>
 
@@ -107,7 +113,7 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
         </div>
 
@@ -118,7 +124,7 @@ export default function SignupPage() {
             placeholder="Phone (optional)"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
         </div>
 
@@ -130,12 +136,12 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -149,25 +155,25 @@ export default function SignupPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
         </div>
 
-        <Button type="submit" isLoading={isLoading} className="w-full !rounded-xl !py-3">
+        <Button type="submit" isLoading={isLoading} className="w-full rounded-xl! py-3!">
           Create Account
         </Button>
       </form>
 
       <div className="my-6 flex items-center gap-4">
-        <div className="h-px flex-1 bg-slate-700" />
-        <span className="text-sm text-slate-500">or</span>
-        <div className="h-px flex-1 bg-slate-700" />
+        <div className="h-px flex-1 bg-slate-100" />
+        <span className="text-sm text-slate-400">or</span>
+        <div className="h-px flex-1 bg-slate-100" />
       </div>
 
       <button
         onClick={handleGoogleSignup}
         disabled={isGoogleLoading}
-        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-700 py-3 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800/80 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
       >
         {isGoogleLoading ? (
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-primary-400" />
@@ -182,9 +188,9 @@ export default function SignupPage() {
         {isGoogleLoading ? "Signing up..." : "Continue with Google"}
       </button>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-slate-500 font-medium">
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-primary-400 hover:text-primary-300">
+        <Link to="/login" className="font-bold text-primary-600 hover:text-primary-700">
           Sign In
         </Link>
       </p>

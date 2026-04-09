@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { FileQuestion, Clock, Star, PlayCircle, Trophy } from "lucide-react";
+import { FileQuestion, Clock, PlayCircle, Trophy } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { enrollmentService, courseService } from "@/services";
 import { Card, Spinner, EmptyState, Badge, Button, Tabs } from "@/components/ui";
 import type { IEnrollment, IModule } from "@/types";
+import clsx from "clsx";
 
 interface TestInfo {
   testId: string;
@@ -92,91 +93,103 @@ export default function TestsPage() {
   const displayedTests = activeTab === "available" ? availableTests : completedTests;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-bold text-white">Tests</h1>
-        <p className="mt-1 text-sm text-slate-400">View and take tests from your enrolled courses</p>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Assessments & Tests</h1>
+        <p className="mt-2 text-sm font-medium text-slate-500">
+          Track your course evaluations, view available tests, and review your performance history.
+        </p>
       </div>
-
+ 
       <Tabs
         tabs={[
-          { id: "available", label: "Available", count: availableTests.length },
-          { id: "completed", label: "Completed", count: completedTests.length },
+          { id: "available", label: "Available Tests", count: availableTests.length },
+          { id: "completed", label: "Completed History", count: completedTests.length },
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
       />
-
+ 
       {loading ? (
-        <div className="py-12">
+        <div className="py-20 flex justify-center bg-white rounded-3xl border border-slate-100 shadow-sm transition-all duration-500">
           <Spinner size="lg" />
         </div>
       ) : displayedTests.length === 0 ? (
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-xl py-16">
           <EmptyState
-            icon={<FileQuestion className="h-10 w-10 text-primary-400" />}
-            title={activeTab === "available" ? "No Tests Available" : "No Completed Tests"}
+            icon={<FileQuestion className="h-14 w-14 text-slate-300" />}
+            title={activeTab === "available" ? "No Available Assessments" : "No Completed Records"}
             description={
               activeTab === "available"
-                ? "There are no tests available right now. Check back later!"
-                : "You haven't completed any tests yet."
+                ? "You've caught up with all your assessments! New tests will appear here once assigned."
+                : "You haven't completed any assessments yet. Get started with an available test!"
             }
           />
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {displayedTests.map((test, index) => (
-            <Card key={`${test.testId}-${index}`}>
-              <div className="mb-3 flex items-start justify-between">
-                <div className="rounded-lg bg-primary-500/20 p-2">
-                  <FileQuestion className="h-5 w-5 text-primary-300" />
+            <Card key={`${test.testId}-${index}`} className="bg-white border-slate-200 shadow-md hover:shadow-2xl transition-all duration-300 group overflow-hidden">
+              <div className="absolute top-0 right-0 h-24 w-24 bg-primary-50 rounded-full -mr-12 -mt-12 blur-2xl opacity-40 group-hover:opacity-60 transition-opacity" />
+              
+              <div className="mb-4 flex items-start justify-between relative z-10">
+                <div className="rounded-2xl bg-primary-50 p-3 border border-primary-100/50 shadow-sm">
+                  <FileQuestion className="h-6 w-6 text-primary-600" />
                 </div>
-                <Badge variant={activeTab === "completed" ? "success" : "info"}>
-                  {activeTab === "completed" ? "Completed" : "Available"}
+                <Badge 
+                  variant={activeTab === "completed" ? "success" : "info"}
+                  className="px-3 py-1 font-bold text-[10px] uppercase tracking-widest rounded-full"
+                >
+                  {activeTab === "completed" ? "Completed" : "Active"}
                 </Badge>
               </div>
-
-              <h3 className="mb-1 font-semibold text-white">{test.moduleTitle} Test</h3>
-              <p className="mb-4 text-sm text-slate-400">{test.courseTitle}</p>
-
-              <div className="mb-4 flex items-center gap-4 text-sm text-slate-400">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" /> Timed
-                </span>
-                <span className="flex items-center gap-1">
-                  <Star className="h-4 w-4" /> Points
-                </span>
-              </div>
-
-              {activeTab === "available" && (
-                <Link to={`/tests/${(test.testId as any)._id}/take`}>
-                  <Button className="w-full" leftIcon={<PlayCircle className="h-4 w-4" />}>
-                    Start Test
-                  </Button>
-                </Link>
-              )}
-
-              {activeTab === "completed" && moduleScoreMap.has(test.moduleId) && (() => {
-                const score = moduleScoreMap.get(test.moduleId)!;
-                const percentage = score.maxScore > 0 ? Math.round((score.totalScore / score.maxScore) * 100) : 0;
-                return (
-                  <Link to={`/tests/results/${score.submissionId}`}>
-                    <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 px-4 py-3 hover:bg-emerald-500/20 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-emerald-400" />
-                        <span className="text-lg font-bold text-emerald-400">
-                          {score.totalScore}{score.maxScore > 0 ? ` / ${score.maxScore}` : ""}
-                        </span>
-                      </div>
-                      {score.maxScore > 0 && (
-                        <Badge variant={percentage >= 70 ? "success" : percentage >= 40 ? "warning" : "danger"}>
-                          {percentage}%
-                        </Badge>
-                      )}
-                    </div>
+ 
+              <div className="relative z-10">
+                <h3 className="mb-1 text-lg font-extrabold text-slate-900 leading-tight group-hover:text-primary-700 transition-colors">{test.moduleTitle} Assessment</h3>
+                <p className="mb-5 text-xs font-bold text-slate-400 uppercase tracking-widest">{test.courseTitle}</p>
+ 
+                <div className="mb-6 flex items-center gap-5 text-slate-500">
+                  <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100 shadow-sm">
+                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Timed</span>
+                  </div>
+                </div>
+ 
+                {activeTab === "available" && (
+                  <Link to={`/tests/${(test.testId as any)._id}/take`}>
+                    <Button className="w-full font-bold py-3.5 rounded-2xl shadow-lg shadow-primary-500/20 active:scale-95 transition-transform" leftIcon={<PlayCircle className="h-4 w-4" />}>
+                      Begin Assessment
+                    </Button>
                   </Link>
-                );
-              })()}
+                )}
+ 
+                {activeTab === "completed" && moduleScoreMap.has(test.moduleId) && (() => {
+                  const score = moduleScoreMap.get(test.moduleId)!;
+                  const percentage = score.maxScore > 0 ? Math.round((score.totalScore / score.maxScore) * 100) : 0;
+                  return (
+                    <Link to={`/tests/results/${score.submissionId}`}>
+                      <div className="group/score flex items-center justify-between rounded-2xl bg-emerald-50 border border-emerald-100 px-5 py-3 hover:bg-emerald-100 transition-all cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <Trophy className="h-5 w-5 text-emerald-600 drop-shadow-sm" />
+                          <span className="text-xl font-extrabold text-emerald-700">
+                            {score.totalScore}<span className="text-emerald-400 text-sm ml-1">/ {score.maxScore}</span>
+                          </span>
+                        </div>
+                        {score.maxScore > 0 && (
+                          <div className={clsx(
+                            "px-3 py-1 rounded-full text-[10px] font-bold border",
+                            percentage >= 70 ? "bg-white text-emerald-600 border-emerald-200" :
+                            percentage >= 40 ? "bg-white text-amber-600 border-amber-200" :
+                            "bg-white text-red-600 border-red-200"
+                          )}>
+                            {percentage}%
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })()}
+              </div>
             </Card>
           ))}
         </div>

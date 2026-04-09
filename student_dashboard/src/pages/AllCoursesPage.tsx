@@ -7,6 +7,7 @@ import {
   CheckCircle,
   Calendar,
   Clock,
+  Zap,
 } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { courseService, enrollmentService } from "@/services";
@@ -103,73 +104,77 @@ export default function AllCoursesPage() {
     new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-white">All Courses</h1>
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border border-slate-200 p-8 rounded-3xl shadow-xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+           <BookOpen className="h-32 w-32 text-primary-900 rotate-12" />
+        </div>
+        <div className="relative z-10">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Academic Catalog</h1>
           {!loading && (
-            <p className="mt-1 text-sm text-slate-400">
-              {data?.total ?? 0} course{(data?.total ?? 0) !== 1 ? "s" : ""} available
+            <p className="mt-1 text-sm font-bold text-slate-400 uppercase tracking-widest">
+              Deployment Terminal: {data?.total ?? 0} Modules Available
             </p>
           )}
         </div>
 
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <div className="relative w-full md:w-80 z-10">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
           <input
             type="text"
             value={search}
             onChange={handleSearchChange}
-            placeholder="Search courses..."
-            className="w-full rounded-lg border border-slate-700 bg-slate-900/80 py-2 pl-9 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            placeholder="Search learning modules..."
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-medium focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/5 transition-all shadow-inner"
           />
         </div>
       </div>
 
       {loading && (
-        <div className="flex justify-center py-20">
+        <div className="flex justify-center py-32 bg-white rounded-3xl border border-slate-100 shadow-sm">
           <Spinner size="lg" />
         </div>
       )}
 
       {!loading && courses.length === 0 && (
-        <Card>
+        <Card className="bg-white border-slate-200 shadow-xl py-20 text-center">
           <EmptyState
-            icon={<BookOpen className="h-10 w-10 text-primary-400" />}
-            title="No Courses Found"
+            icon={<BookOpen className="h-16 w-16 text-slate-200 mx-auto mb-4" />}
+            title="Registry Empty"
             description={
               debouncedSearch
-                ? `No courses match "${debouncedSearch}". Try a different search.`
-                : "No courses have been created yet."
+                ? `No intelligence modules match "${debouncedSearch}". Refine your search query.`
+                : "No course data has been synchronized yet."
             }
           />
         </Card>
       )}
 
       {!loading && courses.length > 0 && (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => {
             const isEnrolled = enrolledCourseIds.has(course._id);
 
             return (
               <Card
                 key={course._id}
-                className="flex flex-col transition-shadow duration-200 hover:shadow-lg"
+                className="flex flex-col h-full bg-white border-slate-200 hover:border-primary-300 hover:shadow-2xl transition-all duration-300 p-6 rounded-3xl group/card"
               >
-                <div className="mb-3 flex items-start justify-between">
-                  <div className="rounded-lg bg-primary-500/20 p-2">
-                    <BookOpen className="h-5 w-5 text-primary-300" />
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="rounded-2xl bg-primary-50 border border-primary-100 p-3 shadow-inner group-hover/card:scale-110 group-hover/card:bg-primary-100 transition-transform">
+                    <BookOpen className="h-6 w-6 text-primary-600" />
                   </div>
                   <div className="flex items-center gap-2">
                     {isEnrolled && (
-                      <Badge variant="success">
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3" /> Enrolled
+                      <Badge variant="success" className="font-black text-[10px] uppercase tracking-widest px-3 py-1 border-emerald-100 shadow-sm">
+                        <span className="flex items-center gap-1.5 ">
+                          <CheckCircle className="h-3.5 w-3.5" /> Enrolled
                         </span>
                       </Badge>
                     )}
                     {course.status && !isEnrolled && (
                       <Badge
+                        className="font-black text-[10px] uppercase tracking-widest px-3 py-1 border-slate-100 shadow-sm"
                         variant={
                           course.status === "PUBLISHED"
                             ? "success"
@@ -184,33 +189,33 @@ export default function AllCoursesPage() {
                   </div>
                 </div>
 
-                <h3 className="mb-1 text-lg font-semibold text-white">{course.title}</h3>
+                <h3 className="mb-2 text-xl font-black text-slate-900 tracking-tight group-hover/card:text-primary-600 transition-colors line-clamp-1">{course.title}</h3>
 
                 {course.description && (
-                  <p className="mb-4 line-clamp-2 text-sm text-slate-400">{course.description}</p>
+                  <p className="mb-6 line-clamp-2 text-sm font-medium text-slate-500 leading-relaxed">{course.description}</p>
                 )}
 
-                <div className="mt-auto flex items-center justify-between border-t border-slate-800/80 pt-3 text-sm">
+                <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
                   {isEnrolled ? (
                     <Link
                       to={`/courses/${course._id}`}
-                      className="flex items-center gap-1 font-medium text-primary-400 hover:text-primary-300"
+                      className="flex items-center gap-2 font-black text-xs uppercase tracking-widest text-primary-600 hover:text-primary-700 transition-colors group"
                     >
-                      Continue Learning <ArrowRight className="h-4 w-4" />
+                      Continue Training <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   ) : (
                     <>
                       <Link
                         to={`/courses/${course._id}`}
-                        className="flex items-center gap-1 font-medium text-slate-400 hover:text-white"
+                        className="flex items-center gap-2 font-black text-xs uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors"
                       >
-                        View Details <ArrowRight className="h-4 w-4" />
+                        Module Specs <ArrowRight className="h-4 w-4" />
                       </Link>
                       <button
                         onClick={() => openBatchPicker(course._id)}
-                        className="rounded-lg bg-primary-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-400 transition-colors cursor-pointer"
+                        className="rounded-xl bg-slate-900 px-6 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-black hover:shadow-lg active:scale-95 transition-all cursor-pointer shadow-md"
                       >
-                        Enroll
+                        Deploy
                       </button>
                     </>
                   )}
@@ -224,36 +229,38 @@ export default function AllCoursesPage() {
       <Modal
         isOpen={batchModalOpen}
         onClose={() => setBatchModalOpen(false)}
-        title="Select a Batch"
+        title="Sync Learning Batch"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setBatchModalOpen(false)}>
-              Cancel
+          <div className="flex gap-3 w-full sm:justify-end">
+            <Button variant="ghost" onClick={() => setBatchModalOpen(false)} className="font-bold rounded-xl px-6">
+              Abort
             </Button>
             <Button
               onClick={handleEnroll}
               disabled={!selectedBatchId}
               isLoading={enrollingId === batchModalCourseId}
+              className="bg-primary-600 hover:bg-primary-700 border-none text-white font-bold px-8 rounded-xl shadow-lg shadow-primary-500/20 active:scale-95 transition-all"
             >
-              Enroll
+              Initiate Enrollment
             </Button>
-          </>
+          </div>
         }
       >
         {batchesLoading ? (
-          <div className="flex justify-center py-10">
+          <div className="flex justify-center py-20">
             <Spinner />
           </div>
         ) : batches.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-sm text-slate-400">No upcoming batches available for this course.</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Please contact your admin to create a batch.
+          <div className="py-20 text-center bg-slate-50 rounded-3xl border border-slate-100 shadow-inner">
+            <Clock className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+            <p className="text-lg font-black text-slate-900 tracking-tight">No Active Batches</p>
+            <p className="mt-1 text-sm font-medium text-slate-500 max-w-xs mx-auto">
+              Deployment scheduled. Please coordinate with command for batch initialization.
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            <p className="mb-3 text-sm text-slate-400">Choose a batch to enroll in:</p>
+          <div className="space-y-3 py-2">
+            <p className="mb-4 text-xs font-black text-slate-400 uppercase tracking-widest">Available Sectors:</p>
             {batches.map((batch) => {
               const isSelected = selectedBatchId === batch._id;
               const orgName =
@@ -262,28 +269,29 @@ export default function AllCoursesPage() {
                 <div
                   key={batch._id}
                   onClick={() => setSelectedBatchId(batch._id)}
-                  className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                  className={`flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-5 transition-all relative overflow-hidden group ${
                     isSelected
-                      ? "border-primary-500 bg-primary-500/20"
-                      : "border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/60"
+                      ? "border-primary-500 bg-primary-50/50 shadow-lg"
+                      : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50 shadow-sm"
                   }`}
                 >
+                   {isSelected && <div className="absolute top-0 right-0 p-4 opacity-5"><Zap className="h-12 w-12 text-primary-900" /></div>}
                   <div
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                      isSelected ? "border-primary-500" : "border-slate-600"
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                      isSelected ? "border-primary-500 bg-primary-500 shadow-inner" : "border-slate-200 bg-slate-50"
                     }`}
                   >
-                    {isSelected && <div className="h-3 w-3 rounded-full bg-primary-500" />}
+                    {isSelected && <div className="h-2 w-2 rounded-full bg-white shadow-sm" />}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white">{batch.name}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-3">
-                      {orgName && <span className="text-xs text-slate-500">{orgName}</span>}
-                      <span className="flex items-center gap-1 text-xs text-slate-400">
-                        <Clock className="h-3 w-3" /> {batch.duration}
+                  <div className="min-w-0 flex-1 relative z-10">
+                    <p className={`text-base font-black tracking-tight ${isSelected ? 'text-primary-900' : 'text-slate-900'}`}>{batch.name}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-4">
+                      {orgName && <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{orgName}</span>}
+                      <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <Clock className="h-3.5 w-3.5 text-primary-500" /> {batch.duration}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-slate-400">
-                        <Calendar className="h-3 w-3" />{" "}
+                      <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <Calendar className="h-3.5 w-3.5 text-primary-500" />{" "}
                         {formatDate(batch.startDate)} – {formatDate(batch.endDate)}
                       </span>
                     </div>

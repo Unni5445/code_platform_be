@@ -34,23 +34,23 @@ export function MCQQuestion({ question, answer, onChange }: MCQQuestionProps) {
             key={index}
             onClick={() => handleSelect(option)}
             className={clsx(
-              "w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer",
+              "w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md",
               isSelected
-                ? "border-primary-500 bg-primary-50"
-                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                ? "border-primary-500 bg-primary-50 shadow-primary-500/5"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
             )}
           >
             <div
               className={clsx(
-                "h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0",
+                "h-8 w-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 shadow-xs",
                 isSelected
                   ? "bg-primary-600 text-white"
-                  : "bg-gray-100 text-gray-600"
+                  : "bg-slate-100 text-slate-500"
               )}
             >
-              {isSelected ? <Check className="h-4 w-4" /> : letter}
+              {isSelected ? <Check className="h-5 w-5" /> : letter}
             </div>
-            <span className={clsx("text-sm", isSelected ? "text-primary-700 font-medium" : "")}>
+            <span className={clsx("text-sm font-bold", isSelected ? "text-primary-700" : "text-slate-600")}>
               {option}
             </span>
           </button>

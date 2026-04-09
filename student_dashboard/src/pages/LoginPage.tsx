@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui";
@@ -7,7 +7,13 @@ import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -61,15 +67,15 @@ export default function LoginPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold leading-tight text-white">
+        <h1 className="text-4xl font-extrabold leading-tight text-slate-900">
           Hello,<br />Welcome Back
         </h1>
-        <p className="mt-3 text-slate-400">Hey, welcome back to your special place</p>
+        <p className="mt-3 text-sm font-medium text-slate-500">Hey, welcome back to your special place</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-sm text-red-200">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
             {error}
           </div>
         )}
@@ -82,7 +88,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
         </div>
 
@@ -94,12 +100,12 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -111,33 +117,33 @@ export default function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500"
+              className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
             />
-            <span className="text-sm text-slate-400">Remember me</span>
+            <span className="text-sm font-medium text-slate-500">Remember me</span>
           </label>
           <Link
             to="/forgot-password"
-            className="text-sm text-slate-400 hover:text-primary-400"
+            className="text-sm font-medium text-slate-500 hover:text-primary-600"
           >
             Forgot Password?
           </Link>
         </div>
 
-        <Button type="submit" isLoading={isLoading} className="w-full !rounded-xl !py-3">
+        <Button type="submit" isLoading={isLoading} className="w-full rounded-xl! py-3!">
           Sign In
         </Button>
       </form>
 
       <div className="my-6 flex items-center gap-4">
-        <div className="h-px flex-1 bg-slate-700" />
-        <span className="text-sm text-slate-500">or</span>
-        <div className="h-px flex-1 bg-slate-700" />
+        <div className="h-px flex-1 bg-slate-100" />
+        <span className="text-sm text-slate-400">or</span>
+        <div className="h-px flex-1 bg-slate-100" />
       </div>
 
       <button
         onClick={handleGoogleLogin}
         disabled={isGoogleLoading}
-        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-700 py-3 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800/80 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
       >
         {isGoogleLoading ? (
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-primary-400" />
@@ -152,9 +158,9 @@ export default function LoginPage() {
         {isGoogleLoading ? "Signing in..." : "Continue with Google"}
       </button>
 
-      <p className="mt-6 text-center text-sm text-slate-400">
+      <p className="mt-6 text-center text-sm text-slate-500 font-medium">
         Don&apos;t have an account?{" "}
-        <Link to="/signup" className="font-medium text-primary-400 hover:text-primary-300">
+        <Link to="/signup" className="font-bold text-primary-600 hover:text-primary-700">
           Sign Up
         </Link>
       </p>

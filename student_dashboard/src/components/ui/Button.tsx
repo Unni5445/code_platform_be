@@ -16,15 +16,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "mc-btn-gradient border border-transparent text-slate-950 shadow-md shadow-emerald-500/40",
+    "mc-btn-gradient border border-transparent text-white shadow-lg shadow-primary-500/20",
   secondary:
-    "bg-slate-900/80 border border-slate-700 text-slate-100 hover:border-sky-400/80 hover:bg-slate-900/90",
+    "bg-slate-100 border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-200",
   outline:
     "mc-btn-outline",
   ghost:
-    "text-slate-300 hover:text-white hover:bg-slate-800/70 border border-transparent",
+    "text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-transparent",
   danger:
-    "bg-red-600/90 hover:bg-red-500 text-white border border-red-500/80 shadow-md shadow-red-500/30",
+    "bg-red-500 hover:bg-red-600 text-white border border-red-400/50 shadow-md shadow-red-500/10",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

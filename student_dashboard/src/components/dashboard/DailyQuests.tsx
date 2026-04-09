@@ -57,28 +57,28 @@ export function DailyQuests() {
   const progressPercent = safeQuests.length > 0 ? Math.round((totalCompleted / safeQuests.length) * 100) : 0;
 
   return (
-    <div className="mc-glass flex h-full flex-col rounded-2xl p-6 sm:p-7">
+    <div className="bg-white border border-slate-200 shadow-xl flex h-full flex-col rounded-3xl p-6 sm:p-7 relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold flex items-center gap-2 text-white">
+          <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900">
             Daily Quests
           </h3>
           {!loading ? (
-            <p className="text-sm font-medium text-slate-400">
+            <p className="text-sm font-medium text-slate-500">
               {totalCompleted} / {safeQuests.length} completed
             </p>
           ) : (
-            <div className="h-4 w-24 rounded bg-slate-800 animate-pulse mt-1" />
+            <div className="h-4 w-24 rounded bg-slate-100 animate-pulse mt-1" />
           )}
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary-500/20 bg-primary-500/10 text-primary-400">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary-100 bg-primary-50 text-primary-600">
           <Target className="h-6 w-6" />
         </div>
       </div>
 
-      <div className="mb-6 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+      <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-slate-50 border border-slate-100 shadow-inner">
         <div
-          className="mc-bg-gradient h-full rounded-full transition-all duration-700 ease-out"
+          className="bg-linear-to-r from-primary-600 to-indigo-600 h-full rounded-full transition-all duration-700 ease-out shadow-sm"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
@@ -87,14 +87,14 @@ export function DailyQuests() {
         {loading ? (
           // Skeletons
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+            <div key={i} className="flex flex-col gap-2 rounded-xl border border-slate-100 bg-slate-50 p-4">
               <div className="flex items-center gap-4">
-                <div className="h-6 w-6 rounded-full bg-slate-800 animate-pulse shrink-0" />
+                <div className="h-6 w-6 rounded-full bg-slate-200 animate-pulse shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-24 rounded bg-slate-800 animate-pulse" />
-                  <div className="h-3 w-40 rounded bg-slate-800/80 animate-pulse" />
+                  <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-3 w-40 rounded bg-slate-200/80 animate-pulse" />
                 </div>
-                <div className="h-4 w-12 rounded bg-slate-800 animate-pulse" />
+                <div className="h-4 w-12 rounded bg-slate-200 animate-pulse" />
               </div>
             </div>
           ))
@@ -111,10 +111,10 @@ export function DailyQuests() {
                 onClick={() => canClaim && !isLoad && handleClaim(quest.id, quest.xp)}
                 className={`flex items-center gap-4 rounded-xl border p-4 transition-all duration-300 ${
                   canClaim 
-                    ? "border-primary-500/50 bg-primary-500/10 cursor-pointer hover:bg-primary-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-1 ring-primary-500/30"
+                    ? "border-primary-300 bg-primary-50 cursor-pointer hover:bg-primary-100 shadow-sm ring-1 ring-primary-200"
                     : isClaimed
-                    ? "border-emerald-500/30 bg-emerald-500/5 cursor-default"
-                    : "border-slate-800 bg-slate-900/40 cursor-default"
+                    ? "border-emerald-100 bg-emerald-50 cursor-default"
+                    : "border-slate-200 bg-white shadow-sm cursor-default"
                 }`}
               >
                 <div className={`shrink-0 ${isClaimed ? 'text-emerald-400' : quest.completed ? 'text-primary-400' : 'text-slate-600'}`}>
@@ -128,7 +128,7 @@ export function DailyQuests() {
                 </div>
                 
                 <div className="flex-1">
-                  <h4 className={`text-sm font-semibold ${isClaimed ? "text-emerald-100" : quest.completed ? "text-primary-100" : "text-white"}`}>
+                  <h4 className={`text-sm font-semibold ${isClaimed ? "text-emerald-700" : quest.completed ? "text-primary-700" : "text-slate-900"}`}>
                     {quest.title}
                   </h4>
                   <p className="text-xs text-slate-500">{quest.desc}</p>
@@ -153,7 +153,7 @@ export function DailyQuests() {
         )}
       </div>
 
-      <button className="mc-btn flex w-full items-center justify-center gap-2 mt-6 py-3 font-semibold hover:border-primary-500 group border-slate-700 hover:text-primary-400 border text-white rounded-xl bg-slate-800/50 backdrop-blur-sm transition-all duration-300">
+      <button className="flex w-full items-center justify-center gap-2 mt-6 py-4 font-bold hover:border-primary-500 group border-slate-200 hover:text-primary-600 border text-slate-700 rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95">
         View All Quests
         <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
       </button>

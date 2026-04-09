@@ -24,8 +24,8 @@ export function Header() {
   return (
     <header className="py-4 px-4 sm:px-6 lg:px-8 bg-transparent">
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">{pageTitle}</h2>
-        <p className="text-sm text-slate-400 mt-1">
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{pageTitle}</h2>
+        <p className="text-sm text-slate-500 mt-1">
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",

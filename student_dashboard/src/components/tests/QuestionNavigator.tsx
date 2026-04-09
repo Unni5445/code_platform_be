@@ -19,12 +19,12 @@ export function QuestionNavigator({ total, current, answeredIndices, onNavigate 
             key={i}
             onClick={() => onNavigate(i)}
             className={clsx(
-              "h-10 w-10 rounded-lg text-sm font-medium transition-all cursor-pointer",
+              "h-10 w-10 rounded-lg text-sm font-bold transition-all cursor-pointer border shadow-xs",
               isCurrent
-                ? "bg-primary-600 text-white shadow-md"
+                ? "bg-primary-600 text-white border-primary-500 shadow-md shadow-primary-500/20"
                 : isAnswered
-                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100"
+                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
             )}
           >
             {i + 1}

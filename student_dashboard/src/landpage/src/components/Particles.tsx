@@ -17,7 +17,7 @@ export default function Particles() {
   }, []);
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
+    <div className=" text-white fixed inset-0 -z-10 overflow-hidden">
       {particles.map((style, i) => (
         <span
           key={i}
