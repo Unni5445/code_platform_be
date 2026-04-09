@@ -10,9 +10,9 @@ import {
   Building,
   Target,
   Users,
-  MessageSquare,
-  AlertTriangle,
-  Lightbulb,
+  // MessageSquare,
+  // AlertTriangle,
+  // Lightbulb,
 } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { interviewService } from "@/services";
