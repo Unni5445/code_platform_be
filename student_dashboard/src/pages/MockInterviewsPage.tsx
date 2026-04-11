@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Shield,
   MessageSquare,
@@ -264,9 +265,10 @@ export default function MockInterviewsPage() {
     return allQuestions.sort(() => 0.5 - Math.random()).slice(0, 3);
   }, [mockInterviews]);
 
+  const navigate = useNavigate();
+
   const handleStartInterview = (id: string) => {
-    // In real implementation, navigate to interview practice page
-    console.log("Starting interview:", id);
+    navigate(`/interviews/${id}/play`);
   };
 
   return (

@@ -26,6 +26,7 @@ import ArenaPage from "@/pages/ArenaPage";
 import ContestArenaPage from "@/pages/ContestArenaPage";
 import ContestBattlePage from "@/pages/ContestBattlePage";
 import MockInterviewsPage from "@/pages/MockInterviewsPage";
+import InterviewPlayPage from "@/pages/InterviewPlayPage";
 import TestResultPage from "@/pages/TestResultPage";
 
 const TestTakePage = lazy(() => import("@/pages/TestTakePage"));
@@ -91,6 +92,18 @@ function App() {
               element={
                 <Suspense fallback={<LazyFallback />}>
                   <ContestBattlePage />
+                </Suspense>
+              }
+            />
+          </Route>
+
+          {/* Interview play - fullscreen, no sidebar */}
+          <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} requireOnboarding />}>
+            <Route
+              path="/interviews/:id/play"
+              element={
+                <Suspense fallback={<LazyFallback />}>
+                  <InterviewPlayPage />
                 </Suspense>
               }
             />

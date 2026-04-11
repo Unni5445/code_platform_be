@@ -12,6 +12,7 @@ export interface IContestSubmission extends Document {
   timeTaken?: number; // seconds
   answers: {
     question: mongoose.Types.ObjectId;
+    answer: any;
     code: string;
     language: string;
     passed: boolean;
@@ -37,6 +38,7 @@ const contestSubmissionSchema = new Schema<IContestSubmission>(
     answers: [
       {
         question: { type: Schema.Types.ObjectId, ref: "Question", required: true },
+        answer: { type: Schema.Types.Mixed, default: null },
         code: { type: String, default: "" },
         language: { type: String, default: "javascript" },
         passed: { type: Boolean, default: false },

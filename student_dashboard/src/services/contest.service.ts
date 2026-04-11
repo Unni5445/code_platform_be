@@ -17,6 +17,7 @@ export interface Contest {
   rewards: string[];
   participants: number;
   isRegistered: boolean;
+  hasSubmitted?: boolean;
   questionsCount?: number;
   questions?: {
     _id: string;

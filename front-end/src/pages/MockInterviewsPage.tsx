@@ -484,11 +484,11 @@ export default function MockInterviewsPage() {
 
       {/* Modals */}
       <Modal isOpen={addModal.isOpen} onClose={addModal.close} title="Create Mock Interview" size="lg" footer={<><Button variant="ghost" onClick={addModal.close}>Cancel</Button><Button onClick={handleCreate} disabled={!company.trim()}>Create</Button></>}>
-        <InterviewForm />
+        {InterviewForm()}
       </Modal>
 
       <Modal isOpen={editModal.isOpen} onClose={() => { editModal.close(); setEditingInterview(null); resetForm(); }} title="Edit Mock Interview" size="lg" footer={<><Button variant="ghost" onClick={() => { editModal.close(); setEditingInterview(null); resetForm(); }}>Cancel</Button><Button onClick={handleEdit} disabled={!company.trim()}>Update</Button></>}>
-        <InterviewForm />
+        {InterviewForm()}
       </Modal>
 
       <ConfirmDialog isOpen={deleteModal.isOpen} onClose={() => { deleteModal.close(); setInterviewToDelete(null); }} onConfirm={handleDelete} title="Delete Mock Interview" message={`Are you sure you want to delete the ${interviewToDelete?.company} ${interviewToDelete?.role} interview?`} confirmLabel="Delete" />

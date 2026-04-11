@@ -41,12 +41,17 @@ class ContestController {
       Contest.countDocuments(filter),
     ]);
 
-    // Attach participant count and registration status per contest
+    // Attach participant count, registration status, and submission status per contest
     const enriched = await Promise.all(
       contests.map(async (contest: any) => {
-        const participantCount = await Contest.findById(contest._id)
-          .select("registeredStudents")
-          .lean();
+        const [participantCount, existingSubmission] = await Promise.all([
+          Contest.findById(contest._id).select("registeredStudents").lean(),
+          ContestSubmission.findOne({
+            student: studentId,
+            contest: contest._id,
+            finishedAt: { $exists: true },
+          }).lean(),
+        ]);
         const isRegistered = participantCount?.registeredStudents?.some(
           (id: any) => id.toString() === studentId
         );
@@ -66,6 +71,7 @@ class ContestController {
           status: computedStatus,
           participants: participantCount?.registeredStudents?.length || 0,
           isRegistered: !!isRegistered,
+          hasSubmitted: !!existingSubmission,
         };
       })
     );
@@ -201,7 +207,7 @@ class ContestController {
         isDeleted: false,
       })
         .populate("student", "name email")
-        .populate("answers.question", "title difficulty points")
+        .populate("answers.question", "title difficulty points type options correctAnswer")
         .sort({ score: -1, timeTaken: 1 })
         .lean();
 
@@ -230,10 +236,21 @@ class ContestController {
         return next(new ErrorResponse("Contest is not currently live", 400));
       }
 
+      const studentId = (req.user!._id as Types.ObjectId).toString();
       const isRegistered = contest.registeredStudents.some(
-        (id: any) => id.toString() === (req.user!._id as Types.ObjectId).toString()
+        (id: any) => id.toString() === studentId
       );
       if (!isRegistered) return next(new ErrorResponse("Not registered for this contest", 403));
+
+      // Block re-entry if already submitted
+      const alreadySubmitted = await ContestSubmission.findOne({
+        student: req.user!._id,
+        contest: req.params.id,
+        finishedAt: { $exists: true },
+      });
+      if (alreadySubmitted) {
+        return next(new ErrorResponse("You have already submitted this contest", 400));
+      }
 
       res.status(200).json(
         new ApiResponse(200, contest, "Contest battle fetched successfully")
@@ -374,6 +391,7 @@ class ContestController {
 
         gradedAnswers.push({
           question: ans.question,
+          answer: ans.answer ?? null,
           code: ans.code || "",
           language: ans.language || "javascript",
           passed,

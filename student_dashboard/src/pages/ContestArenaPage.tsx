@@ -141,7 +141,11 @@ function ContestCard({
 
         <div className="shrink-0">
           {isLive ? (
-            contest.isRegistered ? (
+            contest.hasSubmitted ? (
+              <span className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-sm font-medium">
+                ✓ Submitted
+              </span>
+            ) : contest.isRegistered ? (
               <button 
                 onClick={() => navigate(`/contests/${contest._id}/battle`)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors cursor-pointer"

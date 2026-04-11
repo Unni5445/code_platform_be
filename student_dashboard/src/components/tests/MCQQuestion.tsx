@@ -12,27 +12,28 @@ export function MCQQuestion({ question, answer, onChange }: MCQQuestionProps) {
   const isMultiple = question.type === "MULTIPLE_CHOICE";
   const selectedAnswers = Array.isArray(answer) ? answer : answer ? [answer] : [];
 
-  const handleSelect = (option: string) => {
+  const handleSelect = (idx: string) => {
     if (isMultiple) {
-      const newAnswers = selectedAnswers.includes(option)
-        ? selectedAnswers.filter((a) => a !== option)
-        : [...selectedAnswers, option];
+      const newAnswers = selectedAnswers.includes(idx)
+        ? selectedAnswers.filter((a) => a !== idx)
+        : [...selectedAnswers, idx];
       onChange(newAnswers);
     } else {
-      onChange(option);
+      onChange(idx);
     }
   };
 
   return (
     <div className="space-y-3">
       {question.options?.map((option, index) => {
-        const isSelected = selectedAnswers.includes(option);
+        const optionIdx = String(index);
+        const isSelected = selectedAnswers.includes(optionIdx);
         const letter = String.fromCharCode(65 + index);
 
         return (
           <button
             key={index}
-            onClick={() => handleSelect(option)}
+            onClick={() => handleSelect(optionIdx)}
             className={clsx(
               "w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md",
               isSelected

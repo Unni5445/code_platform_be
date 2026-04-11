@@ -81,7 +81,16 @@ export interface IContestSubmission {
   finishedAt?: string;
   timeTaken?: number;
   answers: {
-    question: { _id: string; title: string; difficulty: string; points: number } | string;
+    question: {
+      _id: string;
+      title: string;
+      difficulty: string;
+      points: number;
+      type: string;
+      options?: string[];
+      correctAnswer?: string | string[];
+    } | string;
+    answer?: any;
     code: string;
     language: string;
     passed: boolean;
