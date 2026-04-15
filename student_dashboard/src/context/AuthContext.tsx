@@ -40,6 +40,7 @@ interface AuthContextValue extends AuthState {
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   updateUserLocally: (user: IUser) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,22 +48,32 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  const refreshUser = async () => {
+    try {
+      const res = await authService.getMe();
+      dispatch({ type: "SET_USER", payload: res.data.data });
+    } catch (error) {
+      dispatch({ type: "LOGOUT" });
+      throw error;
+    }
+  };
+
   useEffect(() => {
-    authService
-      .getMe()
-      .then((res) => {
-        dispatch({ type: "SET_USER", payload: res.data.data });
-      })
-      .catch(() => {
-        dispatch({ type: "LOGOUT" });
-      });
+    refreshUser().catch(() => {});
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await authService.signIn(email, password);
     if (res.data.success) {
       const meRes = await authService.getMe();
-      dispatch({ type: "SET_USER", payload: meRes.data.data });
+      const userData = meRes.data.data;
+      
+      if (userData.role !== "STUDENT") {
+        await authService.signOut();
+        throw new Error("Access denied. Only students can access this portal.");
+      }
+      
+      dispatch({ type: "SET_USER", payload: userData });
     }
   };
 
@@ -84,7 +95,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (res.data.success) {
       const meRes = await authService.getMe();
-      dispatch({ type: "SET_USER", payload: meRes.data.data });
+      const userData = meRes.data.data;
+
+      if (userData.role !== "STUDENT") {
+        await authService.signOut();
+        throw new Error("Access denied. Only students can access this portal.");
+      }
+
+      dispatch({ type: "SET_USER", payload: userData });
     }
   };
 
@@ -98,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, signup, loginWithGoogle, logout, updateUserLocally }}>
+    <AuthContext.Provider value={{ ...state, login, signup, loginWithGoogle, logout, updateUserLocally, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

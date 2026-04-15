@@ -14,7 +14,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
-      if (currentPath !== "/login") {
+      const isAuthPage = currentPath.startsWith("/login") || currentPath.startsWith("/signup");
+      if (!isAuthPage) {
         window.location.href = "/login";
       }
     }
