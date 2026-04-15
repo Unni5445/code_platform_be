@@ -51,7 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const res = await authService.getMe();
-      dispatch({ type: "SET_USER", payload: res.data.data });
+      const userData = res.data.data;
+
+      if (userData.role !== "STUDENT") {
+        await logout();
+        return;
+      }
+
+      dispatch({ type: "SET_USER", payload: userData });
     } catch (error) {
       dispatch({ type: "LOGOUT" });
       throw error;
@@ -81,7 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await authService.signUp(data);
     if (res.data.success) {
       const meRes = await authService.getMe();
-      dispatch({ type: "SET_USER", payload: meRes.data.data });
+      const userData = meRes.data.data;
+
+      if (userData.role !== "STUDENT") {
+        await logout();
+        throw new Error("Access denied. Only students can access this portal.");
+      }
+
+      dispatch({ type: "SET_USER", payload: userData });
     }
   };
 
