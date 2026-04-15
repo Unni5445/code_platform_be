@@ -19,6 +19,7 @@ router.patch("/me/onboarding", protect, UserController.completeOnboarding);
 router.get("/me/stats", protect, UserController.getStudentStats);
 router.get("/me/quests", protect, UserController.getDailyQuests);
 router.post("/me/claim-xp", protect, UserController.claimXp);
+router.post("/me/unlock-hint", protect, UserController.unlockHint);
 
 
 /**

@@ -40,8 +40,11 @@ export const authService = {
     api.get<ApiResponse<{ problemsSolved: number; totalXp: number; globalRank: number; acceptance: number }>>("/me/stats"),
 
   getDailyQuests: () =>
-    api.get<ApiResponse<Array<{ id: number; title: string; desc: string; xp: number; completed: boolean; iconName: string }>>>("/me/quests"),
+    api.get<ApiResponse<Array<{ id: number; title: string; desc: string; xp: number; completed: boolean; claimed: boolean; iconName: string }>>>("/me/quests"),
 
-  claimXp: (amount: number) =>
-    api.post<ApiResponse<IUser>>("/me/claim-xp", { amount }),
+  claimXp: (amount: number, questId: number) =>
+    api.post<ApiResponse<IUser>>("/me/claim-xp", { amount, questId }),
+
+  unlockHint: (questionId: string, hintIndex: number, xpCost: number) =>
+    api.post<ApiResponse<IUser>>("/me/unlock-hint", { questionId, hintIndex, xpCost }),
 };

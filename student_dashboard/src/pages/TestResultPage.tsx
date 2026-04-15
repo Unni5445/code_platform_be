@@ -82,9 +82,9 @@ export default function TestResultPage() {
             <div>
               <div className="flex items-center gap-3 text-slate-900">
                 <Trophy className="h-6 w-6 text-amber-500" />
-                <span className="text-3xl font-extrabold">
-                  {submission.totalScore} <span className="text-slate-300 text-lg">/ {maxScore}</span>
-                </span>
+                <p className="text-3xl font-extrabold text-slate-900">
+                  {submission.totalScore} <span className="text-slate-500 text-lg">/ {maxScore}</span>
+                </p>
               </div>
               <Badge
                 variant={percentage >= 70 ? "success" : percentage >= 40 ? "warning" : "danger"}
@@ -94,7 +94,7 @@ export default function TestResultPage() {
               </Badge>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-4 text-xs font-black text-slate-500 uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 italic">
             <span className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Completed on {completedDate}
@@ -105,7 +105,7 @@ export default function TestResultPage() {
 
       {/* Question Breakdown */}
       <div className="pb-8">
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-6 px-1">Detailed Breakdown</h2>
+        <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 px-1">Detailed Breakdown</h2>
         <div className="space-y-4">
           {submission.answers.map((ans, index) => {
             const q = ans.question;
@@ -127,7 +127,7 @@ export default function TestResultPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">Q{index + 1}</span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] bg-white px-2.5 py-1 rounded inline-block border border-slate-200 shadow-sm leading-none">Q{index + 1}</span>
                         <h3 className="font-bold text-slate-900 text-lg truncate">{q.title}</h3>
                       </div>
                       <div className="flex items-center gap-3 flex-wrap mb-6">
@@ -155,11 +155,19 @@ export default function TestResultPage() {
                       </div>
 
                       {/* Show answer for non-coding questions */}
-                      {q.type !== "CODING" && ans.answer && (
+                      {q.type !== "CODING" && ans.answer !== undefined && ans.answer !== null && ans.answer !== "" && (
                         <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-inner">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Participant Response</span>
                           <span className="text-sm font-bold text-slate-900 leading-relaxed">
-                            {Array.isArray(ans.answer) ? ans.answer.join(", ") : ans.answer}
+                            {(() => {
+                              if (q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") {
+                                const selectedIndices = Array.isArray(ans.answer) ? ans.answer : [ans.answer];
+                                return selectedIndices
+                                  .map((idx: any) => q.options?.[parseInt(idx)] || idx)
+                                  .join(", ");
+                              }
+                              return Array.isArray(ans.answer) ? ans.answer.join(", ") : ans.answer;
+                            })()}
                           </span>
                         </div>
                       )}

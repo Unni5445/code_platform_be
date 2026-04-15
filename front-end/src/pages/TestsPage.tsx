@@ -20,6 +20,8 @@ const questionTypeConfig: Record<QuestionType, { label: string; icon: React.Reac
 export default function TestsPage() {
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
+  const isSuperAdmin = currentUser?.role === "SUPER_ADMIN";
+  const isAnyAdmin = isAdmin || isSuperAdmin;
   const [activeTab, setActiveTab] = useState("questions");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -376,7 +378,7 @@ export default function TestsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Tabs tabs={tabs} activeTab={activeTab} onChange={(tab) => { setActiveTab(tab); setSearch(""); }} />
-        {!isAdmin && (
+        {isAnyAdmin && (
           <div className="flex gap-2">
             {activeTab === "questions" && (
               <>
@@ -465,7 +467,7 @@ export default function TestsPage() {
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Duration</th>
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
                       <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      {!isAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
+                      {isAnyAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-border">
@@ -510,7 +512,7 @@ export default function TestsPage() {
                             <td className="px-6 py-4">
                               <Badge variant={test.isActive ? "success" : "gray"}>{test.isActive ? "Active" : "Inactive"}</Badge>
                             </td>
-                            {!isAdmin && (
+                            {isAnyAdmin && (
                               <td className="px-6 py-4 text-right">
                                 <div className="flex justify-end gap-1">
                                   <button onClick={() => openEditTest(test)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">
@@ -581,7 +583,7 @@ export default function TestsPage() {
                         <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Difficulty</th>
                         <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Points</th>
                         <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Tags</th>
-                        {!isAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
+                        {isAnyAdmin && <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-surface-border">
@@ -619,7 +621,7 @@ export default function TestsPage() {
                                 )}
                               </div>
                             </td>
-                            {!isAdmin && (
+                            {isAnyAdmin && (
                               <td className="px-6 py-4 text-right">
                                 <div className="flex justify-end gap-1">
                                   <button onClick={() => openEditQuestion(question)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer">

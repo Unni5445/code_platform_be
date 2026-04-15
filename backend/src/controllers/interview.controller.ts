@@ -330,16 +330,135 @@ class InterviewController {
   );
 
   // ================= CREATE INTERVIEW (Admin) =================
-  static createInterview = asyncHandler(async (req: Request, res: Response) => {
-    const interview = await MockInterview.create(req.body);
-    res.status(201).json(
-      new ApiResponse(201, interview, "Mock interview created successfully")
-    );
-  });
+  static createInterview = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { company, role, difficulty, duration, requiredLevel, topics, questions } = req.body;
+
+      // ── Required string fields ──
+      if (!company || typeof company !== "string" || !company.trim()) {
+        return next(new ErrorResponse("Company name is required", 400));
+      }
+      if (!role || typeof role !== "string" || !role.trim()) {
+        return next(new ErrorResponse("Role is required", 400));
+      }
+
+      // ── Difficulty ──
+      const validDifficulties = ["Easy", "Medium", "Hard", "Boss"];
+      if (difficulty && !validDifficulties.includes(difficulty)) {
+        return next(new ErrorResponse(`Difficulty must be one of: ${validDifficulties.join(", ")}`, 400));
+      }
+
+      // ── Duration ──
+      if (duration !== undefined) {
+        const dur = Number(duration);
+        if (isNaN(dur) || dur < 1 || dur > 300) {
+          return next(new ErrorResponse("Duration must be between 1 and 300 minutes", 400));
+        }
+      }
+
+      // ── Required Level ──
+      if (requiredLevel !== undefined) {
+        const lvl = Number(requiredLevel);
+        if (isNaN(lvl) || lvl < 0) {
+          return next(new ErrorResponse("Required level must be a non-negative number", 400));
+        }
+      }
+
+      // ── Topics ──
+      if (topics !== undefined) {
+        if (!Array.isArray(topics)) {
+          return next(new ErrorResponse("Topics must be an array of strings", 400));
+        }
+        for (let i = 0; i < topics.length; i++) {
+          if (typeof topics[i] !== "string" || !topics[i].trim()) {
+            return next(new ErrorResponse(`Topic at index ${i} must be a non-empty string`, 400));
+          }
+        }
+      }
+
+      // ── Questions ──
+      if (!questions || !Array.isArray(questions) || questions.length === 0) {
+        return next(new ErrorResponse("At least one question is required", 400));
+      }
+
+      const validCategories = ["technical", "behavioral", "system-design"];
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (!q.question || typeof q.question !== "string" || !q.question.trim()) {
+          return next(new ErrorResponse(`Question ${i + 1}: Question text is required`, 400));
+        }
+        if (!q.category || !validCategories.includes(q.category)) {
+          return next(new ErrorResponse(`Question ${i + 1}: Category must be one of: ${validCategories.join(", ")}`, 400));
+        }
+        if (q.hints !== undefined && !Array.isArray(q.hints)) {
+          return next(new ErrorResponse(`Question ${i + 1}: Hints must be an array of strings`, 400));
+        }
+        if (q.expectedPoints !== undefined && !Array.isArray(q.expectedPoints)) {
+          return next(new ErrorResponse(`Question ${i + 1}: Expected points must be an array of strings`, 400));
+        }
+      }
+
+      const interview = await MockInterview.create(req.body);
+      res.status(201).json(
+        new ApiResponse(201, interview, "Mock interview created successfully")
+      );
+    }
+  );
 
   // ================= UPDATE INTERVIEW (Admin) =================
   static updateInterview = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
+      const { company, role, difficulty, duration, requiredLevel, topics, questions } = req.body;
+
+      // Validate fields if they are being updated
+      if (company !== undefined && (typeof company !== "string" || !company.trim())) {
+        return next(new ErrorResponse("Company name must be a non-empty string", 400));
+      }
+      if (role !== undefined && (typeof role !== "string" || !role.trim())) {
+        return next(new ErrorResponse("Role must be a non-empty string", 400));
+      }
+
+      const validDifficulties = ["Easy", "Medium", "Hard", "Boss"];
+      if (difficulty !== undefined && !validDifficulties.includes(difficulty)) {
+        return next(new ErrorResponse(`Difficulty must be one of: ${validDifficulties.join(", ")}`, 400));
+      }
+
+      if (duration !== undefined) {
+        const dur = Number(duration);
+        if (isNaN(dur) || dur < 1 || dur > 300) {
+          return next(new ErrorResponse("Duration must be between 1 and 300 minutes", 400));
+        }
+      }
+
+      if (requiredLevel !== undefined) {
+        const lvl = Number(requiredLevel);
+        if (isNaN(lvl) || lvl < 0) {
+          return next(new ErrorResponse("Required level must be a non-negative number", 400));
+        }
+      }
+
+      if (topics !== undefined) {
+        if (!Array.isArray(topics)) {
+          return next(new ErrorResponse("Topics must be an array of strings", 400));
+        }
+      }
+
+      if (questions !== undefined) {
+        if (!Array.isArray(questions) || questions.length === 0) {
+          return next(new ErrorResponse("Questions must be a non-empty array", 400));
+        }
+        const validCategories = ["technical", "behavioral", "system-design"];
+        for (let i = 0; i < questions.length; i++) {
+          const q = questions[i];
+          if (!q.question || typeof q.question !== "string" || !q.question.trim()) {
+            return next(new ErrorResponse(`Question ${i + 1}: Question text is required`, 400));
+          }
+          if (!q.category || !validCategories.includes(q.category)) {
+            return next(new ErrorResponse(`Question ${i + 1}: Category must be one of: ${validCategories.join(", ")}`, 400));
+          }
+        }
+      }
+
       const interview = await MockInterview.findOneAndUpdate(
         { _id: req.params.id, isDeleted: false },
         req.body,

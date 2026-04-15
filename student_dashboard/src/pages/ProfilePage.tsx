@@ -24,6 +24,7 @@ import { useApi } from "@/hooks/useApi";
 import { enrollmentService } from "@/services";
 import { Card, Avatar, Badge, StatCard, Spinner, Button, EmptyState } from "@/components/ui";
 import { ActivityHeatmap } from "@/components/activity/ActivityHeatmap";
+import { EditProfileModal } from "@/components/profile/EditProfileModal";
 import type { IEnrollment } from "@/types";
 import type { ICertificate } from "@/services/enrollment.service";
 import toast from "react-hot-toast";
@@ -128,6 +129,7 @@ function SkillRadar() {
 // ─── Main Profile Page ───
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const fetchEnrollments = useCallback(() => enrollmentService.getMyEnrollments(), []);
@@ -152,10 +154,10 @@ export default function ProfilePage() {
 
   const orgName =
     user?.organisation && typeof user.organisation === "object"
-      ? user.organisation.name
+      ? (user.organisation as any).name
       : user?.organisation;
 
-  const formatDate = (dateStr?: string) => {
+  const formatDate = (dateStr?: string | Date) => {
     if (!dateStr) return undefined;
     return new Date(dateStr).toLocaleDateString("en-IN", {
       day: "numeric",
@@ -214,7 +216,7 @@ export default function ProfilePage() {
             {/* XP Progress */}
             <div className="max-w-md">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <span className="text-xs font-black text-slate-500 flex items-center gap-1.5 uppercase tracking-widest leading-none">
                   <Zap className="h-4 w-4 text-amber-500 fill-amber-500/20" />
                   <span className="text-slate-900">{points.toLocaleString()}</span> / {nextLevelXP.toLocaleString()} XP
                 </span>
@@ -229,12 +231,19 @@ export default function ProfilePage() {
             </div>
           </div>
  
-          {/* Share Button */}
-          <div className="shrink-0 self-center">
+          {/* Action Buttons */}
+          <div className="shrink-0 self-center flex flex-col gap-3">
+            <Button
+              onClick={() => setIsEditModalOpen(true)}
+              className="font-bold px-6 py-3 rounded-2xl shadow-xl shadow-primary-500/20 active:scale-95 transition-all w-full"
+              leftIcon={<User className="h-5 w-5" />}
+            >
+              Edit Profile
+            </Button>
             <Button
               onClick={handleCopyLink}
               variant="secondary"
-              className="font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all"
+              className="font-bold px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-all w-full"
               leftIcon={linkCopied ? <CheckCircle className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
             >
               {linkCopied ? "Copied!" : "Public Profile"}
@@ -242,6 +251,8 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
  
       {/* Stats Row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -366,7 +377,7 @@ export default function ProfilePage() {
                       <item.icon className="h-6 w-6 text-slate-500" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400 mb-0.5">{item.label}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-0.5 leading-none">{item.label}</p>
                       <p className="text-sm font-bold text-slate-800 truncate">{String(item.value)}</p>
                     </div>
                   </div>
@@ -420,7 +431,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-extrabold text-slate-900 group-hover/cert:text-emerald-700 transition-colors">{cert.title}</p>
-                        <p className="text-[11px] font-bold text-slate-400 mt-0.5">
+                        <p className="text-[11px] font-black text-slate-500 mt-0.5 leading-none">
                           {courseTitle} <span className="mx-1.5 opacity-50">•</span> {formatDate(cert.issuedAt)}
                         </p>
                       </div>

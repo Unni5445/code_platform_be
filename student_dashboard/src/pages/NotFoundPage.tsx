@@ -7,8 +7,8 @@ export default function NotFoundPage() {
     <div className="flex min-h-screen items-center justify-center mc-page">
       <div className="text-center">
         <h1 className="mb-4 text-6xl font-bold text-primary-400">404</h1>
-        <h2 className="mb-2 text-2xl font-semibold text-white">Page Not Found</h2>
-        <p className="mb-8 text-slate-400">
+        <h2 className="mb-2 text-2xl font-bold text-slate-900">Page Not Found</h2>
+        <p className="mb-8 text-slate-500 font-medium">
           The page you&apos;re looking for doesn&apos;t exist.
         </p>
         <Link to="/dashboard">

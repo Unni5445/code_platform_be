@@ -419,17 +419,66 @@ class ContestController {
         { new: true, upsert: true }
       );
 
-      // Give XP
-      await User.findByIdAndUpdate(studentId, {
-        $inc: { points: totalScore },
-      });
+      // 1. Calculate XP increment (only reward for score improvement)
+      const previousBest = await ContestSubmission.findOne({
+        student: studentId,
+        contest: contestId,
+        finishedAt: { $exists: true, $ne: submission.finishedAt },
+      }).sort({ score: -1 });
+
+      const prevScore = previousBest?.score || 0;
+      const xpToAdd = Math.max(0, totalScore - prevScore);
+
+      // 2. Update User Points and Unified Streak Logic
+      const user = await User.findById(studentId);
+      if (user) {
+        user.points = (user.points || 0) + xpToAdd;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const todayEntry = user.activityLog.find(
+          (entry) => new Date(entry.date).toDateString() === today.toDateString()
+        );
+
+        if (!todayEntry) {
+          // First action of the day
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const hadActivityYesterday = user.activityLog.some(
+            (entry) =>
+              new Date(entry.date).toDateString() === yesterday.toDateString() && entry.count > 0
+          );
+
+          if (hadActivityYesterday) {
+            user.streak += 1;
+          } else {
+            user.streak = 1;
+          }
+
+          if (user.streak > user.maxStreak) {
+            user.maxStreak = user.streak;
+          }
+
+          user.activityLog.push({ date: today, count: 1 });
+        } else {
+          // Subsequent action today - just increment activity count
+          todayEntry.count += 1;
+        }
+
+        await user.save();
+      }
 
       res.status(200).json(
-        new ApiResponse(200, {
-          totalScore,
-          maxScore: contest.questions.reduce((sum: number, q: any) => sum + (q.points || 0), 0),
-          solvedCount
-        }, "Contest submitted successfully")
+        new ApiResponse(
+          200,
+          {
+            totalScore,
+            maxScore: contest.questions.reduce((sum: number, q: any) => sum + (q.points || 0), 0),
+            solvedCount,
+          },
+          "Contest submitted successfully"
+        )
       );
     }
   );

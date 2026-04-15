@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
-  FileQuestion,
+  // FileQuestion,
   Trophy,
   LogOut,
   Swords,
@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
   { path: PATHS.CONTESTS, label: "Contests", icon: Medal },
   { path: PATHS.MOCK_INTERVIEWS, label: "Interviews", icon: Shield },
   { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
-  { path: PATHS.TESTS, label: "Tests", icon: FileQuestion },
+  // { path: PATHS.TESTS, label: "Tests", icon: FileQuestion },
   { path: PATHS.LEADERBOARD, label: "Leaderboard", icon: Trophy },
 ];
 
@@ -83,7 +83,7 @@ export function Navbar() {
 
           {/* Right section: Profile & Mobile Toggle */}
           <div className="flex items-center gap-4">
-            <NavLink 
+            <NavLink
               to="/profile"
               className="hidden sm:flex items-center gap-3 pr-4 border-r border-slate-200 hover:opacity-80 transition-opacity cursor-pointer"
             >
@@ -96,7 +96,7 @@ export function Navbar() {
 
             <button
               onClick={() => logout()}
-              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all duration-200 cursor-pointer"
+              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="h-4 w-4" />
@@ -142,19 +142,19 @@ export function Navbar() {
                 </NavLink>
               );
             })}
-            
-            <NavLink 
+
+            <NavLink
               to="/profile"
               onClick={() => setMobileOpen(false)}
               className="mt-4 pt-4 border-t border-slate-100 text-center flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
             >
-                 <Avatar name={user?.name || "Student"} size="md" />
-                  <div className="mt-2 text-center">
-                    <p className="text-sm font-medium text-slate-900">{user?.name || "Student"}</p>
-                    <p className="text-xs text-slate-500">{user?.email || ""}</p>
-                  </div>
+              <Avatar name={user?.name || "Student"} size="md" />
+              <div className="mt-2 text-center">
+                <p className="text-sm font-medium text-slate-900">{user?.name || "Student"}</p>
+                <p className="text-xs text-slate-500">{user?.email || ""}</p>
+              </div>
             </NavLink>
-            
+
             <button
               onClick={() => {
                 setMobileOpen(false);

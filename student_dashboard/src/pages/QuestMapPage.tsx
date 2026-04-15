@@ -255,7 +255,7 @@ export default function QuestMapPage() {
           </div>
 
           <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm self-start md:self-center">
-            <span className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <span className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest leading-none">
               <Swords className="h-4 w-4 text-primary-500" />
               {totalQuestions} Active Quests
             </span>
@@ -267,7 +267,7 @@ export default function QuestMapPage() {
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl relative z-20">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[300px]">
-             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Search Keywords</label>
+             <label className="block text-[10px] font-extra-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Search Keywords</label>
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
               <input
@@ -281,7 +281,7 @@ export default function QuestMapPage() {
           </div>
           
           <div className="w-full sm:w-44">
-             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Difficulty</label>
+             <label className="block text-[10px] font-extra-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Difficulty</label>
             <Select
               options={[
                 { value: "", label: "All Levels" },
@@ -296,7 +296,7 @@ export default function QuestMapPage() {
           </div>
 
           <div className="w-full sm:w-48">
-             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Language</label>
+             <label className="block text-[10px] font-extra-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Language</label>
             <Select
               options={[
                 { value: "", label: "All Languages" },
@@ -314,7 +314,7 @@ export default function QuestMapPage() {
 
           {availableTags.length > 0 && (
             <div className="w-full sm:w-48">
-               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
+               <label className="block text-[10px] font-extra-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Category</label>
               <Select
                 options={[
                   { value: "", label: "All Topics" },

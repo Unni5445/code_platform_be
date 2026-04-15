@@ -32,6 +32,7 @@ export interface IQuestion extends Document {
   starterCode?: Record<string, string>; // language -> starter code
   testCases?: ITestCase[];
   languages?: string[];
+  hints: string[];
   maxExecutionTime: number;
   maxMemory: number;
   points: number;
@@ -112,6 +113,8 @@ const questionSchema = new Schema<IQuestion>(
         enum: ALLOWED_LANGUAGES,
       },
     ],
+
+    hints: [String],
 
     maxExecutionTime: { type: Number, default: 2, min: 1 },
     maxMemory: { type: Number, default: 128, min: 64 },

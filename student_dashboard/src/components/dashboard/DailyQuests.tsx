@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { CheckCircle2, Circle, Target, Flame, ChevronRight, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services";
@@ -13,40 +13,23 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 export function DailyQuests() {
   const { updateUserLocally } = useAuth();
-  
-  const [claimedIds, setClaimedIds] = useState<number[]>([]);
+
   const [isClaiming, setIsClaiming] = useState<number | null>(null);
 
   const fetchQuests = useCallback(() => authService.getDailyQuests(), []);
-  const { data: quests, loading } = useApi<{ id: number; title: string; desc: string; xp: number; completed: boolean; iconName: string }[]>(fetchQuests, []);
-
-  useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const stored = localStorage.getItem(`claimed_quests_${today}`);
-    if (stored) {
-      setClaimedIds(JSON.parse(stored));
-    }
-  }, []);
+  const { data: quests, loading, refetch } = useApi<{ id: number; title: string; desc: string; xp: number; completed: boolean; claimed: boolean; iconName: string }[]>(fetchQuests, []);
 
   const handleClaim = async (questId: number, xp: number) => {
-    if (claimedIds.includes(questId)) return;
-    
     setIsClaiming(questId);
     try {
-      const res = await authService.claimXp(xp);
+      const res = await authService.claimXp(xp, questId);
       if (res.data.success && res.data.data) {
         updateUserLocally(res.data.data);
-        
-        const newClaimedIds = [...claimedIds, questId];
-        setClaimedIds(newClaimedIds);
-        
-        const today = new Date().toISOString().split("T")[0];
-        localStorage.setItem(`claimed_quests_${today}`, JSON.stringify(newClaimedIds));
-        
+        refetch(); // Refresh quests to show claimed status
         toast.success(`+${xp} XP Claimed! Keep going!`, { icon: '✨' });
       }
-    } catch (err) {
-      toast.error("Failed to claim XP");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to claim XP");
     } finally {
       setIsClaiming(null);
     }
@@ -100,7 +83,7 @@ export function DailyQuests() {
           ))
         ) : (
           safeQuests.map((quest) => {
-            const isClaimed = claimedIds.includes(quest.id);
+            const isClaimed = quest.claimed;
             const canClaim = quest.completed && !isClaimed;
             const isLoad = isClaiming === quest.id;
             const IconComponent = ICON_MAP[quest.iconName] || Circle;
@@ -109,13 +92,12 @@ export function DailyQuests() {
               <div
                 key={quest.id}
                 onClick={() => canClaim && !isLoad && handleClaim(quest.id, quest.xp)}
-                className={`flex items-center gap-4 rounded-xl border p-4 transition-all duration-300 ${
-                  canClaim 
+                className={`flex items-center gap-4 rounded-xl border p-4 transition-all duration-300 ${canClaim
                     ? "border-primary-300 bg-primary-50 cursor-pointer hover:bg-primary-100 shadow-sm ring-1 ring-primary-200"
                     : isClaimed
-                    ? "border-emerald-100 bg-emerald-50 cursor-default"
-                    : "border-slate-200 bg-white shadow-sm cursor-default"
-                }`}
+                      ? "border-emerald-100 bg-emerald-50 cursor-default"
+                      : "border-slate-200 bg-white shadow-sm cursor-default"
+                  }`}
               >
                 <div className={`shrink-0 ${isClaimed ? 'text-emerald-400' : quest.completed ? 'text-primary-400' : 'text-slate-600'}`}>
                   {isClaimed ? (
@@ -126,23 +108,22 @@ export function DailyQuests() {
                     <IconComponent className="h-6 w-6" />
                   )}
                 </div>
-                
+
                 <div className="flex-1">
                   <h4 className={`text-sm font-semibold ${isClaimed ? "text-emerald-700" : quest.completed ? "text-primary-700" : "text-slate-900"}`}>
                     {quest.title}
                   </h4>
                   <p className="text-xs text-slate-500">{quest.desc}</p>
                 </div>
-                
+
                 <div className="flex flex-col items-end gap-1">
-                  <span 
-                    className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                      isClaimed 
-                        ? 'text-emerald-500' 
-                        : canClaim 
-                        ? 'text-primary-400 animate-bounce' 
-                        : 'text-slate-500'
-                    }`}
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${isClaimed
+                        ? 'text-emerald-500'
+                        : canClaim
+                          ? 'text-primary-400 animate-bounce'
+                          : 'text-slate-500'
+                      }`}
                   >
                     {isLoad ? '...' : isClaimed ? 'Claimed' : canClaim ? 'Claim XP' : `+${quest.xp} XP`}
                   </span>

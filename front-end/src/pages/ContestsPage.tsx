@@ -99,10 +99,10 @@ export default function ContestsPage() {
 
   const filtered = search
     ? contests.filter(
-        (c) =>
-          c.title.toLowerCase().includes(search.toLowerCase()) ||
-          c.sponsor?.toLowerCase().includes(search.toLowerCase())
-      )
+      (c) =>
+        c.title.toLowerCase().includes(search.toLowerCase()) ||
+        c.sponsor?.toLowerCase().includes(search.toLowerCase())
+    )
     : contests;
 
   // Helpers
@@ -365,176 +365,6 @@ export default function ContestsPage() {
     return true;
   });
 
-  const ContestForm = () => (
-    <div className="space-y-4">
-      <Input
-        label="Contest Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="e.g., Weekly Code Sprint #42"
-        required
-      />
-      <Input
-        label="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Brief description of the contest"
-      />
-      <div className="grid grid-cols-2 gap-4">
-        <Input
-          label="Start Time"
-          type="datetime-local"
-          value={startTime}
-          onChange={(e) => setStartTime(e.target.value)}
-          required
-        />
-        <Input
-          label="End Time"
-          type="datetime-local"
-          value={endTime}
-          onChange={(e) => setEndTime(e.target.value)}
-          required
-        />
-      </div>
-      <div className="grid grid-cols-3 gap-4">
-        <Input
-          label="Duration (min)"
-          type="number"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-          placeholder="90"
-        />
-        <Select
-          label="Difficulty"
-          options={[
-            { value: "Easy", label: "Easy" },
-            { value: "Medium", label: "Medium" },
-            { value: "Hard", label: "Hard" },
-          ]}
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value)}
-        />
-        <Input
-          label="Max Participants"
-          type="number"
-          value={maxParticipants}
-          onChange={(e) => setMaxParticipants(e.target.value)}
-          placeholder="Unlimited"
-        />
-      </div>
-      <Input
-        label="Sponsor (optional)"
-        value={sponsor}
-        onChange={(e) => setSponsor(e.target.value)}
-        placeholder="e.g., TechCorp Inc."
-      />
-      <Input
-        label="Rewards (comma-separated)"
-        value={rewardsText}
-        onChange={(e) => setRewardsText(e.target.value)}
-        placeholder="e.g., 500 XP, Exclusive Badge, Certificate"
-      />
-
-      {/* ── Inline Question Picker ── */}
-      <div className="border-t border-surface-border pt-4 mt-2">
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Code className="h-4 w-4 text-primary-600" />
-            Questions ({formQuestionIds.size} selected)
-          </label>
-        </div>
-
-        {/* Search */}
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search questions to add..."
-            value={formQuestionSearch}
-            onChange={(e) => setFormQuestionSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
-          />
-        </div>
-
-        {/* Selected questions */}
-        {formQuestionIds.size > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {Array.from(formQuestionIds).map((id) => {
-              const q = formAvailableQuestions.find((q) => q._id === id);
-              return (
-                <span
-                  key={id}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 text-primary-800 rounded-lg text-xs border border-primary-200"
-                >
-                  {q?.title || id}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleFormQuestion(id); }}
-                    className="ml-0.5 text-primary-500 hover:text-primary-800 cursor-pointer"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Available questions list */}
-        {formQuestionsLoading ? (
-          <div className="flex justify-center py-4">
-            <Spinner size="sm" />
-          </div>
-        ) : (
-          <div className="max-h-[200px] overflow-y-auto space-y-1 border border-gray-200 rounded-lg p-2 bg-gray-50">
-            {filteredFormQuestions.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-3">No questions available</p>
-            ) : (
-              filteredFormQuestions.map((q) => {
-                const isSelected = formQuestionIds.has(q._id);
-                const config = questionTypeConfig[q.type];
-                return (
-                  <div
-                    key={q._id}
-                    onClick={() => toggleFormQuestion(q._id)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all text-sm ${
-                      isSelected
-                        ? "bg-primary-50 border border-primary-200"
-                        : "bg-white border border-transparent hover:bg-gray-100"
-                    }`}
-                  >
-                    <div
-                      className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? "bg-primary-600 border-primary-600" : "border-gray-300"
-                      }`}
-                    >
-                      {isSelected && (
-                        <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="flex-1 truncate text-gray-900">{q.title}</span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {config && (
-                        <Badge variant={config.variant}>
-                          <span className="flex items-center gap-0.5 text-[10px]">{config.icon} {config.label}</span>
-                        </Badge>
-                      )}
-                      <Badge variant={q.difficulty === "Easy" ? "success" : q.difficulty === "Hard" ? "danger" : "warning"}>
-                        <span className="text-[10px]">{q.difficulty}</span>
-                      </Badge>
-                      <span className="text-[10px] text-gray-400 w-8 text-right">{q.points}p</span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -727,7 +557,171 @@ export default function ContestsPage() {
           </>
         }
       >
-        <ContestForm />
+        <div className="space-y-4">
+          <Input
+            label="Contest Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Weekly Code Sprint #42"
+            required
+          />
+          <Input
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief description of the contest"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Start Time"
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+            />
+            <Input
+              label="End Time"
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Input
+              label="Duration (min)"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="90"
+            />
+            <Select
+              label="Difficulty"
+              options={[
+                { value: "Easy", label: "Easy" },
+                { value: "Medium", label: "Medium" },
+                { value: "Hard", label: "Hard" },
+              ]}
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+            />
+            <Input
+              label="Max Participants"
+              type="number"
+              value={maxParticipants}
+              onChange={(e) => setMaxParticipants(e.target.value)}
+              placeholder="Unlimited"
+            />
+          </div>
+          <Input
+            label="Sponsor (optional)"
+            value={sponsor}
+            onChange={(e) => setSponsor(e.target.value)}
+            placeholder="e.g., TechCorp Inc."
+          />
+          <Input
+            label="Rewards (comma-separated)"
+            value={rewardsText}
+            onChange={(e) => setRewardsText(e.target.value)}
+            placeholder="e.g., 500 XP, Exclusive Badge, Certificate"
+          />
+
+          {/* ── Inline Question Picker ── */}
+          <div className="border-t border-surface-border pt-4 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Code className="h-4 w-4 text-primary-600" />
+                Questions ({formQuestionIds.size} selected)
+              </label>
+            </div>
+
+            {/* Search */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search questions to add..."
+                value={formQuestionSearch}
+                onChange={(e) => setFormQuestionSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              />
+            </div>
+
+            {/* Selected questions */}
+            {formQuestionIds.size > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {Array.from(formQuestionIds).map((id) => {
+                  const q = formAvailableQuestions.find((q) => q._id === id);
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 text-primary-800 rounded-lg text-xs border border-primary-200"
+                    >
+                      {q?.title || id}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFormQuestion(id); }}
+                        className="ml-0.5 text-primary-500 hover:text-primary-800 cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Available questions list */}
+            {formQuestionsLoading ? (
+              <div className="flex justify-center py-4">
+                <Spinner size="sm" />
+              </div>
+            ) : (
+              <div className="max-h-[200px] overflow-y-auto space-y-1 border border-gray-200 rounded-lg p-2 bg-gray-50">
+                {filteredFormQuestions.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-3">No questions available</p>
+                ) : (
+                  filteredFormQuestions.map((q) => {
+                    const isSelected = formQuestionIds.has(q._id);
+                    const config = questionTypeConfig[q.type];
+                    return (
+                      <div
+                        key={q._id}
+                        onClick={() => toggleFormQuestion(q._id)}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all text-sm ${isSelected
+                            ? "bg-primary-50 border border-primary-200"
+                            : "bg-white border border-transparent hover:bg-gray-100"
+                          }`}
+                      >
+                        <div
+                          className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-primary-600 border-primary-600" : "border-gray-300"
+                            }`}
+                        >
+                          {isSelected && (
+                            <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="flex-1 truncate text-gray-900">{q.title}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {config && (
+                            <Badge variant={config.variant}>
+                              <span className="flex items-center gap-0.5 text-[10px]">{config.icon} {config.label}</span>
+                            </Badge>
+                          )}
+                          <Badge variant={q.difficulty === "Easy" ? "success" : q.difficulty === "Hard" ? "danger" : "warning"}>
+                            <span className="text-[10px]">{q.difficulty}</span>
+                          </Badge>
+                          <span className="text-[10px] text-gray-400 w-8 text-right">{q.points}p</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </Modal>
 
       {/* Edit Modal */}
@@ -747,7 +741,171 @@ export default function ContestsPage() {
           </>
         }
       >
-        <ContestForm />
+        <div className="space-y-4">
+          <Input
+            label="Contest Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Weekly Code Sprint #42"
+            required
+          />
+          <Input
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief description of the contest"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Start Time"
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+            />
+            <Input
+              label="End Time"
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Input
+              label="Duration (min)"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="90"
+            />
+            <Select
+              label="Difficulty"
+              options={[
+                { value: "Easy", label: "Easy" },
+                { value: "Medium", label: "Medium" },
+                { value: "Hard", label: "Hard" },
+              ]}
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+            />
+            <Input
+              label="Max Participants"
+              type="number"
+              value={maxParticipants}
+              onChange={(e) => setMaxParticipants(e.target.value)}
+              placeholder="Unlimited"
+            />
+          </div>
+          <Input
+            label="Sponsor (optional)"
+            value={sponsor}
+            onChange={(e) => setSponsor(e.target.value)}
+            placeholder="e.g., TechCorp Inc."
+          />
+          <Input
+            label="Rewards (comma-separated)"
+            value={rewardsText}
+            onChange={(e) => setRewardsText(e.target.value)}
+            placeholder="e.g., 500 XP, Exclusive Badge, Certificate"
+          />
+
+          {/* ── Inline Question Picker ── */}
+          <div className="border-t border-surface-border pt-4 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Code className="h-4 w-4 text-primary-600" />
+                Questions ({formQuestionIds.size} selected)
+              </label>
+            </div>
+
+            {/* Search */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search questions to add..."
+                value={formQuestionSearch}
+                onChange={(e) => setFormQuestionSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              />
+            </div>
+
+            {/* Selected questions */}
+            {formQuestionIds.size > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {Array.from(formQuestionIds).map((id) => {
+                  const q = formAvailableQuestions.find((q) => q._id === id);
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 text-primary-800 rounded-lg text-xs border border-primary-200"
+                    >
+                      {q?.title || id}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFormQuestion(id); }}
+                        className="ml-0.5 text-primary-500 hover:text-primary-800 cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Available questions list */}
+            {formQuestionsLoading ? (
+              <div className="flex justify-center py-4">
+                <Spinner size="sm" />
+              </div>
+            ) : (
+              <div className="max-h-[200px] overflow-y-auto space-y-1 border border-gray-200 rounded-lg p-2 bg-gray-50">
+                {filteredFormQuestions.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-3">No questions available</p>
+                ) : (
+                  filteredFormQuestions.map((q) => {
+                    const isSelected = formQuestionIds.has(q._id);
+                    const config = questionTypeConfig[q.type];
+                    return (
+                      <div
+                        key={q._id}
+                        onClick={() => toggleFormQuestion(q._id)}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all text-sm ${isSelected
+                            ? "bg-primary-50 border border-primary-200"
+                            : "bg-white border border-transparent hover:bg-gray-100"
+                          }`}
+                      >
+                        <div
+                          className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-primary-600 border-primary-600" : "border-gray-300"
+                            }`}
+                        >
+                          {isSelected && (
+                            <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="flex-1 truncate text-gray-900">{q.title}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {config && (
+                            <Badge variant={config.variant}>
+                              <span className="flex items-center gap-0.5 text-[10px]">{config.icon} {config.label}</span>
+                            </Badge>
+                          )}
+                          <Badge variant={q.difficulty === "Easy" ? "success" : q.difficulty === "Hard" ? "danger" : "warning"}>
+                            <span className="text-[10px]">{q.difficulty}</span>
+                          </Badge>
+                          <span className="text-[10px] text-gray-400 w-8 text-right">{q.points}p</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </Modal>
 
       {/* View Modal with Question Management */}
@@ -978,19 +1136,17 @@ export default function ContestsPage() {
                   <div
                     key={q._id}
                     onClick={() => toggleQuestionSelection(q._id)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all ${
-                      isSelected
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all ${isSelected
                         ? "bg-primary-50 border-primary-300 ring-1 ring-primary-200"
                         : "bg-white border-gray-200 hover:border-primary-200 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {/* Checkbox */}
                     <div
-                      className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected
+                      className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected
                           ? "bg-primary-600 border-primary-600"
                           : "border-gray-300"
-                      }`}
+                        }`}
                     >
                       {isSelected && (
                         <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

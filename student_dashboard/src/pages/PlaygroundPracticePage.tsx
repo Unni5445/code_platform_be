@@ -180,7 +180,7 @@ export default function PlaygroundPracticePage() {
             )}
             {question.tags && question.tags.length > 0 && (
               <span className="flex items-center gap-1">
-                <Tag className="h-3.5 w-3.5 text-slate-400" />
+                <Tag className="h-3.5 w-3.5 text-slate-500" />
                 {question.tags.join(", ")}
               </span>
             )}
@@ -215,13 +215,13 @@ export default function PlaygroundPracticePage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="mb-1.5 text-xs font-bold text-slate-400">INPUT</p>
+                        <p className="mb-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">INPUT</p>
                         <pre className="code-font whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-900 shadow-sm">
                           {tc.input || "(empty)"}
                         </pre>
                       </div>
                       <div>
-                        <p className="mb-1.5 text-xs font-bold text-slate-400">EXPECTED OUTPUT</p>
+                        <p className="mb-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">EXPECTED OUTPUT</p>
                         <pre className="code-font whitespace-pre-wrap rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800 shadow-sm font-bold">
                           {tc.output}
                         </pre>
@@ -387,19 +387,19 @@ export default function PlaygroundPracticePage() {
                     {!tc.hidden && (
                       <div className="grid grid-cols-3 gap-3 text-xs code-font">
                         <div>
-                          <p className="mb-1 font-bold text-slate-400">INPUT</p>
+                          <p className="mb-1.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">INPUT</p>
                           <pre className="whitespace-pre-wrap rounded-lg bg-slate-50 border border-slate-100 p-2 text-slate-800">
                             {tc.input || "(empty)"}
                           </pre>
                         </div>
                         <div>
-                          <p className="mb-1 font-bold text-slate-400">EXPECTED</p>
+                          <p className="mb-1.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">EXPECTED</p>
                           <pre className="whitespace-pre-wrap rounded-lg bg-emerald-50 border border-emerald-100 p-2 text-emerald-800 font-bold">
                             {tc.expected}
                           </pre>
                         </div>
                         <div>
-                          <p className="mb-1 font-bold text-slate-400">ACTUAL</p>
+                          <p className="mb-1.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none">ACTUAL</p>
                           <pre
                             className={`whitespace-pre-wrap rounded-lg p-2 border ${
                               tc.passed ? "bg-emerald-50 border-emerald-100 text-emerald-800 font-bold" : "bg-red-50 border-red-100 text-red-800 font-bold"

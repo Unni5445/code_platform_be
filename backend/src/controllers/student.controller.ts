@@ -42,7 +42,8 @@ class StudentController {
       });
 
       if (!submission) {
-        // Check if already completed
+        /*
+        // Check if already completed - removed to allow retaking tests
         const completed = await StudentTestSubmission.findOne({
           student: studentId,
           test: testId,
@@ -51,6 +52,7 @@ class StudentController {
         if (completed) {
           return next(new ErrorResponse("You have already completed this test", 400));
         }
+        */
 
         submission = await StudentTestSubmission.create({
           student: studentId,
@@ -86,6 +88,20 @@ class StudentController {
 
       const test = await Test.findById(testId).populate("questions");
       if (!test) return next(new ErrorResponse("Test not found", 404));
+
+      // Check enrollment status
+      const enrollmentCheck = await Enrollment.findOne({
+        student: studentId,
+        course: test.course,
+      });
+
+      if (!enrollmentCheck) {
+        return next(new ErrorResponse("You are not enrolled in this course", 403));
+      }
+
+      if (enrollmentCheck.status !== "ACTIVE") {
+        return next(new ErrorResponse(`Cannot submit test for an ${enrollmentCheck.status.toLowerCase()} enrollment`, 403));
+      }
 
       const questionsMap = new Map<string, any>();
       for (const q of test.questions) {
@@ -168,44 +184,53 @@ class StudentController {
         { new: true, upsert: true }
       );
 
-      // Update user points and activity
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // 1. Calculate XP increment (only reward for score improvement)
+      const previousBest = await StudentTestSubmission.findOne({
+        student: studentId,
+        test: testId,
+        completedAt: { $exists: true, $ne: submission.completedAt },
+      }).sort({ totalScore: -1 });
 
-      await User.findByIdAndUpdate(studentId, {
-        $inc: { points: totalScore },
-        $push: {
-          activityLog: {
-            $each: [],
-          },
-        },
-      });
+      const prevScore = previousBest?.totalScore || 0;
+      const xpToAdd = Math.max(0, totalScore - prevScore);
 
-      // Update activity log
+      // 2. Update User Points and Unified Streak Logic
       const user = await User.findById(studentId);
       if (user) {
+        user.points = (user.points || 0) + xpToAdd;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const todayEntry = user.activityLog.find(
           (entry) => new Date(entry.date).toDateString() === today.toDateString()
         );
-        if (todayEntry) {
-          todayEntry.count += 1;
-        } else {
-          user.activityLog.push({ date: today, count: 1 });
-        }
-        // Update streak
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const hadActivityYesterday = user.activityLog.some(
-          (entry) => new Date(entry.date).toDateString() === yesterday.toDateString() && entry.count > 0
-        );
-        if (hadActivityYesterday || user.streak === 0) {
-          user.streak += 1;
+
+        if (!todayEntry) {
+          // First action of the day
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const hadActivityYesterday = user.activityLog.some(
+            (entry) =>
+              new Date(entry.date).toDateString() === yesterday.toDateString() && entry.count > 0
+          );
+
+          if (hadActivityYesterday) {
+            user.streak += 1;
+          } else {
+            user.streak = 1;
+          }
+
           if (user.streak > user.maxStreak) {
             user.maxStreak = user.streak;
           }
+
+          user.activityLog.push({ date: today, count: 1 });
         } else {
-          user.streak = 1;
+          // Subsequent action today - just increment activity count
+          todayEntry.count += 1;
         }
+
         await user.save();
       }
 
@@ -398,6 +423,10 @@ class StudentController {
         student: studentId,
       });
       if (!enrollment) return next(new ErrorResponse("Enrollment not found", 404));
+
+      if (enrollment.status !== "ACTIVE") {
+        return next(new ErrorResponse(`Cannot update progress on an ${enrollment.status.toLowerCase()} enrollment`, 403));
+      }
 
       // Verify module and submodule exist
       const module = await Module.findById(moduleId);
@@ -748,40 +777,53 @@ class StudentController {
       const allPassed = passedCount === results.length && results.length > 0;
       const score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * (question.points || 0)) : 0;
 
-      // Update activity log and streak if all test cases passed
-      if (allPassed) {
-        const user = await User.findById(studentId);
-        if (user) {
-          user.points += score;
+      // 1. Calculate XP increment (only reward for score improvement)
+      const previousBest = await StudentSubmission.findOne({
+        student: studentId,
+        question: questionId,
+      }).sort({ score: -1 });
 
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const todayEntry = user.activityLog.find(
-            (entry) => new Date(entry.date).toDateString() === today.toDateString()
-          );
-          if (todayEntry) {
-            todayEntry.count += 1;
-          } else {
-            user.activityLog.push({ date: today, count: 1 });
-          }
+      const prevScore = previousBest?.score || 0;
+      const xpToAdd = Math.max(0, score - prevScore);
 
-          // Update streak
+      // 2. Update User Points and Unified Streak Logic
+      const user = await User.findById(studentId);
+      if (user) {
+        user.points = (user.points || 0) + xpToAdd;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const todayEntry = user.activityLog.find(
+          (entry) => new Date(entry.date).toDateString() === today.toDateString()
+        );
+
+        if (!todayEntry) {
+          // First action of the day
           const yesterday = new Date(today);
           yesterday.setDate(yesterday.getDate() - 1);
           const hadActivityYesterday = user.activityLog.some(
-            (entry) => new Date(entry.date).toDateString() === yesterday.toDateString() && entry.count > 0
+            (entry) =>
+              new Date(entry.date).toDateString() === yesterday.toDateString() && entry.count > 0
           );
-          if (hadActivityYesterday || user.streak === 0) {
+
+          if (hadActivityYesterday) {
             user.streak += 1;
-            if (user.streak > user.maxStreak) {
-              user.maxStreak = user.streak;
-            }
-          } else if (!todayEntry) {
+          } else {
             user.streak = 1;
           }
 
-          await user.save();
+          if (user.streak > user.maxStreak) {
+            user.maxStreak = user.streak;
+          }
+
+          user.activityLog.push({ date: today, count: 1 });
+        } else {
+          // Subsequent action today - just increment activity count
+          todayEntry.count += 1;
         }
+
+        await user.save();
       }
 
       await StudentSubmission.create({

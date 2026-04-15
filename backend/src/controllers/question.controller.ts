@@ -8,6 +8,18 @@ import ErrorResponse from "../utils/errorResponse";
 class QuestionController {
   // ================= CREATE QUESTION =================
   static createQuestion = asyncHandler(async (req: Request, res: Response) => {
+    // Auto-generate a unique slug if not provided
+    if (!req.body.slug && req.body.title) {
+      req.body.slug =
+        req.body.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") +
+        "-" +
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 6);
+    }
+
     const question = await Question.create(req.body);
 
     // If test is provided, add question to the test's questions array

@@ -28,6 +28,7 @@ export interface IUser {
   playerClass?: "Apprentice" | "Warrior" | "Champion";
   dailyGoal?: number;
   hasCompletedOnboarding: boolean;
+  unlockedHints?: { questionId: string; hintIndex: number }[];
   isActive: boolean;
   isDeleted: boolean;
   createdAt: string;

@@ -28,6 +28,7 @@ import ContestBattlePage from "@/pages/ContestBattlePage";
 import MockInterviewsPage from "@/pages/MockInterviewsPage";
 import InterviewPlayPage from "@/pages/InterviewPlayPage";
 import TestResultPage from "@/pages/TestResultPage";
+import ContestResultPage from "@/pages/ContestResultPage";
 
 const TestTakePage = lazy(() => import("@/pages/TestTakePage"));
 
@@ -121,6 +122,7 @@ function App() {
               <Route path="/quests" element={<QuestMapPage />} />
               <Route path="/arena/:id" element={<ArenaPage />} />
               <Route path="/contests" element={<ContestArenaPage />} />
+              <Route path="/contests/:id/results" element={<ContestResultPage />} />
               <Route path="/interviews" element={<MockInterviewsPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/activity" element={<ActivityPage />} />

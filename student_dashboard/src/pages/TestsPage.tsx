@@ -146,12 +146,12 @@ export default function TestsPage() {
  
               <div className="relative z-10">
                 <h3 className="mb-1 text-lg font-extrabold text-slate-900 leading-tight group-hover:text-primary-700 transition-colors">{test.moduleTitle} Assessment</h3>
-                <p className="mb-5 text-xs font-bold text-slate-400 uppercase tracking-widest">{test.courseTitle}</p>
+                <p className="mb-5 text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{test.courseTitle}</p>
  
                 <div className="mb-6 flex items-center gap-5 text-slate-500">
                   <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100 shadow-sm">
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Timed</span>
+                    <Clock className="h-3.5 w-3.5 text-slate-500" />
+                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">Timed</span>
                   </div>
                 </div>
  

@@ -68,6 +68,25 @@ class UserController {
     const { id } = req.params;
     const query: any = { _id: id, isDeleted: false };
 
+    // Security: Students can only update their own profile
+    if (req.user?.role === "STUDENT" && req.user._id.toString() !== id) {
+      return next(new ErrorResponse("Unauthorized to update other's profile", 403));
+    }
+
+    // Sanitization: Strip sensitive fields for non-admin/super-admin updates
+    if (req.user?.role === "STUDENT") {
+      delete req.body.email;
+      delete req.body.role;
+      delete req.body.organisation;
+      delete req.body.points;
+      delete req.body.streak;
+      delete req.body.maxStreak;
+      delete req.body.isActive;
+      delete req.body.isDeleted;
+      delete req.body.playerClass;
+      delete req.body.hasCompletedOnboarding;
+    }
+
     // ADMIN can only update users in their own org
     if (req.user?.role === "ADMIN") {
       query.organisation = req.user.organisation;
@@ -401,20 +420,68 @@ class UserController {
   });
 
   // ================= CLAIM XP =================
-  static claimXp = asyncHandler(async (req: Request, res: Response) => {
-    const { amount } = req.body;
-    if (!amount || amount <= 0) {
-      return res.status(400).json(new ApiResponse(400, {}, "Invalid amount"));
+  static claimXp = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { amount, questId } = req.body;
+    if (!amount || amount <= 0 || !questId) {
+      return res.status(400).json(new ApiResponse(400, {}, "Invalid claim data"));
     }
 
     const userId = req.user!._id;
     const user = await User.findById(userId);
     if (!user) return res.status(404).json(new ApiResponse(404, {}, "User not found"));
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Check if already claimed today
+    const alreadyClaimed = user.claimedQuests.some(
+      (q) => q.questId === questId && new Date(q.date).toDateString() === today.toDateString()
+    );
+
+    if (alreadyClaimed) {
+      return next(new ErrorResponse("Quest already claimed today", 400));
+    }
+
+    // Record claim and add points
+    user.claimedQuests.push({ questId, date: today });
     user.points = (user.points || 0) + amount;
     await user.save();
 
     res.status(200).json(new ApiResponse(200, user, `Claimed ${amount} XP`));
+  });
+
+  // ================= UNLOCK HINT =================
+  static unlockHint = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { questionId, hintIndex, xpCost } = req.body;
+
+    if (!questionId || hintIndex === undefined || xpCost === undefined) {
+      return next(new ErrorResponse("Question ID, hint index, and XP cost are required", 400));
+    }
+
+    const userId = req.user!._id;
+    const user = await User.findById(userId);
+    if (!user) return next(new ErrorResponse("User not found", 404));
+
+    // 1. Check if already unlocked
+    const isAlreadyUnlocked = user.unlockedHints.some(
+      (h) => h.questionId.toString() === questionId && h.hintIndex === hintIndex
+    );
+
+    if (isAlreadyUnlocked) {
+      return res.status(200).json(new ApiResponse(200, user, "Hint already unlocked"));
+    }
+
+    // 2. Check if enough XP
+    if (user.points < xpCost) {
+      return next(new ErrorResponse(`Insufficient XP. Need ${xpCost} XP.`, 400));
+    }
+
+    // 3. Deduct XP and record unlock
+    user.points -= xpCost;
+    user.unlockedHints.push({ questionId: questionId as any, hintIndex });
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, user, "Hint unlocked successfully"));
   });
 
   // ================= GET DAILY QUESTS =================
@@ -442,6 +509,12 @@ class UserController {
     );
 
     const dailyGoal = user.dailyGoal || 3;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const claimedTodayIds = user.claimedQuests
+      .filter((q) => new Date(q.date).toDateString() === today.toDateString())
+      .map((q) => q.questId);
 
     const quests = [
       {
@@ -450,6 +523,7 @@ class UserController {
         desc: "Checking in to train.",
         xp: 20,
         completed: true,
+        claimed: claimedTodayIds.includes(1),
         iconName: "Flame",
       },
       {
@@ -458,6 +532,7 @@ class UserController {
         desc: `Solve ${dailyGoal} problems today.`,
         xp: 150,
         completed: totalSolvedToday >= dailyGoal,
+        claimed: claimedTodayIds.includes(2),
         iconName: "Target",
       },
       {
@@ -466,6 +541,7 @@ class UserController {
         desc: "Pass all test cases on a problem today.",
         xp: 50,
         completed: hasAnyPerfectSubmissionToday,
+        claimed: claimedTodayIds.includes(3),
         iconName: "CheckCircle2",
       },
     ];

@@ -20,6 +20,7 @@ export interface IQuestion {
   starterCode?: Record<string, string>;
   testCases?: TestCase[];
   languages?: string[];
+  hints?: string[];
   maxExecutionTime?: number;
   maxMemory?: number;
   points: number;

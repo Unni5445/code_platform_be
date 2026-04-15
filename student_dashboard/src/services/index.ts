@@ -7,3 +7,4 @@ export { dashboardService } from "./dashboard.service";
 export { playgroundService } from "./playground.service";
 export { contestService } from "./contest.service";
 export { interviewService } from "./interview.service";
+export { userService } from "./user.service";

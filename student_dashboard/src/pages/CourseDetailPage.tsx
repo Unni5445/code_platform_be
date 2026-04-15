@@ -40,18 +40,18 @@ function PdfViewerModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
       onContextMenu={(e) => e.preventDefault()} // disable right-click on backdrop
     >
-      <div className="relative flex h-[92vh] w-full max-w-4xl flex-col rounded-2xl bg-[#1e1e2e] shadow-2xl overflow-hidden">
+      <div className="relative flex h-[92vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-3 bg-slate-50">
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-primary-400" />
-            <span className="truncate text-sm font-medium text-white max-w-[500px]">
+            <FileText className="h-4 w-4 text-primary-600" />
+            <span className="truncate text-sm font-bold text-slate-900 max-w-[500px]">
               {title}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
           >
             <X className="h-5 w-5" />
           </button>
@@ -155,6 +155,11 @@ export default function CourseDetailPage() {
     isCompleted: boolean
   ) => {
     if (!enrollment || updatingProgress) return;
+    
+    if (enrollment.status === "EXPIRED" || enrollment.status === "DROPPED") {
+      toast.error(`Cannot update progress on an ${enrollment.status.toLowerCase()} enrollment`);
+      return;
+    }
     setUpdatingProgress(submoduleId);
     try {
       await enrollmentService.updateProgress(enrollment._id, {
@@ -191,24 +196,24 @@ export default function CourseDetailPage() {
 
       <Link
         to="/courses"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+        className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-primary-600 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Courses
       </Link>
 
       {/* Course header card */}
-      <Card>
+      <Card className="bg-white border-slate-200">
         <div className="flex items-start gap-4">
-          <div className="rounded-xl bg-primary-500/20 p-3">
-            <BookOpen className="h-8 w-8 text-primary-300" />
+          <div className="rounded-xl bg-primary-50 p-3 border border-primary-100 shadow-inner">
+            <BookOpen className="h-8 w-8 text-primary-600" />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">{course?.title}</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">{course?.title}</h1>
             {course?.description && (
-              <p className="mt-1 text-slate-400">{course.description}</p>
+              <p className="mt-1 text-slate-500 font-medium">{course.description}</p>
             )}
             <div className="mt-4 flex items-center gap-4">
-              <Badge variant="primary">{modules?.length || 0} Modules</Badge>
+              <Badge variant="primary" className="font-bold">{modules?.length || 0} Modules</Badge>
               {enrollment && (
                 <Badge variant={enrollment.status === "COMPLETED" ? "success" : "info"}>
                   {enrollment.status}
@@ -245,7 +250,7 @@ export default function CourseDetailPage() {
               {/* Module header */}
               <button
                 onClick={() => toggleModule(module._id)}
-                className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-slate-800/60"
+                className="flex w-full cursor-pointer items-center justify-between p-5 text-left transition-colors hover:bg-slate-50"
               >
                 <div className="flex items-center gap-3">
                   {isExpanded ? (
@@ -254,15 +259,16 @@ export default function CourseDetailPage() {
                     <ChevronRight className="h-5 w-5 text-slate-400" />
                   )}
                   <div>
-                    <h3 className="font-semibold text-white">{module.title}</h3>
+                    <h3 className="font-bold text-slate-900">{module.title}</h3>
                     {module.description && (
-                      <p className="mt-0.5 text-sm text-slate-400">{module.description}</p>
+                      <p className="mt-0.5 text-sm text-slate-500 font-medium">{module.description}</p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {progress && (
                     <Badge
+                      className="font-bold"
                       variant={
                         progress.status === "COMPLETED"
                           ? "success"
@@ -274,7 +280,7 @@ export default function CourseDetailPage() {
                       {progress.status.replace("_", " ")}
                     </Badge>
                   )}
-                  <span className="text-sm text-slate-400">
+                  <span className="text-sm font-bold text-slate-500">
                     {completedCount}/{totalSubs}
                   </span>
                 </div>
@@ -282,7 +288,7 @@ export default function CourseDetailPage() {
 
               {/* Submodules */}
               {isExpanded && (
-                <div className="space-y-2 border-t border-slate-800/80 px-5 py-4">
+                <div className="space-y-2 border-t border-slate-100 px-5 py-4 bg-slate-50/30">
                   {isLoadingSubs ? (
                     <div className="py-4">
                       <Spinner size="sm" />
@@ -300,13 +306,13 @@ export default function CourseDetailPage() {
                           key={sub._id}
                           className={clsx(
                             "flex w-full items-center gap-3 rounded-lg p-3 transition-colors",
-                            isCompleted ? "bg-emerald-500/20" : "hover:bg-slate-800/60"
+                            isCompleted ? "bg-emerald-50 border border-emerald-100 shadow-sm" : "hover:bg-white hover:shadow-sm border border-transparent"
                           )}
                         >
                           {/* Complete toggle button */}
                           <button
                             onClick={() => handleToggleSubmodule(module._id, sub._id, isCompleted)}
-                            disabled={!!isUpdating}
+                            disabled={!!isUpdating || !enrollment || enrollment.status === "EXPIRED" || enrollment.status === "DROPPED"}
                             className="shrink-0"
                             title={isCompleted ? "Mark incomplete" : "Mark complete"}
                           >
@@ -323,14 +329,14 @@ export default function CourseDetailPage() {
                           <div className="flex-1 min-w-0">
                             <p
                               className={clsx(
-                                "text-sm font-medium",
-                                isCompleted ? "text-emerald-300" : "text-white"
+                                "text-sm font-bold",
+                                isCompleted ? "text-emerald-800" : "text-slate-900"
                               )}
                             >
                               {sub.title}
                             </p>
                             {sub.description && (
-                              <p className="mt-0.5 text-xs text-slate-500">{sub.description}</p>
+                              <p className="mt-0.5 text-xs text-slate-500 font-medium">{sub.description}</p>
                             )}
                           </div>
 
@@ -361,7 +367,7 @@ export default function CourseDetailPage() {
                       {totalSubs > 0 && completedCount >= totalSubs ? (
                         <Link to={`/tests/${(module.test as any)?._id}/take`}>
                           <Button size="sm" leftIcon={<FileQuestion className="h-4 w-4" />}>
-                            Take Test
+                            {progress?.status === "COMPLETED" ? "Retake Test" : "Take Test"}
                           </Button>
                         </Link>
                       ) : (

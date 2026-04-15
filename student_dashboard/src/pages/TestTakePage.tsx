@@ -224,15 +224,15 @@ export default function TestTakePage() {
             <div className="grid grid-cols-3 gap-4 mb-10">
               <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                 <span className="block text-2xl font-extrabold text-slate-900">{questions.length}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Questions</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Questions</span>
               </div>
               <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <span className="block text-2xl font-extrabold text-slate-900">{test?.duration || 60}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minutes</span>
+                <span className="block text-2xl font-extrabold text-slate-900 leading-none mb-1">{test?.duration || 60}</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Minutes</span>
               </div>
               <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <span className="block text-2xl font-extrabold text-slate-900">{test?.totalPoints || 0}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Points</span>
+                <span className="block text-2xl font-extrabold text-slate-900 leading-none mb-1">{test?.totalPoints || 0}</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Points</span>
               </div>
             </div>
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-8 text-left shadow-xs">
@@ -264,8 +264,8 @@ export default function TestTakePage() {
       <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div>
           <h1 className="font-bold text-slate-900">{test?.title}</h1>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-            Question {currentIndex + 1} <span className="text-slate-300">/</span> {questions.length}
+          <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-0.5">
+            Question {currentIndex + 1} <span className="text-slate-400 font-medium">/</span> {questions.length}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -302,7 +302,7 @@ export default function TestTakePage() {
       <div className="flex">
         {/* Question Navigator Sidebar */}
         <div className="w-64 shrink-0 p-6 border-r border-slate-200 bg-white min-h-[calc(100vh-64px)] shadow-sm">
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Questions</h3>
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Questions</h3>
           <QuestionNavigator
             total={questions.length}
             current={currentIndex}

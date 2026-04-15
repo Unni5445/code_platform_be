@@ -318,7 +318,7 @@ export default function UsersPage() {
           hideRoleFilter={isAdmin}
         />
         <div className="flex gap-2 shrink-0">
-          {isSuperAdmin && (
+          {(isSuperAdmin || isAdmin) && (
             <>
               <Button variant="outline" size="sm" leftIcon={<Download className="h-4 w-4" />} onClick={handleExportUsers}>Export</Button>
               <Button 

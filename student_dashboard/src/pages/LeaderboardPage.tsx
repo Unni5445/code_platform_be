@@ -158,7 +158,7 @@ export default function LeaderboardPage() {
                                 <Badge variant="primary" className="ml-2 text-[10px] px-2 py-0">YOU</Badge>
                               )}
                             </p>
-                            <p className="text-[11px] font-bold text-slate-400">{entry.student.email}</p>
+                             {/* Email hidden for privacy */}
                           </div>
                         </div>
                       </td>

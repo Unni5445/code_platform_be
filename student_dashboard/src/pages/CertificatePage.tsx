@@ -78,7 +78,7 @@ export default function CertificatePage() {
       <div className="space-y-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex cursor-pointer items-center gap-2 text-slate-400 hover:text-white"
+          className="flex cursor-pointer items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
@@ -103,7 +103,7 @@ export default function CertificatePage() {
       <div className="flex items-center justify-between print:hidden">
         <button
           onClick={() => navigate(-1)}
-          className="flex cursor-pointer items-center gap-2 text-slate-400 hover:text-white"
+          className="flex cursor-pointer items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>

@@ -33,6 +33,7 @@ export default function MockInterviewsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Form state
   const [company, setCompany] = useState("");
@@ -87,7 +88,32 @@ export default function MockInterviewsPage() {
     setRequiredLevel("0");
     setTopicsText("");
     setQuestions([]);
+    setFormErrors({});
     resetQuestionForm();
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!company.trim()) errors.company = "Company name is required";
+    if (!role.trim()) errors.role = "Role is required";
+
+    const dur = Number(duration);
+    if (!duration.trim() || isNaN(dur) || dur < 1 || dur > 300) {
+      errors.duration = "Duration must be between 1 and 300 minutes";
+    }
+
+    const lvl = Number(requiredLevel);
+    if (requiredLevel.trim() !== "" && (isNaN(lvl) || lvl < 0)) {
+      errors.requiredLevel = "Required level must be a non-negative number";
+    }
+
+    if (questions.length === 0) {
+      errors.questions = "At least one question is required";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const resetQuestionForm = () => {
@@ -138,10 +164,7 @@ export default function MockInterviewsPage() {
 
   // Handlers
   const handleCreate = async () => {
-    if (!company.trim() || !role.trim()) {
-      toast.error("Company and Role are required");
-      return;
-    }
+    if (!validateForm()) return;
     try {
       await interviewService.createInterview({
         company: company.trim(),
@@ -176,6 +199,7 @@ export default function MockInterviewsPage() {
 
   const handleEdit = async () => {
     if (!editingInterview) return;
+    if (!validateForm()) return;
     try {
       await interviewService.updateInterview(editingInterview._id, {
         company: company.trim(),
@@ -212,29 +236,40 @@ export default function MockInterviewsPage() {
   const InterviewForm = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label="Company"
-          value={company}
-          onChange={(e) => setCompany(e.target.value)}
-          placeholder="e.g., Google, Amazon"
-          required
-        />
-        <Input
-          label="Role"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          placeholder="e.g., Frontend Engineer"
-          required
-        />
+        <div>
+          <Input
+            label="Company *"
+            value={company}
+            onChange={(e) => { setCompany(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.company; return n; }); }}
+            placeholder="e.g., Google, Amazon"
+            required
+          />
+          {formErrors.company && <p className="text-xs text-red-500 mt-1">{formErrors.company}</p>}
+        </div>
+        <div>
+          <Input
+            label="Role *"
+            value={role}
+            onChange={(e) => { setRole(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.role; return n; }); }}
+            placeholder="e.g., Frontend Engineer"
+            required
+          />
+          {formErrors.role && <p className="text-xs text-red-500 mt-1">{formErrors.role}</p>}
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <Input
-          label="Duration (min)"
-          type="number"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-          placeholder="45"
-        />
+        <div>
+          <Input
+            label="Duration (min) *"
+            type="number"
+            value={duration}
+            onChange={(e) => { setDuration(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.duration; return n; }); }}
+            placeholder="45"
+            min={1}
+            max={300}
+          />
+          {formErrors.duration && <p className="text-xs text-red-500 mt-1">{formErrors.duration}</p>}
+        </div>
         <Select
           label="Difficulty"
           options={[
@@ -246,13 +281,17 @@ export default function MockInterviewsPage() {
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value)}
         />
-        <Input
-          label="Required Level"
-          type="number"
-          value={requiredLevel}
-          onChange={(e) => setRequiredLevel(e.target.value)}
-          placeholder="0"
-        />
+        <div>
+          <Input
+            label="Required Level"
+            type="number"
+            value={requiredLevel}
+            onChange={(e) => { setRequiredLevel(e.target.value); setFormErrors((p) => { const n = { ...p }; delete n.requiredLevel; return n; }); }}
+            placeholder="0"
+            min={0}
+          />
+          {formErrors.requiredLevel && <p className="text-xs text-red-500 mt-1">{formErrors.requiredLevel}</p>}
+        </div>
       </div>
       <Input
         label="Topics (comma-separated)"
@@ -262,10 +301,11 @@ export default function MockInterviewsPage() {
       />
 
       {/* Questions Manager */}
-      <div className="border border-surface-border rounded-xl p-4 bg-gray-50/50">
+      <div className={`border rounded-xl p-4 bg-gray-50/50 ${formErrors.questions ? 'border-red-300' : 'border-surface-border'}`}>
         <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center justify-between">
-          <span>Questions ({questions.length})</span>
+          <span>Questions ({questions.length}) <span className="text-red-500">*</span></span>
         </h4>
+        {formErrors.questions && <p className="text-xs text-red-500 mb-3">{formErrors.questions}</p>}
 
         {/* Existing Questions */}
         {questions.length > 0 && (
@@ -294,14 +334,14 @@ export default function MockInterviewsPage() {
         <div className="space-y-3 p-3 bg-surface border border-gray-200 rounded-lg">
           <p className="text-xs font-semibold text-gray-500 uppercase">Add New Question</p>
           <Input
-            label="Question Text"
+            label="Question Text *"
             value={qText}
             onChange={(e) => setQText(e.target.value)}
             placeholder="e.g., How does React's Virtual DOM work?"
           />
           <div className="grid grid-cols-2 gap-3">
             <Select
-              label="Category"
+              label="Category *"
               options={[
                 { value: "technical", label: "Technical" },
                 { value: "behavioral", label: "Behavioral" },
@@ -323,7 +363,7 @@ export default function MockInterviewsPage() {
             onChange={(e) => setQHintsText(e.target.value)}
             placeholder="e.g., Think about how the DOM updates, React Fiber"
           />
-          <Button variant="secondary" size="sm" onClick={handleAddQuestion} className="w-full">
+          <Button variant="secondary" size="sm" onClick={() => { handleAddQuestion(); setFormErrors((p) => { const n = { ...p }; delete n.questions; return n; }); }} className="w-full">
             Add Question
           </Button>
         </div>
@@ -483,11 +523,11 @@ export default function MockInterviewsPage() {
       )}
 
       {/* Modals */}
-      <Modal isOpen={addModal.isOpen} onClose={addModal.close} title="Create Mock Interview" size="lg" footer={<><Button variant="ghost" onClick={addModal.close}>Cancel</Button><Button onClick={handleCreate} disabled={!company.trim()}>Create</Button></>}>
+      <Modal isOpen={addModal.isOpen} onClose={() => { addModal.close(); resetForm(); }} title="Create Mock Interview" size="lg" footer={<><Button variant="ghost" onClick={() => { addModal.close(); resetForm(); }}>Cancel</Button><Button onClick={handleCreate} disabled={!company.trim() || !role.trim() || questions.length === 0}>Create</Button></>}>
         {InterviewForm()}
       </Modal>
 
-      <Modal isOpen={editModal.isOpen} onClose={() => { editModal.close(); setEditingInterview(null); resetForm(); }} title="Edit Mock Interview" size="lg" footer={<><Button variant="ghost" onClick={() => { editModal.close(); setEditingInterview(null); resetForm(); }}>Cancel</Button><Button onClick={handleEdit} disabled={!company.trim()}>Update</Button></>}>
+      <Modal isOpen={editModal.isOpen} onClose={() => { editModal.close(); setEditingInterview(null); resetForm(); }} title="Edit Mock Interview" size="lg" footer={<><Button variant="ghost" onClick={() => { editModal.close(); setEditingInterview(null); resetForm(); }}>Cancel</Button><Button onClick={handleEdit} disabled={!company.trim() || !role.trim() || questions.length === 0}>Update</Button></>}>
         {InterviewForm()}
       </Modal>
 

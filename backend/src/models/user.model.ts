@@ -37,6 +37,8 @@ export interface IUser extends Document {
   playerClass?: "Apprentice" | "Warrior" | "Champion";
   dailyGoal?: number;
   hasCompletedOnboarding: boolean;
+  claimedQuests: { questId: number; date: Date }[];
+  unlockedHints: { questionId: mongoose.Types.ObjectId; hintIndex: number }[];
 
   isActive: boolean;
   isDeleted: boolean;
@@ -83,6 +85,18 @@ const userSchema = new Schema<IUser>(
     playerClass: { type: String, enum: ["Apprentice", "Warrior", "Champion"] },
     dailyGoal: { type: Number },
     hasCompletedOnboarding: { type: Boolean, default: false },
+    claimedQuests: [
+      {
+        questId: { type: Number },
+        date: { type: Date },
+      },
+    ],
+    unlockedHints: [
+      {
+        questionId: { type: Schema.Types.ObjectId, ref: "Question" },
+        hintIndex: { type: Number },
+      },
+    ],
 
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },

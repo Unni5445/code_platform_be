@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Trophy,
   Users,
@@ -15,12 +15,43 @@ import {
   Medal,
   Loader2,
 } from "lucide-react";
-import { Card, Badge, Spinner } from "@/components/ui";
+import { Card, Badge, Spinner, Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { useApi } from "@/hooks/useApi";
-import { contestService } from "@/services";
+import { contestService, dashboardService } from "@/services";
 import type { Contest } from "@/services/contest.service";
+import type { LeaderboardEntry } from "@/services/dashboard.service";
 import toast from "react-hot-toast";
+
+function DeadlineTimer({ endTime }: { endTime: string }) {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const difference = new Date(endTime).getTime() - new Date().getTime();
+      if (difference <= 0) {
+        setTimeLeft("Ending...");
+        return;
+      }
+
+      const h = Math.floor(difference / (1000 * 60 * 60));
+      const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+      if (h > 0) {
+        setTimeLeft(`${h}h ${m}m ${s}s`);
+      } else {
+        setTimeLeft(`${m}m ${s}s`);
+      }
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  return <span>Ends in {timeLeft}</span>;
+}
 
 function ContestCard({
   contest,
@@ -44,26 +75,14 @@ function ContestCard({
 
   return (
     <div
-      className={`rounded-2xl border p-5 transition-all duration-300 relative overflow-hidden group ${
-        isLive
+      className={`rounded-2xl border p-5 transition-all duration-300 relative overflow-hidden group ${isLive
           ? "border-red-200 bg-linear-to-br from-red-50 to-orange-50 shadow-sm"
           : isEnded
-          ? "border-slate-100 bg-slate-50 opacity-70"
-          : "border-slate-200 bg-white hover:border-primary-300 shadow-sm"
-      }`}
+            ? "border-slate-100 bg-slate-50 opacity-70"
+            : "border-slate-200 bg-white hover:border-primary-300 shadow-sm"
+        }`}
     >
-      {/* Live pulse */}
-      {isLive && (
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-          </span>
-          <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
-            Live Now
-          </span>
-        </div>
-      )}
+      {/* Sponsor badge moved below title for better layout flow */}
 
       {/* Sponsor badge */}
       {contest.sponsor && (
@@ -79,6 +98,17 @@ function ContestCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <h3 className="text-base font-semibold text-slate-900">{contest.title}</h3>
+            {isLive && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-100 border border-red-200">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+                <span className="text-[10px] font-black text-red-600 uppercase tracking-wider">
+                  Live
+                </span>
+              </div>
+            )}
             <Badge variant={difficultyColor[contest.difficulty]}>
               {contest.difficulty}
             </Badge>
@@ -91,14 +121,20 @@ function ContestCard({
           <div className="flex items-center gap-4 flex-wrap text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" />
-              {isEnded
-                ? `Ended ${startDate.toLocaleDateString()}`
-                : startDate.toLocaleDateString() +
-                  " " +
-                  startDate.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+              {isEnded ? (
+                `Ended ${new Date(contest.endTime).toLocaleDateString()}`
+              ) : isLive ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-red-600 font-bold">
+                    <DeadlineTimer endTime={contest.endTime} />
+                  </span>
+                  <span className="text-slate-400 font-medium">
+                    ({new Date(contest.endTime).toLocaleDateString([], { month: "short", day: "numeric" })})
+                  </span>
+                </div>
+              ) : (
+                `Starts ${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              )}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
@@ -146,7 +182,7 @@ function ContestCard({
                 ✓ Submitted
               </span>
             ) : contest.isRegistered ? (
-              <button 
+              <button
                 onClick={() => navigate(`/contests/${contest._id}/battle`)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors cursor-pointer"
               >
@@ -168,7 +204,10 @@ function ContestCard({
               </button>
             )
           ) : isEnded ? (
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm font-medium cursor-pointer hover:bg-white shadow-sm transition-all">
+            <button
+              onClick={() => navigate(`/contests/${contest._id}/results`)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm font-medium cursor-pointer hover:bg-white shadow-sm transition-all text-left"
+            >
               View Results
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -211,8 +250,13 @@ export default function ContestArenaPage() {
     [tab]
   );
 
+  const fetchLeaderboard = useCallback(() => dashboardService.getLeaderboard({ limit: 5 }), []);
+
   const { data, loading, refetch } = useApi(fetchContests, [tab]);
+  const { data: lbData, loading: lbLoading } = useApi<{ leaderboard: LeaderboardEntry[] }>(fetchLeaderboard, []);
+  
   const contests: Contest[] = data?.contests ?? [];
+  const leaderboard: LeaderboardEntry[] = lbData?.leaderboard ?? [];
 
   const liveCount = contests.filter((c) => c.status === "LIVE").length;
 
@@ -237,7 +281,7 @@ export default function ContestArenaPage() {
       <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-xl p-8 group">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
         <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-amber-50 rounded-full blur-3xl opacity-60 group-hover:opacity-80 transition-opacity" />
-        
+
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 border border-red-100 shadow-inner">
@@ -274,11 +318,10 @@ export default function ContestArenaPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-6 py-2.5 text-xs font-black rounded-xl transition-all duration-300 cursor-pointer uppercase tracking-widest flex items-center gap-2.5 ${
-              tab === t
+            className={`px-6 py-2.5 text-xs font-black rounded-xl transition-all duration-300 cursor-pointer uppercase tracking-widest flex items-center gap-2.5 ${tab === t
                 ? "bg-white text-primary-600 shadow-lg shadow-primary-500/10 border border-slate-100"
                 : "text-slate-400 hover:text-slate-900 hover:bg-white/50"
-            }`}
+              }`}
           >
             {t === "live" && (
               <span className="relative flex h-2 w-2">
@@ -321,32 +364,87 @@ export default function ContestArenaPage() {
       )}
 
       {/* Leaderboard Preview */}
-      {contests.length > 0 && (
-        <Card
-          className="bg-white border-slate-200 shadow-xl overflow-hidden"
-          header={
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight">
-                <Medal className="h-6 w-6 text-amber-500 drop-shadow-sm" />
-                Global Battleground Leaderboard
-              </h3>
-              <Badge variant="primary" className="font-bold text-[10px] uppercase tracking-widest px-3 py-1">
-                Top Performers
-              </Badge>
-            </div>
-          }
-        >
+      <Card
+        className="bg-white border-slate-200 shadow-xl overflow-hidden"
+        header={
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2 tracking-tight">
+              <Medal className="h-6 w-6 text-amber-500 drop-shadow-sm" />
+              Global Battleground Leaderboard
+            </h3>
+            <Link 
+              to="/leaderboard"
+              className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-primary-50 text-primary-600 rounded-xl border border-primary-100 hover:bg-primary-100 transition-colors shadow-sm"
+            >
+              View Full Leaderboard
+            </Link>
+          </div>
+        }
+      >
+        {lbLoading ? (
+          <div className="flex justify-center py-12">
+            <Spinner />
+          </div>
+        ) : leaderboard.length === 0 ? (
           <div className="text-center py-12 px-6">
             <div className="relative inline-block mb-4">
-               <Star className="h-12 w-12 text-slate-100 scale-150 rotate-12" />
-               <Star className="h-8 w-8 text-slate-200 absolute inset-0 m-auto" />
+              <Star className="h-12 w-12 text-slate-100 scale-150 rotate-12" />
+              <Star className="h-8 w-8 text-slate-200 absolute inset-0 m-auto" />
             </div>
             <p className="text-sm font-bold text-slate-400 max-w-sm mx-auto">
               Deployment in progress. Complete an arena challenge to benchmark your performance against the community!
             </p>
           </div>
-        </Card>
-      )}
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {leaderboard.map((entry, index) => {
+              const isCurrentUser = entry.student._id === user?._id;
+              const rankColors = [
+                "bg-amber-100 text-amber-700 border-amber-200",
+                "bg-slate-100 text-slate-600 border-slate-200",
+                "bg-orange-100 text-orange-700 border-orange-200",
+              ];
+
+              return (
+                <div 
+                  key={entry._id} 
+                  className={`flex items-center justify-between p-4 transition-colors ${
+                    isCurrentUser ? "bg-primary-50/40" : "hover:bg-slate-50/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`h-8 w-8 flex items-center justify-center rounded-lg text-xs font-black border ${
+                      index < 3 ? rankColors[index] : "bg-white text-slate-400 border-slate-100"
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <Avatar name={entry.student.name} size="sm" className="shadow-sm" />
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        {entry.student.name}
+                        {isCurrentUser && (
+                          <Badge variant="primary" className="text-[8px] px-1.5 py-0">YOU</Badge>
+                        )}
+                      </p>
+                      <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                        Ranked Candidate
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-amber-600 flex items-center gap-1 justify-end">
+                      <Zap className="h-3.5 w-3.5" /> {entry.points.toLocaleString()}
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Battle XP
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

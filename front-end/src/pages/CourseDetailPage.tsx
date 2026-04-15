@@ -467,7 +467,16 @@ export default function CourseDetailPage() {
   const handleCreateQuestion = async (data: Partial<IQuestion>) => {
     setSavingQuestion(true);
     try {
-      await questionService.createQuestion({ ...data, course: courseId, module: questionModuleId });
+      const testId = moduleTests[questionModuleId]?._id;
+      const res = await questionService.createQuestion({ ...data, course: courseId, module: questionModuleId, test: testId || undefined });
+      // If a test exists but the question wasn't auto-added (e.g. no test reference), add it explicitly
+      if (testId && res.data?.data?._id) {
+        const questionId = res.data.data._id;
+        const testQuestionIds = (moduleTests[questionModuleId]?.questions || []).map((q: any) => typeof q === "string" ? q : q._id);
+        if (!testQuestionIds.includes(questionId)) {
+          await testService.addQuestionsToTest(testId, [questionId]);
+        }
+      }
       addQuestionModal.close();
       toast.success("Question created");
       fetchModuleTestAndQuestions(questionModuleId);
