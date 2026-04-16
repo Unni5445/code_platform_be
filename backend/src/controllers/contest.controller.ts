@@ -343,14 +343,14 @@ class ContestController {
 
         if (question.type === "SINGLE_CHOICE") {
           totalTestCases = 1;
-          if (ans.answer === question.correctAnswer) {
+          if (String(ans.answer) === String(question.correctAnswer)) {
             score = maxScore;
             passed = true;
             passedTestCases = 1;
           }
         } else if (question.type === "MULTIPLE_CHOICE") {
-          const correct = Array.isArray(question.correctAnswer) ? question.correctAnswer : [];
-          const studentAns = Array.isArray(ans.answer) ? ans.answer : [];
+          const correct = Array.isArray(question.correctAnswer) ? question.correctAnswer.map(String) : [];
+          const studentAns = Array.isArray(ans.answer) ? ans.answer.map(String) : [];
           const correctSet = new Set(correct);
           const studentSet = new Set(studentAns);
           totalTestCases = correct.length;

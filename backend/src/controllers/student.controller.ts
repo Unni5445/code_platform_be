@@ -121,12 +121,12 @@ class StudentController {
         const maxScore = question.points || 0;
 
         if (question.type === "SINGLE_CHOICE") {
-          if (ans.answer === question.correctAnswer) {
+          if (String(ans.answer) === String(question.correctAnswer)) {
             score = maxScore;
           }
         } else if (question.type === "MULTIPLE_CHOICE") {
-          const correct = Array.isArray(question.correctAnswer) ? question.correctAnswer : [];
-          const studentAns = Array.isArray(ans.answer) ? ans.answer : [];
+          const correct = Array.isArray(question.correctAnswer) ? question.correctAnswer.map(String) : [];
+          const studentAns = Array.isArray(ans.answer) ? ans.answer.map(String) : [];
           const correctSet = new Set(correct);
           const studentSet = new Set(studentAns);
 
