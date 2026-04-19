@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { UserPlus, Edit, Trash2, Eye, Download, Upload, FileUp, AlertCircle, CheckCircle2, Key } from "lucide-react";
+import { UserPlus, Edit, Trash2, Eye, Download, FileUp, AlertCircle, CheckCircle2, Key } from "lucide-react";
 import { organisationService, userService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";

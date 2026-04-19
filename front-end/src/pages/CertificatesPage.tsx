@@ -1,16 +1,15 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Download, ExternalLink, Award, QrCode, Copy, Link2, Check } from "lucide-react";
+import { Eye, Download, ExternalLink, Award, QrCode, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 import { certificateService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
-import { Button, Card, Badge, EmptyState, SearchInput, Spinner } from "@/components/ui";
-import { useAuth } from "@/context/AuthContext";
+import { Card, Badge, EmptyState, SearchInput, Spinner } from "@/components/ui";
+// import { useAuth } from "@/context/AuthContext";
 
 export default function CertificatesPage() {
-  const { user: currentUser } = useAuth();
-  const isAdmin = currentUser?.role === "ADMIN";
+  // const { user: currentUser } = useAuth();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 8;

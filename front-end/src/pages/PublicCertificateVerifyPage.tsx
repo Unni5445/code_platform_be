@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { Award, Calendar, CheckCircle, ShieldCheck, Download, ExternalLink, ArrowRight } from "lucide-react";
+import { Award, Calendar, CheckCircle, ShieldCheck } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { certificateService } from "@/services";
 import type { ICertificate } from "@/types";
@@ -15,10 +15,6 @@ export default function PublicCertificateVerifyPage() {
   );
 
   const { data: certificate, loading, error } = useApi<ICertificate>(fetchCertificate, [id]);
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   if (loading) {
     return (

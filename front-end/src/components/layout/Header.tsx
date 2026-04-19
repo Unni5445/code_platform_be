@@ -5,7 +5,8 @@ import { PATHS } from "@/config/routes";
 
 const pageTitles: Record<string, string> = {
   [PATHS.DASHBOARD]: "Dashboard",
-  [PATHS.USERS]: "User Management",
+  [PATHS.ADMINS]: "Admin Management",
+  [PATHS.STUDENTS]: "Student Management",
   [PATHS.COURSES]: "Courses & Modules",
   [PATHS.TESTS]: "Tests & Question Bank",
   [PATHS.ANALYTICS]: "Analytics & Reports",
