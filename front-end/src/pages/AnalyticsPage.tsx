@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Download, Users, TrendingUp, Award, Target } from "lucide-react";
 import { Button, Card, Badge, Tabs, Spinner } from "@/components/ui";
 import { dashboardService } from "@/services";
@@ -22,7 +23,25 @@ export default function AnalyticsPage() {
   const { data: leaderboardData, loading: leaderLoading } = useApi(() => dashboardService.getLeaderboard({ limit: 20 }), []);
   const leaderboard = (leaderboardData as any)?.leaderboard || leaderboardData || [];
 
+
   const isLoading = statsLoading || growthLoading || perfLoading;
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await dashboardService.exportStats();
+      const blob = new Blob([response.data], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analytics-export-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Analytics exported successfully");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export analytics");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -30,8 +49,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Download className="h-4 w-4" />}>Export CSV</Button>
-          <Button variant="secondary" size="sm" leftIcon={<Download className="h-4 w-4" />}>Export PDF</Button>
+          <Button variant="outline" size="sm" leftIcon={<Download className="h-4 w-4" />} onClick={handleExportCSV}>Export CSV</Button>
         </div>
       </div>
 
@@ -163,12 +181,11 @@ export default function AnalyticsPage() {
                   return (
                     <tr key={entry._id} className="hover:bg-primary-50/30 transition-colors">
                       <td className="px-6 py-4">
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          rank === 1 ? "bg-secondary-100 text-secondary-700" :
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${rank === 1 ? "bg-secondary-100 text-secondary-700" :
                           rank === 2 ? "bg-gray-200 text-gray-700" :
-                          rank === 3 ? "bg-orange-100 text-orange-700" :
-                          "bg-gray-100 text-gray-500"
-                        }`}>
+                            rank === 3 ? "bg-orange-100 text-orange-700" :
+                              "bg-gray-100 text-gray-500"
+                          }`}>
                           {rank}
                         </div>
                       </td>

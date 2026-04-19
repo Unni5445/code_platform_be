@@ -12,11 +12,13 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const currentPath = window.location.pathname;
-      if (currentPath !== "/login") {
-        window.location.href = "/login";
-      }
+    const status = error.response?.status;
+    const currentPath = window.location.pathname;
+
+    if (status === 401 && currentPath !== "/login" && !currentPath.startsWith("/verify-certificate")) {
+      // Clear any stale local state if necessary
+      // window.localStorage.removeItem("user"); 
+      window.location.href = "/login?redirect=" + encodeURIComponent(currentPath);
     }
     return Promise.reject(error);
   }

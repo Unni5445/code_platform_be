@@ -546,7 +546,7 @@ class StudentController {
           title: `${course?.title || "Course"} Completion Certificate`,
           issuedAt: new Date(),
           grade: "Completed",
-          verificationLink: `${req.protocol}://${req.get("host")}/api/v1/certificates/verify/${Date.now().toString(36)}${(studentId as Types.ObjectId).toString().slice(-4)}`,
+          verificationLink: `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-certificate/${Date.now().toString(36)}${(studentId as any).toString().slice(-4)}`,
         });
 
         // Populate for response

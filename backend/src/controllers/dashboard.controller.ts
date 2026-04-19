@@ -220,6 +220,62 @@ class DashboardController {
 
     res.status(200).json(new ApiResponse(200, activities.slice(0, 10), "Recent activity fetched successfully"));
   });
+  // ================= EXPORT ANALYTICS =================
+  static exportStats = asyncHandler(async (req: Request, res: Response) => {
+    const isAdmin = req.user?.role === "ADMIN";
+    const orgFilter = isAdmin ? { organisation: req.user!.organisation } : {};
+
+    // 1. Fetch Summary Stats
+    const [
+      totalUsers,
+      totalStudents,
+      totalCourses,
+      totalTests,
+      totalCertificates,
+    ] = await Promise.all([
+      User.countDocuments({ isDeleted: false, ...orgFilter }),
+      User.countDocuments({ isDeleted: false, role: "STUDENT", ...orgFilter }),
+      Course.countDocuments(),
+      Test.countDocuments({ isDeleted: false }),
+      Certificate.countDocuments({ isDeleted: false }),
+    ]);
+
+    // 2. Fetch Leaderboard 
+    const students = await User.find({ isDeleted: false, role: "STUDENT", ...orgFilter })
+      .select("name email points streak maxStreak")
+      .sort({ points: -1 })
+      .limit(100);
+
+    // Prepare CSV
+    const headers = ["Category", "Metric", "Value"];
+    const summaryRows = [
+      ["Summary", "Total Users", totalUsers],
+      ["Summary", "Total Students", totalStudents],
+      ["Summary", "Total Courses", totalCourses],
+      ["Summary", "Total Tests", totalTests],
+      ["Summary", "Total Certificates", totalCertificates],
+    ];
+
+    const leaderboardHeaders = ["", "", ""]; // Separator
+    const leaderboardTitle = ["Leaderboard", "Rank", "Name", "Email", "Points", "Streak"];
+    const leaderboardRows = students.map((s, i) => [
+      "Student",
+      i + 1,
+      `"${(s.name || "").replace(/"/g, '""')}"`,
+      `"${(s.email || "").replace(/"/g, '""')}"`,
+      s.points,
+      s.streak
+    ]);
+
+    let csvContent = headers.join(",") + "\n";
+    summaryRows.forEach(row => { csvContent += row.join(",") + "\n"; });
+    csvContent += "\n" + leaderboardTitle.join(",") + "\n";
+    leaderboardRows.forEach(row => { csvContent += row.join(",") + "\n"; });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=analytics-export-${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csvContent);
+  });
 }
 
 export default DashboardController;

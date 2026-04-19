@@ -12,6 +12,11 @@ class UserController {
   // ================= CREATE USER =================
   static createUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
+    const { phone } = data;
+
+    if (phone && !/^\d{10}$/.test(phone)) {
+      return next(new ErrorResponse("Invalid phone number. Must be 10 digits.", 400));
+    }
 
     // ADMIN can only create STUDENT users in their own org
     if (req.user?.role === "ADMIN") {
@@ -48,10 +53,13 @@ class UserController {
     const limit = Math.min(Number(req.query.limit) || 10, 100);
     const search = req.query.search as string;
     const roleFilter = req.query.role as UserRole;
+    const statusFilter = req.query.status as string;
 
     const filter: any = { isDeleted: false };
     if (search) filter.$or = [{ name: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }];
     if (roleFilter) filter.role = roleFilter;
+    if (statusFilter === "active") filter.isActive = true;
+    if (statusFilter === "inactive") filter.isActive = false;
 
     // Admin can only see their org users
     if (req.user?.role === "ADMIN") filter.organisation = req.user.organisation;
@@ -98,6 +106,10 @@ class UserController {
     const user = await User.findOne(query);
     if (!user) return next(new ErrorResponse("User not found", 404));
 
+    if (req.body.phone && !/^\d{10}$/.test(req.body.phone)) {
+      return next(new ErrorResponse("Invalid phone number. Must be 10 digits.", 400));
+    }
+
     Object.assign(user, req.body);
     await user.save();
     res.status(200).json(new ApiResponse(200, user, "User updated successfully"));
@@ -123,11 +135,14 @@ class UserController {
   static exportUsers = asyncHandler(async (req: Request, res: Response) => {
     const search = req.query.search as string;
     const roleFilter = req.query.role as UserRole;
+    const statusFilter = req.query.status as string;
     const isAdmin = req.user?.role === "ADMIN";
 
     const filter: any = { isDeleted: false };
     if (search) filter.$or = [{ name: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }];
     if (roleFilter) filter.role = roleFilter;
+    if (statusFilter === "active") filter.isActive = true;
+    if (statusFilter === "inactive") filter.isActive = false;
 
     // Admin can only see their org users
     if (isAdmin) filter.organisation = req?.user?.organisation;
@@ -135,11 +150,10 @@ class UserController {
     const users = await User.find(filter).select("-password").populate("organisation").sort({ createdAt: -1 });
 
     // Convert to CSV
-    const headers = ["Name", "Email", "Role", "Department", "Passout Year", "Gender", "Status", "Points", "Streak", "Joined"];
+    const headers = ["Name", "Email", "Department", "Passout Year", "Gender", "Status", "Points", "Streak", "Joined"];
     const rows = users.map(user => [
       `"${(user.name || "").replace(/"/g, '""')}"`,
       `"${(user.email || "").replace(/"/g, '""')}"`,
-      user.role || "",
       `"${(user.department || "").replace(/"/g, '""')}"`,
       user.passoutYear || "",
       user.gender || "",
@@ -163,6 +177,9 @@ class UserController {
   // ================= SIGN UP (STUDENT) =================
   static signupUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password, phone } = req.body;
+    if (phone && !/^\d{10}$/.test(phone)) {
+      return next(new ErrorResponse("Invalid phone number. Must be 10 digits.", 400));
+    }
     if (!name || !email || !password) return next(new ErrorResponse("Name, email and password are required", 400));
 
     const existingUser = await User.findOne({ email, isDeleted: false });
@@ -184,7 +201,7 @@ class UserController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(201).json(new ApiResponse(201, { token, _id: user._id, email: user.email, role: user.role }, "Account created successfully"));
@@ -219,7 +236,7 @@ class UserController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json(new ApiResponse(200, { token, _id: user._id, email: user.email, role: user.role }, "Google login successful"));
@@ -325,7 +342,7 @@ class UserController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       // domain: ".morattucoder.com",
     });
 
@@ -587,6 +604,11 @@ class UserController {
         userData.organisation = u.organisation;
       }
 
+      // Final validation before pushing to preparedUsers (optional but good for debugging)
+      if (userData.phone && !/^\d{10}$/.test(userData.phone)) {
+        userData.phone = undefined; // Drop invalid phone numbers in bulk import or handle as error
+      }
+
       return userData;
     });
 
@@ -619,6 +641,44 @@ class UserController {
         `${createdUsers.length} user(s) imported successfully`
       )
     );
+  });
+
+  // ================= ADMIN RESET PASSWORD =================
+  static adminResetPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+
+    // Security check: Only SUPER_ADMIN can reset passwords
+    if (req.user?.role !== "SUPER_ADMIN") {
+      return next(new ErrorResponse("Only Super Admin can reset user passwords", 403));
+    }
+
+    const user = await User.findOne({ _id: id, isDeleted: false });
+    if (!user) return next(new ErrorResponse("User not found", 404));
+
+    // Generate 8-character temporary password
+    const tempPassword = Math.random().toString(36).slice(-8);
+    
+    user.password = tempPassword;
+    await user.save();
+
+    await sendEmail(
+      user.email as string,
+      "Password Reset - Skill & Brains",
+      `<div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 16px;">
+        <h2 style="color: #1f2937; margin-bottom: 16px;">Password Reset by Admin</h2>
+        <p style="color: #4b5563;">An administrator has reset your password. Use the temporary password below to log in.</p>
+        <div style="background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+          <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Temporary Password</p>
+          <span style="font-size: 24px; font-weight: bold; color: #7c3aed; font-family: monospace;">${tempPassword}</span>
+        </div>
+        <p style="color: #ef4444; font-size: 14px; font-weight: 500;">Please change your password immediately after logging in for security.</p>
+        <div style="margin-top: 32px; padding-top: 24px; border-t: 1px solid #e5e7eb;">
+          <p style="color: #9ca3af; font-size: 12px;">If you did not expect this change, please contact support immediately.</p>
+        </div>
+      </div>`
+    );
+
+    res.status(200).json(new ApiResponse(200, {}, "Password reset successfully and email sent"));
   });
 }
 

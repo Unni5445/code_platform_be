@@ -59,4 +59,7 @@ export const dashboardService = {
 
   getRecentActivity: () =>
     api.get<ApiResponse<ActivityItem[]>>("/dashboard/recent-activity"),
+
+  exportStats: () =>
+    api.get("/dashboard/export", { responseType: "blob" }),
 };

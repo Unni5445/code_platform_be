@@ -187,8 +187,24 @@ export default function TestsPage() {
         const text = event.target?.result as string;
 
         if (file.name.endsWith(".json")) {
-          const parsed = JSON.parse(text);
-          const questions = Array.isArray(parsed) ? parsed : parsed.questions;
+          let questions;
+          try {
+            const parsed = JSON.parse(text);
+            questions = Array.isArray(parsed) ? parsed : parsed.questions;
+          } catch (err: any) {
+            // Attempt to fix common JSON snippet issues (missing [] or trailing commas)
+            try {
+              let cleaned = text.trim();
+              if (cleaned.endsWith(",")) cleaned = cleaned.slice(0, -1);
+              if (!cleaned.startsWith("[")) cleaned = "[" + cleaned + "]";
+              const parsed = JSON.parse(cleaned);
+              questions = Array.isArray(parsed) ? parsed : parsed.questions;
+            } catch (e: any) {
+              setBulkErrors([`JSON Parse Error: ${err.message}`]);
+              return;
+            }
+          }
+
           if (!Array.isArray(questions)) {
             setBulkErrors(["JSON must be an array of questions or an object with a \"questions\" array."]);
             return;
@@ -201,29 +217,54 @@ export default function TestsPage() {
             return;
           }
           const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-          const questions = lines.slice(1).map((line) => {
-            const values = parseCSVLine(line);
-            const obj: Record<string, string> = {};
-            headers.forEach((h, i) => { obj[h] = values[i]?.trim() || ""; });
-            return {
-              title: obj.title,
-              type: (obj.type || "SINGLE_CHOICE").toUpperCase(),
-              difficulty: obj.difficulty || "Medium",
-              points: Number(obj.points) || 10,
-              course: obj.course || "",
-              tags: obj.tags ? obj.tags.split(";").map((t: string) => t.trim()) : undefined,
-              options: obj.options ? obj.options.split(";").map((o: string) => o.trim()) : undefined,
-              correctAnswer: obj.correctanswer || obj.correct_answer || undefined,
-              company: obj.company || undefined,
-              description: obj.description || undefined,
-            } as Partial<IQuestion>;
+          const parseAttempts = lines.slice(1).map((line, i) => {
+            try {
+              const values = parseCSVLine(line);
+              const obj: Record<string, string> = {};
+              headers.forEach((h, i) => { obj[h] = values[i]?.trim() || ""; });
+              
+              const q: Partial<IQuestion> = {
+                title: obj.title,
+                type: (obj.type || "SINGLE_CHOICE").toUpperCase() as any,
+                difficulty: obj.difficulty as any || "Medium",
+                points: Number(obj.points) || 10,
+                tags: obj.tags ? obj.tags.split(";").map((t: string) => t.trim()) : undefined,
+                options: obj.options ? obj.options.split(";").map((o: string) => o.trim()) : undefined,
+                correctAnswer: obj.correctanswer || obj.correct_answer || undefined,
+                company: obj.company || undefined,
+                description: obj.description || undefined,
+              };
+
+              if (q.type === "CODING") {
+                if (obj.languages) {
+                  q.languages = obj.languages.split(";").map(l => l.trim().toLowerCase());
+                }
+                if (obj.startercode) {
+                  try { q.starterCode = JSON.parse(obj.startercode); } catch { throw new Error(`Row ${i+2}: Invalid JSON in starterCode`); }
+                }
+                if (obj.testcases) {
+                  try { q.testCases = JSON.parse(obj.testcases); } catch { throw new Error(`Row ${i+2}: Invalid JSON in testCases`); }
+                }
+              }
+
+              return q;
+            } catch (err: any) {
+              return { error: err.message };
+            }
           });
-          validateAndSetQuestions(questions);
+
+          const errors = parseAttempts.filter(a => "error" in a).map((a: any) => a.error);
+          if (errors.length > 0) {
+            setBulkErrors(errors);
+            return;
+          }
+
+          validateAndSetQuestions(parseAttempts as Partial<IQuestion>[]);
         } else {
           setBulkErrors(["Unsupported file format. Please upload a .json or .csv file."]);
         }
-      } catch {
-        setBulkErrors(["Failed to parse file. Please check the format."]);
+      } catch (err: any) {
+        setBulkErrors([err.message || "Failed to parse file. Please check the format."]);
       }
     };
     reader.readAsText(file);
@@ -251,6 +292,27 @@ export default function TestsPage() {
       if (!q.title?.trim()) { errors.push(`Row ${row}: Missing title`); return; }
       const validTypes = ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "CODING", "BEHAVIORAL"];
       if (q.type && !validTypes.includes(q.type)) { errors.push(`Row ${row}: Invalid type "${q.type}"`); return; }
+      
+      if (q.type === "CODING") {
+        // Normalize languages to lowercase and map C++ to cpp
+        if (q.languages && Array.isArray(q.languages)) {
+          q.languages = q.languages.map(l => {
+            const low = l.toLowerCase();
+            if (low === "c++") return "cpp";
+            return low;
+          });
+        }
+
+        if (!q.testCases || !Array.isArray(q.testCases) || q.testCases.length === 0) {
+          errors.push(`Row ${row}: Coding questions must have at least one test case.`);
+          return;
+        }
+        if (!q.languages || !Array.isArray(q.languages) || q.languages.length === 0) {
+          errors.push(`Row ${row}: Coding questions must specify at least one language (e.g. javascript, python).`);
+          return;
+        }
+      }
+
       valid.push(q);
     });
 
@@ -293,16 +355,24 @@ export default function TestsPage() {
           type: "CODING",
           difficulty: "Medium",
           points: 20,
-          description: "<p>Implement a stack data structure.</p>",
+          description: "Implement a stack with push and pop methods.",
           languages: ["javascript", "python"],
+          starterCode: {
+            javascript: "class Stack {\n  constructor() {}\n  push(val) {}\n  pop() {}\n}",
+            python: "class Stack:\n    def __init__(self):\n        pass\n    def push(self, val):\n        pass\n    def pop(self):\n        pass"
+          },
+          testCases: [
+            { input: "[1, 2, 3]", output: "3", hidden: false, weight: 1 },
+            { input: "[]", output: "null", hidden: true, weight: 1 }
+          ],
           tags: ["dsa", "stack"],
         },
       ], null, 2);
       downloadFile(template, "questions-template.json", "application/json");
     } else {
-      const csv = `title,type,difficulty,points,options,correctAnswer,tags,company,description
-"What is React?",SINGLE_CHOICE,Easy,10,"A library;A framework;A language;An OS",0,"react;basics",Google,""
-"Explain closures",BEHAVIORAL,Medium,15,,,"javascript;closures",,""`;
+      const csv = `title,type,difficulty,points,options,correctAnswer,tags,company,description,languages,starterCode,testCases
+"What is React?",SINGLE_CHOICE,Easy,10,"A library;A framework;A language;An OS",0,"react;basics",Google,"","", , 
+"Reverse a String",CODING,Easy,15,"",,"javascript;logic",,"Return the reverse of a string","javascript;python","{""javascript"": ""function rev(s) {}""}","[{""input"": ""abc"", ""output"": ""cba""}]"`;
       downloadFile(csv, "questions-template.csv", "text/csv");
     }
   };

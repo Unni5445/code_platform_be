@@ -6,7 +6,8 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
-import UsersPage from "@/pages/UsersPage";
+import AdminsPage from "@/pages/AdminsPage";
+import StudentsPage from "@/pages/StudentsPage";
 import CoursesPage from "@/pages/CoursesPage";
 import TestsPage from "@/pages/TestsPage";
 import ContestsPage from "@/pages/ContestsPage";
@@ -21,6 +22,7 @@ import CourseDetailPage from "@/pages/CourseDetailPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import TestSubmissionsPage from "./pages/TestSubmissionsPage";
 import SubmissionDetailPage from "./pages/SubmissionDetailPage";
+import PublicCertificateVerifyPage from "@/pages/PublicCertificateVerifyPage";
 
 function App() {
   return (
@@ -43,11 +45,14 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
           </Route>
 
+          <Route path="/verify-certificate/:id" element={<PublicCertificateVerifyPage />} />
+
           <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN"]} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/users" element={<UsersPage />} />
+              <Route path="/admins" element={<AdminsPage />} />
+              <Route path="/students" element={<StudentsPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/tests" element={<TestsPage />} />

@@ -34,6 +34,7 @@ export default function MockInterviewsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [qFormErrors, setQFormErrors] = useState<Record<string, string>>({});
 
   // Form state
   const [company, setCompany] = useState("");
@@ -104,15 +105,18 @@ export default function MockInterviewsPage() {
     }
 
     const lvl = Number(requiredLevel);
-    if (requiredLevel.trim() !== "" && (isNaN(lvl) || lvl < 0)) {
-      errors.requiredLevel = "Required level must be a non-negative number";
+    if (requiredLevel.trim() === "" || isNaN(lvl) || lvl < 0) {
+      errors.requiredLevel = "Required level is required and must be non-negative";
     }
 
     if (questions.length === 0) {
-      errors.questions = "At least one question is required";
+      errors.questions = "At least one question is required for a mock interview";
     }
 
     setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the errors in the form");
+    }
     return Object.keys(errors).length === 0;
   };
 
@@ -124,7 +128,20 @@ export default function MockInterviewsPage() {
   };
 
   const handleAddQuestion = () => {
-    if (!qText.trim()) return toast.error("Question text is required");
+    const errors: Record<string, string> = {};
+    if (!qText.trim()) errors.qText = "Question text is required";
+    
+    const hintsCount = qHintsText.split(",").map((h) => h.trim()).filter(Boolean).length;
+    if (hintsCount === 0) errors.qHints = "At least one hint is required";
+    
+    const pointsCount = qExpectedText.split(",").map((e) => e.trim()).filter(Boolean).length;
+    if (pointsCount === 0) errors.qExpected = "At least one expected point is required";
+
+    if (Object.keys(errors).length > 0) {
+      setQFormErrors(errors);
+      return;
+    }
+
     const newQ: IInterviewQuestion = {
       question: qText.trim(),
       category: qCategory,
@@ -133,6 +150,8 @@ export default function MockInterviewsPage() {
     };
     setQuestions([...questions, newQ]);
     resetQuestionForm();
+    setQFormErrors({});
+    setFormErrors((p) => { const n = { ...p }; delete n.questions; return n; });
   };
 
   const handleRemoveQuestion = (index: number) => {
@@ -333,12 +352,15 @@ export default function MockInterviewsPage() {
         {/* Add New Question */}
         <div className="space-y-3 p-3 bg-surface border border-gray-200 rounded-lg">
           <p className="text-xs font-semibold text-gray-500 uppercase">Add New Question</p>
-          <Input
-            label="Question Text *"
-            value={qText}
-            onChange={(e) => setQText(e.target.value)}
-            placeholder="e.g., How does React's Virtual DOM work?"
-          />
+          <div>
+            <Input
+              label="Question Text *"
+              value={qText}
+              onChange={(e) => { setQText(e.target.value); setQFormErrors(p => { const n = {...p}; delete n.qText; return n; }); }}
+              placeholder="e.g., How does React's Virtual DOM work?"
+            />
+            {qFormErrors.qText && <p className="text-xs text-red-500 mt-1">{qFormErrors.qText}</p>}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Select
               label="Category *"
@@ -351,19 +373,25 @@ export default function MockInterviewsPage() {
               onChange={(e) => setQCategory(e.target.value as any)}
             />
           </div>
-          <Input
-            label="Expected Points (comma-separated)"
-            value={qExpectedText}
-            onChange={(e) => setQExpectedText(e.target.value)}
-            placeholder="e.g., Diffing algorithm, Reconciliation, Batched updates"
-          />
-          <Input
-            label="Hints (comma-separated)"
-            value={qHintsText}
-            onChange={(e) => setQHintsText(e.target.value)}
-            placeholder="e.g., Think about how the DOM updates, React Fiber"
-          />
-          <Button variant="secondary" size="sm" onClick={() => { handleAddQuestion(); setFormErrors((p) => { const n = { ...p }; delete n.questions; return n; }); }} className="w-full">
+          <div>
+            <Input
+              label="Expected Points (comma-separated) *"
+              value={qExpectedText}
+              onChange={(e) => { setQExpectedText(e.target.value); setQFormErrors(p => { const n = {...p}; delete n.qExpected; return n; }); }}
+              placeholder="e.g., Diffing algorithm, Reconciliation, Batched updates"
+            />
+            {qFormErrors.qExpected && <p className="text-xs text-red-500 mt-1">{qFormErrors.qExpected}</p>}
+          </div>
+          <div>
+            <Input
+              label="Hints (comma-separated) *"
+              value={qHintsText}
+              onChange={(e) => { setQHintsText(e.target.value); setQFormErrors(p => { const n = {...p}; delete n.qHints; return n; }); }}
+              placeholder="e.g., Think about how the DOM updates, React Fiber"
+            />
+            {qFormErrors.qHints && <p className="text-xs text-red-500 mt-1">{qFormErrors.qHints}</p>}
+          </div>
+          <Button variant="secondary" size="sm" onClick={handleAddQuestion} className="w-full">
             Add Question
           </Button>
         </div>

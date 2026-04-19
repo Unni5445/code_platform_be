@@ -390,11 +390,11 @@ class InterviewController {
         if (!q.category || !validCategories.includes(q.category)) {
           return next(new ErrorResponse(`Question ${i + 1}: Category must be one of: ${validCategories.join(", ")}`, 400));
         }
-        if (q.hints !== undefined && !Array.isArray(q.hints)) {
-          return next(new ErrorResponse(`Question ${i + 1}: Hints must be an array of strings`, 400));
+        if (!q.hints || !Array.isArray(q.hints) || q.hints.length === 0) {
+          return next(new ErrorResponse(`Question ${i + 1}: At least one hint is required`, 400));
         }
-        if (q.expectedPoints !== undefined && !Array.isArray(q.expectedPoints)) {
-          return next(new ErrorResponse(`Question ${i + 1}: Expected points must be an array of strings`, 400));
+        if (!q.expectedPoints || !Array.isArray(q.expectedPoints) || q.expectedPoints.length === 0) {
+          return next(new ErrorResponse(`Question ${i + 1}: At least one expected point is required`, 400));
         }
       }
 
@@ -455,6 +455,12 @@ class InterviewController {
           }
           if (!q.category || !validCategories.includes(q.category)) {
             return next(new ErrorResponse(`Question ${i + 1}: Category must be one of: ${validCategories.join(", ")}`, 400));
+          }
+          if (!q.hints || !Array.isArray(q.hints) || q.hints.length === 0) {
+            return next(new ErrorResponse(`Question ${i + 1}: At least one hint is required`, 400));
+          }
+          if (!q.expectedPoints || !Array.isArray(q.expectedPoints) || q.expectedPoints.length === 0) {
+            return next(new ErrorResponse(`Question ${i + 1}: At least one expected point is required`, 400));
           }
         }
       }

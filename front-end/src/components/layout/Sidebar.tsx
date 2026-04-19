@@ -35,15 +35,8 @@ interface NavItem {
 
 const superAdminNavItems: NavItem[] = [
   { path: PATHS.DASHBOARD, label: "Dashboard", icon: LayoutDashboard },
-  {
-    path: PATHS.USERS,
-    label: "Users",
-    icon: Users,
-    children: [
-      { path: `${PATHS.USERS}?role=ADMIN`, label: "Admins", icon: ShieldCheck },
-      { path: `${PATHS.USERS}?role=STUDENT`, label: "Students", icon: UserRound },
-    ],
-  },
+  { path: PATHS.ADMINS, label: "Admins", icon: ShieldCheck },
+  { path: PATHS.STUDENTS, label: "Students", icon: UserRound },
   { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
   { path: PATHS.TESTS, label: "Questions", icon: FileQuestion },
   { path: PATHS.CONTESTS, label: "Contests", icon: Trophy },
@@ -55,9 +48,8 @@ const superAdminNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { path: PATHS.DASHBOARD, label: "Dashboard", icon: LayoutDashboard },
-  { path: PATHS.USERS, label: "Students", icon: UserRound },
+  { path: PATHS.STUDENTS, label: "Students", icon: UserRound },
   { path: PATHS.COURSES, label: "Courses", icon: BookOpen },
-  // { path: PATHS.TESTS, label: "Tests", icon: FileQuestion },
   { path: PATHS.CERTIFICATES, label: "Certificates", icon: Award },
 ];
 

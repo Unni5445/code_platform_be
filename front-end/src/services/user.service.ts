@@ -6,6 +6,7 @@ export interface GetUsersParams {
   limit?: number;
   search?: string;
   role?: string;
+  status?: string;
 }
 
 export const userService = {
@@ -27,6 +28,9 @@ export const userService = {
   bulkImportUsers: (users: Partial<IUser>[]) =>
       api.post<ApiResponse<{ imported: number; users: IUser[] }>>("/users/bulk-import", { users }),
 
-  exportUsers: () =>
-    api.get("/users/export", { responseType: "blob" }),
+  exportUsers: (params?: { search?: string; role?: string; status?: string }) =>
+    api.get("/users/export", { params, responseType: "blob" }),
+
+  adminResetPassword: (id: string) =>
+    api.post<ApiResponse<object>>(`/users/admin/reset-password/${id}`),
 };

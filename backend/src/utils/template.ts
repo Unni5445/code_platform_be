@@ -82,18 +82,17 @@ export const generateFirstLoginEmail = (
   
       <div class="container">
           <div class="header">
-              <h1>Welcome to Miller Auto Tech</h1>
+              <h1>Welcome to </h1>
           </div>
           <div class="body">
               <h2>Hi ${userName},</h2>
               
           </div>
           <div class="footer">
-              <p>Thank you for choosing Miller Auto Tech.</p>
+              <p>Thank you.</p>
           </div>
       </div>
   
   </body>
   </html>`;
-  };
-  
+};

@@ -43,14 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
-    authService
-      .getMe()
-      .then((res) => {
-        dispatch({ type: "SET_USER", payload: res.data.data });
-      })
-      .catch(() => {
+    const initAuth = async () => {
+      try {
+        const res = await authService.getMe();
+        if (res.data.success) {
+          dispatch({ type: "SET_USER", payload: res.data.data });
+        } else {
+          dispatch({ type: "SET_LOADING", payload: false });
+        }
+      } catch (error) {
         dispatch({ type: "LOGOUT" });
-      });
+      }
+    };
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {

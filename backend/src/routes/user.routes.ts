@@ -46,5 +46,12 @@ router
     UserController.deleteUser
   );
 
+router.post(
+  "/users/admin/reset-password/:id",
+  protect,
+  authorize("SUPER_ADMIN"),
+  UserController.adminResetPassword
+);
+
 
 export default router;

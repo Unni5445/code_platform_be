@@ -121,21 +121,19 @@ export default function CertificateDetailPage() {
             </div>
 
             {/* Verification */}
-            {certificate.verificationLink && (
-              <div className="pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-400">
-                  Certificate ID: {certificate._id}
-                </p>
-                <a
-                  href={certificate.verificationLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 mt-1"
-                >
-                  Verify Certificate <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            )}
+            <div className="pt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                Certificate ID: {certificate._id}
+              </p>
+              <a
+                href={`${window.location.origin}/verify-certificate/${certificate._id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 mt-1"
+              >
+                Verify Certificate <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </div>
 
           {/* Bottom border accent */}

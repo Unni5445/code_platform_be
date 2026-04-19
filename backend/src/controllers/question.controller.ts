@@ -126,6 +126,16 @@ class QuestionController {
     // Strip course/module/test and auto-generate slugs
     const questionsWithSlugs = questions.map((q: any) => {
       const { course, module, test, ...rest } = q;
+      
+      // Normalize languages
+      if (rest.languages && Array.isArray(rest.languages)) {
+        rest.languages = rest.languages.map((l: string) => {
+          const low = l.toLowerCase();
+          if (low === "c++") return "cpp";
+          return low;
+        });
+      }
+
       return {
         ...rest,
         slug: q.slug || q.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),

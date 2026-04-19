@@ -10,5 +10,6 @@ router.get("/dashboard/user-growth", protect, authorize("ADMIN", "SUPER_ADMIN"),
 router.get("/dashboard/test-performance", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getTestPerformance);
 router.get("/dashboard/leaderboard", protect, DashboardController.getLeaderboard);
 router.get("/dashboard/recent-activity", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.getRecentActivity);
+router.get("/dashboard/export", protect, authorize("ADMIN", "SUPER_ADMIN"), DashboardController.exportStats);
 
 export default router;

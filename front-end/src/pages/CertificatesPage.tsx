@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Download, ExternalLink, Award, QrCode } from "lucide-react";
+import { Plus, Eye, Download, ExternalLink, Award, QrCode, Copy, Link2, Check } from "lucide-react";
+import toast from "react-hot-toast";
 import { certificateService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
@@ -11,18 +12,26 @@ export default function CertificatesPage() {
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 8;
   const navigate = useNavigate();
 
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchCerts = useCallback(
-    () => certificateService.getCertificates({ search: debouncedSearch || undefined }),
-    [debouncedSearch]
+    () => certificateService.getCertificates({
+      page: currentPage,
+      limit: PAGE_SIZE,
+      search: debouncedSearch || undefined
+    }),
+    [debouncedSearch, currentPage]
   );
 
   const { data, loading } = useApi(fetchCerts, [debouncedSearch]);
 
   const certificates = data?.certificates ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalCertificates = data?.totalCertificates ?? 0;
 
   const getStudentName = (student: string | { name?: string; _id: string }) => {
     if (typeof student === "object" && student !== null) return student.name || "Unknown";
@@ -56,7 +65,7 @@ export default function CertificatesPage() {
         <div className="w-72">
           <SearchInput placeholder="Search certificates..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        {!isAdmin && <Button leftIcon={<Plus className="h-4 w-4" />}>Generate Certificate</Button>}
+        {/* {!isAdmin && <Button leftIcon={<Plus className="h-4 w-4" />}>Generate Certificate</Button>} */}
       </div>
 
       {/* Stats */}
@@ -119,6 +128,7 @@ export default function CertificatesPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-surface-secondary border-b border-surface-border">
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">S.No</th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Certificate</th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Student</th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Course</th>
@@ -129,8 +139,11 @@ export default function CertificatesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              {certificates.map((cert) => (
+              {certificates.map((cert, index) => (
                 <tr key={cert._id} className="hover:bg-primary-50/30 transition-colors">
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-medium text-gray-500">{(currentPage - 1) * PAGE_SIZE + index + 1}</span>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-secondary-100 rounded-lg">
@@ -159,25 +172,77 @@ export default function CertificatesPage() {
                       <button
                         onClick={() => navigate(`/certificates/${cert._id}`)}
                         className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
+                        title="View Details"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
-                      {cert.verificationLink && (
-                        <a
-                          href={cert.verificationLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      )}
+
+                      {/* External Link (Verify) - Always available via frontend route */}
+                      <a
+                        href={`${window.location.origin}/verify-certificate/${cert._id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                        title="Verify Certificate"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+
+                      {/* Copy Verification Link */}
+                      <button
+                        onClick={() => {
+                          const link = `${window.location.origin}/verify-certificate/${cert._id}`;
+                          navigator.clipboard.writeText(link);
+                          toast.success("Verification link copied!");
+                        }}
+                        className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                        title="Copy Link"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+
+                      {/* QR Code (Placeholder for now, could open a modal) */}
+                      {/* <button
+                        onClick={() => {
+                          toast.error("QR Code generation coming soon!");
+                        }}
+                        className="p-2 rounded-lg text-gray-400 hover:text-secondary-600 hover:bg-secondary-50 transition-colors cursor-pointer"
+                        title="Show QR Code"
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </button> */}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-surface-border">
+            <p className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}&ndash;{Math.min(currentPage * PAGE_SIZE, totalCertificates)} of {totalCertificates} certificates
+            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <button
+                className="px-3 py-1 bg-white border border-gray-300 rounded-md disabled:opacity-50 cursor-pointer"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </button>
+              <span className="font-medium text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="px-3 py-1 bg-white border border-gray-300 rounded-md disabled:opacity-50 cursor-pointer"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -13,3 +13,4 @@ export { Tabs } from "./Tabs";
 export { Pagination } from "./Pagination";
 export { Dropdown } from "./Dropdown";
 export { RichTextEditor } from "./RichTextEditor";
+export { Switch } from "./Switch";

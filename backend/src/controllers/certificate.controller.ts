@@ -11,7 +11,8 @@ class CertificateController {
 
     // Auto-generate verification link
     if (!data.verificationLink) {
-      data.verificationLink = `${req.protocol}://${req.get("host")}/api/v1/certificates/verify/${Date.now()}`;
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      data.verificationLink = `${frontendUrl}/verify-certificate/${Date.now()}`;
     }
 
     const certificate = await Certificate.create(data);
@@ -80,8 +81,14 @@ class CertificateController {
   // ================= VERIFY CERTIFICATE =================
   static verifyCertificate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { verificationId } = req.params;
+    const mongoose = require("mongoose");
 
-    const certificate = await Certificate.findOne({ verificationLink: { $regex: verificationId } })
+    const query: any = { $or: [{ verificationLink: { $regex: verificationId } }] };
+    if (mongoose.Types.ObjectId.isValid(verificationId)) {
+      query.$or.push({ _id: verificationId });
+    }
+
+    const certificate = await Certificate.findOne(query)
       .populate("student", "name email")
       .populate("course", "title")
       .populate("test", "title");

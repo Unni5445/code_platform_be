@@ -57,7 +57,17 @@ const userSchema = new Schema<IUser>(
   {
     name: { type: String, trim: true },
     email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
-    phone: { type: String, unique: true, sparse: true },
+    phone: { 
+      type: String, 
+      unique: true, 
+      sparse: true,
+      validate: {
+        validator: function(v: string) {
+          return !v || /^\d{10}$/.test(v);
+        },
+        message: (props: any) => `${props.value} is not a valid 10-digit phone number!`
+      }
+    },
     password: { type: String, select: false },
     role: { type: String, enum: ["STUDENT", "ADMIN", "SUPER_ADMIN"], default: "STUDENT" },
 
