@@ -28,6 +28,11 @@ export default function SignupPage() {
     e.preventDefault();
     setError("");
 
+    if (phone && !/^\d{10}$/.test(phone)) {
+      setError("Phone number must be exactly 10 digits");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -121,10 +126,11 @@ export default function SignupPage() {
           <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             type="tel"
-            placeholder="Phone (optional)"
+            placeholder="Phone (10 digits)"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all font-medium"
+            maxLength={10}
           />
         </div>
 

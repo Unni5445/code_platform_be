@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Circle, Target, Flame, ChevronRight, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services";
@@ -12,6 +13,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 export function DailyQuests() {
+  const navigate = useNavigate();
   const { updateUserLocally } = useAuth();
 
   const [isClaiming, setIsClaiming] = useState<number | null>(null);
@@ -93,10 +95,10 @@ export function DailyQuests() {
                 key={quest.id}
                 onClick={() => canClaim && !isLoad && handleClaim(quest.id, quest.xp)}
                 className={`flex items-center gap-4 rounded-xl border p-4 transition-all duration-300 ${canClaim
-                    ? "border-primary-300 bg-primary-50 cursor-pointer hover:bg-primary-100 shadow-sm ring-1 ring-primary-200"
-                    : isClaimed
-                      ? "border-emerald-100 bg-emerald-50 cursor-default"
-                      : "border-slate-200 bg-white shadow-sm cursor-default"
+                  ? "border-primary-300 bg-primary-50 cursor-pointer hover:bg-primary-100 shadow-sm ring-1 ring-primary-200"
+                  : isClaimed
+                    ? "border-emerald-100 bg-emerald-50 cursor-default"
+                    : "border-slate-200 bg-white shadow-sm cursor-default"
                   }`}
               >
                 <div className={`shrink-0 ${isClaimed ? 'text-emerald-400' : quest.completed ? 'text-primary-400' : 'text-slate-600'}`}>
@@ -119,10 +121,10 @@ export function DailyQuests() {
                 <div className="flex flex-col items-end gap-1">
                   <span
                     className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${isClaimed
-                        ? 'text-emerald-500'
-                        : canClaim
-                          ? 'text-primary-400 animate-bounce'
-                          : 'text-slate-500'
+                      ? 'text-emerald-500'
+                      : canClaim
+                        ? 'text-primary-400 animate-bounce'
+                        : 'text-slate-500'
                       }`}
                   >
                     {isLoad ? '...' : isClaimed ? 'Claimed' : canClaim ? 'Claim XP' : `+${quest.xp} XP`}
@@ -134,7 +136,10 @@ export function DailyQuests() {
         )}
       </div>
 
-      <button className="flex w-full items-center justify-center gap-2 mt-6 py-4 font-bold hover:border-primary-500 group border-slate-200 hover:text-primary-600 border text-slate-700 rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95">
+      <button
+        onClick={() => navigate("/quests")}
+        className="flex w-full items-center justify-center gap-2 mt-6 py-4 font-bold hover:border-primary-500 group border-slate-200 hover:text-primary-600 border text-slate-700 rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 active:scale-95"
+      >
         View All Quests
         <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
       </button>

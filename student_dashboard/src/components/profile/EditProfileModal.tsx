@@ -24,12 +24,23 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === "phone") {
+      // Only allow digits and limit to 10
+      const digitsOnly = value.replace(/\D/g, "");
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?._id) return;
+
+    if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+      toast.error("Phone number must be exactly 10 digits");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -82,7 +93,8 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="+91 00000 00000"
+            placeholder="Enter 10-digit number"
+            maxLength={10}
           />
           <Select
             label="Gender"

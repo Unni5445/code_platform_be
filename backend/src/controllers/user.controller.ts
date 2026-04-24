@@ -106,8 +106,18 @@ class UserController {
     const user = await User.findOne(query);
     if (!user) return next(new ErrorResponse("User not found", 404));
 
-    if (req.body.phone && !/^\d{10}$/.test(req.body.phone)) {
-      return next(new ErrorResponse("Invalid phone number. Must be 10 digits.", 400));
+    if (req.body.phone) {
+      if (!/^\d{10}$/.test(req.body.phone)) {
+        return next(new ErrorResponse("Invalid phone number. Must be 10 digits.", 400));
+      }
+      const phoneExists = await User.findOne({ 
+        phone: req.body.phone, 
+        _id: { $ne: id },
+        isDeleted: false 
+      });
+      if (phoneExists) {
+        return next(new ErrorResponse("Phone number already in use", 400));
+      }
     }
 
     Object.assign(user, req.body);
