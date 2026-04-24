@@ -27,7 +27,7 @@ export function StreakCalendar({ streak }: StreakCalendarProps) {
       <div className="mb-8 flex items-center justify-between z-10">
         <div>
           <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900">
-            Training Streak
+            Streak calendar — this week
           </h3>
           <p className="text-sm font-medium text-slate-500">
             Keep the fire burning!
