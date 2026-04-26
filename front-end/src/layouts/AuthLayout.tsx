@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { Shield } from "lucide-react";
-import logo from '@/assets/logo.jpeg' 
+import logo from '@/assets/logo.jpeg'
 
 export default function AuthLayout() {
   return (
@@ -13,7 +13,7 @@ export default function AuthLayout() {
             <div className="h-8 w-8 bg-black rounded-lg overflow-hidden p-1 flex items-center justify-center">
               <img src={logo} alt="Logo" className="h-full w-full text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">Skill & Brains</span>
+            <span className="text-lg font-bold text-gray-900">Morattu Coder</span>
           </div>
 
           <Outlet />

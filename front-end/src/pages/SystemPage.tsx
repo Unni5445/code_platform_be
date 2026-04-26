@@ -676,7 +676,7 @@ export default function SystemPage() {
       {activeTab === "settings" && (
         <Card header={<h3 className="text-base font-semibold text-gray-900">Platform Settings</h3>}>
           <div className="space-y-6 max-w-xl">
-            <Input label="Platform Name" defaultValue="Skill & Brains" />
+            <Input label="Platform Name" defaultValue="Morattu Coder" />
             <Input label="Support Email" type="email" defaultValue="support@platform.com" />
             <Select
               label="Default Language"

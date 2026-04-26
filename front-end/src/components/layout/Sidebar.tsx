@@ -78,7 +78,7 @@ export function Sidebar() {
           <img src={logo} alt="Logo" className="h-full w-full text-white" />
         </div>
         <div>
-          <h1 className="text-white font-bold text-lg leading-tight">Skill & Brains</h1>
+          <h1 className="text-white font-bold text-lg leading-tight">Morattu Coder</h1>
           <p className="text-sidebar-text text-xs">{isAdmin ? "Organisation Admin" : "Super Admin"}</p>
         </div>
       </div>

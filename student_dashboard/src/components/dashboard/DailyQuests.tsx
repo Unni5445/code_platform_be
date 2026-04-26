@@ -46,7 +46,7 @@ export function DailyQuests() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900">
-            Daily Quests
+            Today's quests
           </h3>
           {!loading ? (
             <p className="text-sm font-medium text-slate-500">

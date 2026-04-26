@@ -69,7 +69,7 @@ export default function PublicCertificateVerifyPage() {
             </div>
             <div>
               <p className="text-emerald-900 font-bold text-sm">Verified Credentials</p>
-              <p className="text-emerald-700 text-xs">This certificate is authentic and issued by Skill & Brains Platform.</p>
+              <p className="text-emerald-700 text-xs">This certificate is authentic and issued by Morattu Coder Platform.</p>
             </div>
           </div>
           <div className="hidden sm:block">
@@ -157,7 +157,7 @@ export default function PublicCertificateVerifyPage() {
                 <div className="text-left space-y-2">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Signed By</p>
                   <div className="space-y-0">
-                    <p className="font-serif text-xl text-slate-800 italic font-bold">Skill & Brains Team</p>
+                    <p className="font-serif text-xl text-slate-800 italic font-bold">Morattu Coder Team</p>
                     <p className="text-[10px] text-slate-400 font-medium">Platform Certification Authority</p>
                   </div>
                 </div>

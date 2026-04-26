@@ -110,10 +110,10 @@ class UserController {
       if (!/^\d{10}$/.test(req.body.phone)) {
         return next(new ErrorResponse("Invalid phone number. Must be 10 digits.", 400));
       }
-      const phoneExists = await User.findOne({ 
-        phone: req.body.phone, 
+      const phoneExists = await User.findOne({
+        phone: req.body.phone,
         _id: { $ne: id },
-        isDeleted: false 
+        isDeleted: false
       });
       if (phoneExists) {
         return next(new ErrorResponse("Phone number already in use", 400));
@@ -268,7 +268,7 @@ class UserController {
 
     await sendEmail(
       email,
-      "Password Reset OTP - Skill & Brains",
+      "Password Reset OTP - Morattu Coder",
       `<div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
         <h2 style="color: #1f2937; margin-bottom: 16px;">Password Reset</h2>
         <p style="color: #6b7280;">Use the OTP below to reset your password. It expires in 10 minutes.</p>
@@ -667,13 +667,13 @@ class UserController {
 
     // Generate 8-character temporary password
     const tempPassword = Math.random().toString(36).slice(-8);
-    
+
     user.password = tempPassword;
     await user.save();
 
     await sendEmail(
       user.email as string,
-      "Password Reset - Skill & Brains",
+      "Password Reset - Morattu Coder",
       `<div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 16px;">
         <h2 style="color: #1f2937; margin-bottom: 16px;">Password Reset by Admin</h2>
         <p style="color: #4b5563;">An administrator has reset your password. Use the temporary password below to log in.</p>
