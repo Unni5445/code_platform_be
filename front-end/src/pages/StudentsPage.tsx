@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from "react";
-import { UserPlus, Edit, Trash2, Eye, Download, Upload, FileUp, AlertCircle, CheckCircle2 } from "lucide-react";
+import { UserPlus, Edit, Trash2, Eye, Download, Upload, FileUp, AlertCircle, CheckCircle2, Settings } from "lucide-react";
 import { organisationService, userService } from "@/services";
 import { useApi } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks";
-import { Button, Badge, Modal, ConfirmDialog, Pagination, Avatar, Dropdown, EmptyState, Spinner, Select, Switch } from "@/components/ui";
+import { Button, Badge, Modal, ConfirmDialog, Pagination, Avatar, Dropdown, EmptyState, Spinner, Select, Switch, Input } from "@/components/ui";
 import { UserFilters } from "@/components/users/UserFilters";
 import { UserForm } from "@/components/users/UserForm";
 import { useModal } from "@/hooks";
@@ -29,6 +29,64 @@ export default function StudentsPage() {
   const deleteModal = useModal();
   const viewModal = useModal();
   const bulkUploadModal = useModal();
+  
+  const subscriptionModal = useModal();
+  const [subTiers, setSubTiers] = useState<any[]>([]);
+  const [studentSub, setStudentSub] = useState<any>(null);
+  const [subLoading, setSubLoading] = useState(false);
+  const [selectedTierId, setSelectedTierId] = useState("");
+  const [selectedSubStatus, setSelectedSubStatus] = useState("INACTIVE");
+  const [subExpiresAt, setSubExpiresAt] = useState("");
+
+  const openSubscriptionModal = async (student: IUser) => {
+    setSelectedUser(student);
+    setSubLoading(true);
+    subscriptionModal.open();
+
+    try {
+      let tiersList = subTiers;
+      if (subTiers.length === 0) {
+        const tiersRes = await userService.getSubscriptionTiers();
+        tiersList = tiersRes.data.data;
+        setSubTiers(tiersList);
+      }
+
+      const subRes = await userService.getStudentSubscription(student._id);
+      const sub = subRes.data.data;
+      setStudentSub(sub);
+      setSelectedSubStatus(sub?.status || "INACTIVE");
+      
+      const subTierId = typeof sub?.tier === "object" && sub?.tier !== null ? sub.tier._id : sub?.tier || "";
+      setSelectedTierId(subTierId);
+      
+      setSubExpiresAt(sub?.expiresAt ? new Date(sub.expiresAt).toISOString().split("T")[0] : "");
+    } catch (error) {
+      toast.error("Failed to load subscription details");
+      subscriptionModal.close();
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const handleUpdateSubscription = async () => {
+    if (!selectedUser || !selectedTierId) {
+      toast.error("Please select a subscription tier");
+      return;
+    }
+    try {
+      await userService.updateStudentSubscription(selectedUser._id, {
+        status: selectedSubStatus,
+        tierId: selectedTierId,
+        expiresAt: subExpiresAt || undefined
+      });
+      toast.success("Subscription updated successfully");
+      subscriptionModal.close();
+      setSelectedUser(null);
+      refetch();
+    } catch {
+      toast.error("Failed to update subscription");
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bulkFile, setBulkFile] = useState<File | null>(null);
@@ -352,6 +410,7 @@ export default function StudentsPage() {
                         items={[
                           { label: "View Details", icon: <Eye className="h-4 w-4" />, onClick: () => { setSelectedUser(user); viewModal.open(); } },
                           { label: "Edit Student", icon: <Edit className="h-4 w-4" />, onClick: () => { setSelectedUser(user); editModal.open(); } },
+                          { label: "Manage Subscription", icon: <Settings className="h-4 w-4" />, onClick: () => openSubscriptionModal(user) },
                           { label: "Delete Student", icon: <Trash2 className="h-4 w-4" />, onClick: () => { setUserToDelete(user); deleteModal.open(); }, danger: true },
                         ]}
                       />
@@ -466,6 +525,71 @@ export default function StudentsPage() {
         title="Delete Student"
         message={`Are you sure you want to delete "${userToDelete?.name}"?`}
       />
+
+      {/* Manage Subscription Modal */}
+      <Modal
+        isOpen={subscriptionModal.isOpen}
+        onClose={() => { subscriptionModal.close(); setSelectedUser(null); }}
+        title="Manage Student Subscription"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => { subscriptionModal.close(); setSelectedUser(null); }}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateSubscription} disabled={subLoading}>
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        {subLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <div className="space-y-4 py-2">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-3">
+              <Avatar name={selectedUser?.name || "Student"} size="sm" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{selectedUser?.name}</p>
+                <p className="text-xs text-slate-500">{selectedUser?.email}</p>
+              </div>
+            </div>
+
+            <Select
+              label="Subscription Status"
+              value={selectedSubStatus}
+              onChange={(e) => setSelectedSubStatus(e.target.value)}
+              options={[
+                { value: "ACTIVE", label: "Active" },
+                { value: "INACTIVE", label: "Inactive" },
+                { value: "EXPIRED", label: "Expired" },
+              ]}
+            />
+
+            <Select
+              label="Subscription Tier"
+              value={selectedTierId}
+              onChange={(e) => setSelectedTierId(e.target.value)}
+              options={[
+                { value: "", label: "Select a tier..." },
+                ...subTiers.map((tier) => ({
+                  value: tier._id,
+                  label: `${tier.name} (₹${tier.price} - ${tier.features.join(", ")})`,
+                })),
+              ]}
+            />
+
+            <Input
+              label="Expiration Date"
+              type="date"
+              value={subExpiresAt}
+              onChange={(e) => setSubExpiresAt(e.target.value)}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

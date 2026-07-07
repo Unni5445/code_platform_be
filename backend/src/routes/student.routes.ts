@@ -1,6 +1,7 @@
 import express from "express";
 import StudentController from "../controllers/student.controller";
 import { protect } from "../middlewares/authProtect";
+import { checkSubscription } from "../middlewares/subscriptionProtect";
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.post("/questions/:id/run-tests", StudentController.runTestCases);
 router.get("/courses/:courseId/batches", StudentController.getCourseBatches);
 
 // Self-enroll in a course (batch-based)
-router.post("/courses/:courseId/self-enroll", StudentController.selfEnroll);
+router.post("/courses/:courseId/self-enroll", checkSubscription("courses"), StudentController.selfEnroll);
 
 // Certificates
 router.get("/my/certificates", StudentController.getMyCertificates);

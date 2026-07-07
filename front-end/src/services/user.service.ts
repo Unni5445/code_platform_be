@@ -33,4 +33,25 @@ export const userService = {
 
   adminResetPassword: (id: string) =>
     api.post<ApiResponse<object>>(`/users/admin/reset-password/${id}`),
+
+  getSubscriptionTiers: () =>
+    api.get<ApiResponse<any[]>>("/subscription-tiers"),
+
+  createSubscriptionTier: (data: any) =>
+    api.post<ApiResponse<any>>("/subscription-tiers", data),
+
+  getSubscriptionTierById: (id: string) =>
+    api.get<ApiResponse<any>>(`/subscription-tiers/${id}`),
+
+  updateSubscriptionTier: (id: string, data: any) =>
+    api.put<ApiResponse<any>>(`/subscription-tiers/${id}`, data),
+
+  deleteSubscriptionTier: (id: string) =>
+    api.delete<ApiResponse<any>>(`/subscription-tiers/${id}`),
+
+  getStudentSubscription: (id: string) =>
+    api.get<ApiResponse<any>>(`/users/${id}/subscription`),
+
+  updateStudentSubscription: (id: string, data: { status: string; tierId: string; expiresAt?: string }) =>
+    api.put<ApiResponse<any>>(`/users/${id}/subscription`, data),
 };

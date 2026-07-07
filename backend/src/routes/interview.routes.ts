@@ -1,6 +1,7 @@
 import express from "express";
 import InterviewController from "../controllers/interview.controller";
 import { protect, authorize } from "../middlewares/authProtect";
+import { checkSubscription } from "../middlewares/subscriptionProtect";
 
 const router = express.Router();
 
@@ -8,10 +9,10 @@ const router = express.Router();
 router.use(protect);
 
 // Student routes
-router.get("/interviews", InterviewController.getInterviews);
-router.get("/interviews/stats", InterviewController.getStats);
-router.get("/interviews/:id", InterviewController.getInterviewById);
-router.post("/interviews/:id/attempt", InterviewController.submitAttempt);
+router.get("/interviews", checkSubscription("interviews"), InterviewController.getInterviews);
+router.get("/interviews/stats", checkSubscription("interviews"), InterviewController.getStats);
+router.get("/interviews/:id", checkSubscription("interviews"), InterviewController.getInterviewById);
+router.post("/interviews/:id/attempt", checkSubscription("interviews"), InterviewController.submitAttempt);
 
 // Admin routes
 router.get("/admin/interviews", authorize("ADMIN", "SUPER_ADMIN"), InterviewController.getAdminInterviews);

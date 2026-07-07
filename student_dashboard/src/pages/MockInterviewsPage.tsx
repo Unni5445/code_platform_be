@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield,
@@ -14,10 +14,13 @@ import {
   Play,
   BarChart3,
 } from "lucide-react";
-import { Card, Badge, Spinner, EmptyState } from "@/components/ui";
+import { Card, Badge, Spinner, EmptyState, Modal, Button } from "@/components/ui";
 import { useApi } from "@/hooks/useApi";
 import { interviewService } from "@/services/interview.service";
 import type { MockInterviewItem, InterviewStats } from "@/services/interview.service";
+import { paymentService } from "@/services/payment.service";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "react-hot-toast";
 
 const difficultyEmoji: Record<string, string> = {
   Easy: "⚡",
@@ -238,11 +241,97 @@ function FeedbackCard({ stats }: { stats?: InterviewStats }) {
 
 export default function MockInterviewsPage() {
   const [tab, setTab] = useState<"all" | "available" | "completed">("all");
+  const { user: currentUser, refreshUser } = useAuth();
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [tiers, setTiers] = useState<any[]>([]);
+  const [loadingTiers, setLoadingTiers] = useState(false);
+
+  const loadTiers = useCallback(async () => {
+    setLoadingTiers(true);
+    try {
+      const res = await paymentService.getSubscriptionTiers();
+      const activeTiers = res.data.data.filter((t: any) => t.name !== "NONE");
+      setTiers(activeTiers);
+    } catch {
+      toast.error("Failed to load pricing packages");
+    } finally {
+      setLoadingTiers(false);
+    }
+  }, []);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleUpgrade = async (tier: any) => {
+    setUpgradeLoading(true);
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error("Failed to load Razorpay SDK. Please check your connection.");
+        setUpgradeLoading(false);
+        return;
+      }
+
+      const orderRes = await paymentService.createOrder(tier._id);
+      const { orderId, amount, currency, keyId } = orderRes.data.data;
+
+      const options = {
+        key: keyId,
+        amount,
+        currency,
+        name: "Morattu Coder",
+        description: `Upgrade to ${tier.name} Subscription`,
+        order_id: orderId,
+        handler: async (response: any) => {
+          setUpgradeLoading(true);
+          try {
+            await paymentService.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              tierId: tier._id,
+            });
+            
+            toast.success("Subscription upgraded successfully! Premium features unlocked.");
+            await refreshUser();
+            window.location.reload();
+          } catch (err: any) {
+            const msg = err?.response?.data?.message || "Payment verification failed";
+            toast.error(msg);
+          } finally {
+            setUpgradeLoading(false);
+          }
+        },
+        prefill: {
+          name: currentUser?.name || "",
+          email: currentUser?.email || "",
+        },
+        theme: {
+          color: "#7c3aed",
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to initiate payment";
+      toast.error(msg);
+    } finally {
+      setUpgradeLoading(false);
+    }
+  };
 
   const fetchInterviews = useCallback(() => interviewService.getInterviews(), []);
   const fetchStats = useCallback(() => interviewService.getStats(), []);
 
-  const { data: interviewsData, loading: interviewsLoading } = useApi(fetchInterviews);
+  const { data: interviewsData, loading: interviewsLoading, error: interviewsError } = useApi(fetchInterviews);
   const { data: statsData } = useApi(fetchStats);
 
   const mockInterviews = interviewsData || [];
@@ -270,6 +359,100 @@ export default function MockInterviewsPage() {
   const handleStartInterview = (id: string) => {
     navigate(`/interviews/${id}/play`);
   };
+
+  useEffect(() => {
+    if (interviewsError) {
+      loadTiers();
+    }
+  }, [interviewsError, loadTiers]);
+
+  if (interviewsError) {
+    return (
+      <div className="space-y-8 pb-10 max-w-4xl mx-auto">
+        <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-2xl p-8 md:p-12 text-center">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+             <Shield className="h-64 w-64 text-primary-900 rotate-12" />
+          </div>
+          
+          <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4 drop-shadow-md" />
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Premium Access Restricted</h2>
+          <p className="mt-3 text-sm font-medium text-slate-500 max-w-lg mx-auto leading-relaxed">
+            {interviewsError}
+          </p>
+
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
+            {loadingTiers ? (
+              <div className="col-span-2 flex justify-center py-12">
+                <Spinner size="lg" />
+              </div>
+            ) : (
+              tiers.map((tier) => {
+                const isPremium = tier.name === "PREMIUM";
+                return (
+                  <div
+                    key={tier._id}
+                    className={`rounded-2xl border-2 p-6 flex flex-col justify-between transition-all duration-300 relative ${
+                      isPremium
+                        ? "border-purple-500 bg-purple-50/20 shadow-lg shadow-purple-500/5 scale-105"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    {isPremium && (
+                      <span className="absolute -top-3.5 right-6 text-[10px] font-black uppercase tracking-widest text-white bg-purple-600 px-3 py-1 rounded-full border border-purple-400 shadow-md">
+                        Best Value
+                      </span>
+                    )}
+
+                    <div>
+                      <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">{tier.name}</h3>
+                      <div className="mt-3 flex items-baseline text-slate-900">
+                        <span className="text-3xl font-black tracking-tight">₹{tier.price}</span>
+                        <span className="ml-1 text-xs font-semibold text-slate-400">/one-time</span>
+                      </div>
+
+                      <ul className="mt-6 space-y-3">
+                        {tier.features.includes("courses") && (
+                          <li className="flex items-start text-xs font-medium text-slate-600 gap-2">
+                            <span className="text-green-500 shrink-0">✔</span> Access to learning modules
+                          </li>
+                        )}
+                        {tier.features.includes("interviews") && (
+                          <li className="flex items-start text-xs font-medium text-slate-600 gap-2">
+                            <span className="text-green-500 shrink-0">✔</span> AI Mock Interview prep battles
+                          </li>
+                        )}
+                        {isPremium ? (
+                          <li className="flex items-start text-xs font-medium text-slate-600 gap-2">
+                            <span className="text-green-500 shrink-0">✔</span> Premium skill breakdown radar
+                          </li>
+                        ) : (
+                          <li className="flex items-start text-xs font-medium text-slate-400 line-through gap-2">
+                            <span className="text-slate-300 shrink-0">✘</span> AI Mock Interview prep battles
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <button
+                      onClick={() => handleUpgrade(tier)}
+                      disabled={upgradeLoading}
+                      className={`mt-8 w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2 ${
+                        isPremium
+                          ? "bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20"
+                          : "bg-slate-900 hover:bg-black text-white"
+                      }`}
+                    >
+                      {upgradeLoading ? <Spinner size="sm" /> : `Unlock ${tier.name}`}
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-10">

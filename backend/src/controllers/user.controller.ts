@@ -7,6 +7,8 @@ import createJWTToken from "../utils/createJwtToken";
 import sendEmail from "../utils/sendEmail";
 import { Types } from "mongoose";
 import StudentSubmission from "../models/studentSubmission.model";
+import Subscription from "../models/subscription.model";
+import SubscriptionTier from "../models/subscriptionTier.model";
 
 class UserController {
   // ================= CREATE USER =================
@@ -689,6 +691,177 @@ class UserController {
     );
 
     res.status(200).json(new ApiResponse(200, {}, "Password reset successfully and email sent"));
+  });
+
+  // ================= GET USER SUBSCRIPTION =================
+  static getUserSubscription = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+
+    const student = await User.findOne({ _id: id, isDeleted: false, role: "STUDENT" });
+    if (!student) return next(new ErrorResponse("Student not found", 404));
+
+    let subscription = await Subscription.findOne({ student: id }).populate("tier");
+
+    // Dynamic auto-grant if they belong to default student organisation but document doesn't exist
+    if (!subscription && student.organisation?.toString() === "69a4771afb503d57808b866e") {
+      const premiumTier = await SubscriptionTier.findOne({ name: "PREMIUM" });
+      if (premiumTier) {
+        subscription = await Subscription.create({
+          student: id,
+          status: "ACTIVE",
+          tier: premiumTier._id,
+        });
+        subscription = await Subscription.findById(subscription._id).populate("tier");
+      }
+    }
+
+    // Return an empty/NONE tier structure if no subscription exists
+    if (!subscription) {
+      const noneTier = await SubscriptionTier.findOne({ name: "NONE" });
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            student: id,
+            status: "INACTIVE",
+            tier: noneTier || { name: "NONE", level: 0, price: 0, currency: "INR", features: [] }
+          },
+          "Subscription retrieved successfully"
+        )
+      );
+    }
+
+    res.status(200).json(new ApiResponse(200, subscription, "Subscription retrieved successfully"));
+  });
+
+  // ================= UPDATE USER SUBSCRIPTION =================
+  static updateUserSubscription = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const { status, tierId, expiresAt } = req.body;
+
+    const student = await User.findOne({ _id: id, isDeleted: false, role: "STUDENT" });
+    if (!student) return next(new ErrorResponse("Student not found", 404));
+
+    const tierExists = await SubscriptionTier.findById(tierId);
+    if (!tierExists) return next(new ErrorResponse("Subscription tier not found", 400));
+
+    const subscription = await Subscription.findOneAndUpdate(
+      { student: id },
+      {
+        status,
+        tier: tierId,
+        expiresAt: expiresAt === "" ? null : expiresAt,
+      },
+      { upsert: true, new: true }
+    ).populate("tier");
+
+    res.status(200).json(new ApiResponse(200, subscription, "Subscription updated successfully"));
+  });
+
+  // ================= GET SUBSCRIPTION TIERS =================
+  static getSubscriptionTiers = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const tiers = await SubscriptionTier.find({ isDeleted: false }).sort({ level: 1 });
+    res.status(200).json(new ApiResponse(200, tiers, "Subscription tiers retrieved successfully"));
+  });
+
+  // ================= CREATE SUBSCRIPTION TIER =================
+  static createSubscriptionTier = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { name, level, price, currency, features } = req.body;
+
+    if (!name || level === undefined || price === undefined) {
+      return next(new ErrorResponse("Name, level, and price are required fields", 400));
+    }
+
+    // Check if name already exists
+    const nameExists = await SubscriptionTier.findOne({ name: name.toUpperCase() });
+    if (nameExists) {
+      return next(new ErrorResponse("Subscription tier with this name already exists", 400));
+    }
+
+    // Check if level already exists
+    const levelExists = await SubscriptionTier.findOne({ level });
+    if (levelExists) {
+      return next(new ErrorResponse("Subscription tier with this level already exists", 400));
+    }
+
+    const tier = await SubscriptionTier.create({
+      name: name.toUpperCase(),
+      level,
+      price,
+      currency: currency || "INR",
+      features: features || [],
+    });
+
+    res.status(201).json(new ApiResponse(201, tier, "Subscription tier created successfully"));
+  });
+
+  // ================= GET SUBSCRIPTION TIER BY ID =================
+  static getSubscriptionTierById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const tier = await SubscriptionTier.findOne({ _id: req.params.id, isDeleted: false });
+    if (!tier) {
+      return next(new ErrorResponse("Subscription tier not found", 404));
+    }
+    res.status(200).json(new ApiResponse(200, tier, "Subscription tier retrieved successfully"));
+  });
+
+  // ================= UPDATE SUBSCRIPTION TIER =================
+  static updateSubscriptionTier = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { name, level, price, currency, features } = req.body;
+
+    const tier = await SubscriptionTier.findOne({ _id: req.params.id, isDeleted: false });
+    if (!tier) {
+      return next(new ErrorResponse("Subscription tier not found", 404));
+    }
+
+    if (name) {
+      const nameExists = await SubscriptionTier.findOne({ name: name.toUpperCase(), _id: { $ne: req.params.id } });
+      if (nameExists) {
+        return next(new ErrorResponse("Subscription tier with this name already exists", 400));
+      }
+      tier.name = name.toUpperCase();
+    }
+
+    if (level !== undefined) {
+      const levelExists = await SubscriptionTier.findOne({ level, _id: { $ne: req.params.id } });
+      if (levelExists) {
+        return next(new ErrorResponse("Subscription tier with this level already exists", 400));
+      }
+      tier.level = level;
+    }
+
+    if (price !== undefined) {
+      tier.price = price;
+    }
+
+    if (currency) {
+      tier.currency = currency;
+    }
+
+    if (features !== undefined) {
+      tier.features = features;
+    }
+
+    await tier.save();
+
+    res.status(200).json(new ApiResponse(200, tier, "Subscription tier updated successfully"));
+  });
+
+  // ================= DELETE SUBSCRIPTION TIER =================
+  static deleteSubscriptionTier = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const tier = await SubscriptionTier.findOne({ _id: req.params.id, isDeleted: false });
+    if (!tier) {
+      return next(new ErrorResponse("Subscription tier not found", 404));
+    }
+
+    // Do not allow deleting the NONE tier, as it is the default fallback
+    if (tier.name === "NONE") {
+      return next(new ErrorResponse("Cannot delete the default 'NONE' subscription tier", 400));
+    }
+
+    tier.isDeleted = true;
+    await tier.save();
+
+    res.status(200).json(new ApiResponse(200, null, "Subscription tier deleted successfully"));
   });
 }
 

@@ -84,6 +84,10 @@ class OrganisationController {
   static deleteOrganisation = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
+    if (id === "69a4771afb503d57808b866e") {
+      return next(new ErrorResponse("This organisation cannot be deleted", 400));
+    }
+
     const organisation = await Organisation.findById(id);
     if (!organisation) return next(new ErrorResponse("Organisation not found", 404));
 

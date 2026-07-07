@@ -53,5 +53,23 @@ router.post(
   UserController.adminResetPassword
 );
 
+/**
+ * ================= SUBSCRIPTION ROUTES
+ */
+router
+  .route("/subscription-tiers")
+  .get(protect, UserController.getSubscriptionTiers)
+  .post(protect, authorize("SUPER_ADMIN"), UserController.createSubscriptionTier);
+
+router
+  .route("/subscription-tiers/:id")
+  .get(protect, UserController.getSubscriptionTierById)
+  .put(protect, authorize("SUPER_ADMIN"), UserController.updateSubscriptionTier)
+  .delete(protect, authorize("SUPER_ADMIN"), UserController.deleteSubscriptionTier);
+
+router
+  .route("/users/:id/subscription")
+  .get(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.getUserSubscription)
+  .put(protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.updateUserSubscription);
 
 export default router;

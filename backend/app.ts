@@ -22,7 +22,7 @@ import contestRoute from "./src/routes/contest.routes";
 import interviewRoute from "./src/routes/interview.routes";
 import uploadRoute from "./src/routes/upload.routes";
 import { apiKeyProtect } from "./src/middlewares/apiKeyProtect";
-
+import paymentRoute from "./src/routes/payment.routes";
 
 dotenv.config();
 
@@ -73,10 +73,13 @@ app.use("/api/v1", enrollmentRoute);
 app.use("/api/v1", studentRoute);
 app.use("/api/v1", contestRoute);
 app.use("/api/v1", interviewRoute);
+app.use("/api/v1", paymentRoute);
 // Database Connection
 mongoose
   .connect(process.env.MONGO_DB||"",)
-  .then(() => console.log("MongoDB connected successfully"))
+  .then(async () => {
+    console.log("MongoDB connected successfully");
+  })
   .catch(() => console.log("MongoDB connection failed"));
 
 // Error Handling

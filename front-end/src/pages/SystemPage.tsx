@@ -11,6 +11,7 @@ const systemTabs = [
   // { id: "notifications", label: "Notifications" },
   { id: "batches", label: "Batches" },
   { id: "organisations", label: "Organisations" },
+  { id: "tiers", label: "Subscription Tiers" },
   // { id: "settings", label: "Settings" },
   // { id: "logs", label: "System Logs" },
 ];
@@ -84,6 +85,19 @@ export default function SystemPage() {
   const [newOrgAddress, setNewOrgAddress] = useState("");
   const [newOrgAdmin, setNewOrgAdmin] = useState("");
 
+  // Subscription Tier state
+  const addTierModal = useModal();
+  const editTierModal = useModal();
+  const deleteTierModal = useModal();
+  const [tierToDelete, setTierToDelete] = useState<string | null>(null);
+  const [editingTier, setEditingTier] = useState<any | null>(null);
+  const [newTierName, setNewTierName] = useState("");
+  const [newTierLevel, setNewTierLevel] = useState<number | "">("");
+  const [newTierPrice, setNewTierPrice] = useState<number | "">("");
+  const [newTierCurrency, setNewTierCurrency] = useState("INR");
+  const [newTierFeatures, setNewTierFeatures] = useState<string[]>([]);
+
+
   // API data
   const { data: batches, loading: batchesLoading, refetch: refetchBatches } = useApi(
     () => batchService.getBatches(),
@@ -94,6 +108,12 @@ export default function SystemPage() {
     () => organisationService.getOrganisations(),
     []
   );
+
+  const { data: tiers, loading: tiersLoading, refetch: refetchTiers } = useApi(
+    () => userService.getSubscriptionTiers(),
+    []
+  );
+
 
   const { data: adminUsersData } = useApi(
     () => userService.getUsers({ role: "ADMIN", limit: 100 }),
@@ -270,6 +290,80 @@ export default function SystemPage() {
     editOrganisationModal.open();
   };
 
+  const handleCreateTier = async () => {
+    if (!newTierName.trim() || newTierLevel === "" || newTierPrice === "") return;
+    try {
+      await userService.createSubscriptionTier({
+        name: newTierName,
+        level: Number(newTierLevel),
+        price: Number(newTierPrice),
+        currency: newTierCurrency,
+        features: newTierFeatures,
+      });
+      addTierModal.close();
+      resetTierFields();
+      toast.success("Subscription tier created successfully");
+      refetchTiers();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to create subscription tier";
+      toast.error(msg);
+    }
+  };
+
+  const handleEditTier = async () => {
+    if (!editingTier || !newTierName.trim() || newTierLevel === "" || newTierPrice === "") return;
+    try {
+      await userService.updateSubscriptionTier(editingTier._id, {
+        name: newTierName,
+        level: Number(newTierLevel),
+        price: Number(newTierPrice),
+        currency: newTierCurrency,
+        features: newTierFeatures,
+      });
+      editTierModal.close();
+      setEditingTier(null);
+      resetTierFields();
+      toast.success("Subscription tier updated successfully");
+      refetchTiers();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to update subscription tier";
+      toast.error(msg);
+    }
+  };
+
+  const handleDeleteTier = async () => {
+    if (!tierToDelete) return;
+    try {
+      await userService.deleteSubscriptionTier(tierToDelete);
+      deleteTierModal.close();
+      setTierToDelete(null);
+      toast.success("Subscription tier deleted successfully");
+      refetchTiers();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to delete subscription tier";
+      toast.error(msg);
+    }
+  };
+
+  const openEditTierModal = (tier: any) => {
+    setEditingTier(tier);
+    setNewTierName(tier.name);
+    setNewTierLevel(tier.level);
+    setNewTierPrice(tier.price);
+    setNewTierCurrency(tier.currency || "INR");
+    setNewTierFeatures(tier.features || []);
+    editTierModal.open();
+  };
+
+  const resetTierFields = () => {
+    setNewTierName("");
+    setNewTierLevel("");
+    setNewTierPrice("");
+    setNewTierCurrency("INR");
+    setNewTierFeatures([]);
+  };
+
+
   const logLevelStyle = {
     info: "bg-blue-100 text-blue-700",
     warning: "bg-amber-100 text-amber-700",
@@ -278,6 +372,8 @@ export default function SystemPage() {
 
   const batchList = batches || [];
   const orgList = organisations || [];
+  const tierList = tiers || [];
+
 
   return (
     <div className="space-y-6">
@@ -671,6 +767,251 @@ export default function SystemPage() {
           />
         </>
       )}
+
+      {/* Subscription Tiers Tab */}
+      {activeTab === "tiers" && (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-base font-semibold text-gray-900">Manage Subscription Tiers</h3>
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addTierModal.open}>Add Tier</Button>
+          </div>
+          <div className="bg-surface rounded-xl shadow-card border border-surface-border overflow-hidden">
+            {tiersLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <Spinner />
+              </div>
+            ) : tierList.length === 0 ? (
+              <EmptyState title="No subscription tiers found" description="No tiers have been created yet." />
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-secondary border-b border-surface-border">
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tier Name</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Level</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Features</th>
+                    <th className="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                    <th className="text-right px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border">
+                  {tierList.map((tier: any) => (
+                    <tr key={tier._id} className="hover:bg-primary-50/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-gray-900 uppercase">{tier.name}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="info">LVL {tier.level}</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {tier.price === 0 ? "Free" : `${tier.currency || "INR"} ${tier.price}`}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {tier.features && tier.features.length > 0 ? (
+                            tier.features.map((feat: string) => (
+                              <Badge key={feat} variant="success" className="capitalize text-[10px]">
+                                {feat}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-xs text-gray-400">No capabilities</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-500">
+                          {tier.createdAt ? new Date(tier.createdAt).toLocaleDateString() : "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => openEditTierModal(tier)}
+                            className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          {tier.name !== "NONE" && (
+                            <button
+                              onClick={() => { setTierToDelete(tier._id); deleteTierModal.open(); }}
+                              className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Add Tier Modal */}
+          <Modal
+            isOpen={addTierModal.isOpen}
+            onClose={addTierModal.close}
+            title="Add New Subscription Tier"
+            size="sm"
+            footer={<><Button variant="ghost" onClick={addTierModal.close}>Cancel</Button><Button onClick={handleCreateTier} disabled={!newTierName.trim() || newTierLevel === "" || newTierPrice === ""}>Create Tier</Button></>}
+          >
+            <div className="space-y-4">
+              <Input
+                label="Tier Name *"
+                value={newTierName}
+                onChange={(e) => setNewTierName(e.target.value)}
+                placeholder="e.g., PREMIUM"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Level *"
+                  type="number"
+                  value={newTierLevel}
+                  onChange={(e) => setNewTierLevel(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="e.g., 2"
+                />
+                <Input
+                  label="Price *"
+                  type="number"
+                  value={newTierPrice}
+                  onChange={(e) => setNewTierPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="e.g., 599"
+                />
+              </div>
+              <Input
+                label="Currency"
+                value={newTierCurrency}
+                onChange={(e) => setNewTierCurrency(e.target.value)}
+                placeholder="INR"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Features / Capabilities</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTierFeatures.includes("courses")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewTierFeatures([...newTierFeatures, "courses"]);
+                        } else {
+                          setNewTierFeatures(newTierFeatures.filter(f => f !== "courses"));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Access to Courses
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTierFeatures.includes("interviews")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewTierFeatures([...newTierFeatures, "interviews"]);
+                        } else {
+                          setNewTierFeatures(newTierFeatures.filter(f => f !== "interviews"));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Mock Interviews
+                  </label>
+                </div>
+              </div>
+            </div>
+          </Modal>
+
+          {/* Edit Tier Modal */}
+          <Modal
+            isOpen={editTierModal.isOpen}
+            onClose={() => { editTierModal.close(); setEditingTier(null); }}
+            title="Edit Subscription Tier"
+            size="sm"
+            footer={<><Button variant="ghost" onClick={() => { editTierModal.close(); setEditingTier(null); }}>Cancel</Button><Button onClick={handleEditTier} disabled={!newTierName.trim() || newTierLevel === "" || newTierPrice === ""}>Update Tier</Button></>}
+          >
+            <div className="space-y-4">
+              <Input
+                label="Tier Name *"
+                value={newTierName}
+                onChange={(e) => setNewTierName(e.target.value)}
+                placeholder="e.g., PREMIUM"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Level *"
+                  type="number"
+                  value={newTierLevel}
+                  onChange={(e) => setNewTierLevel(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="e.g., 2"
+                />
+                <Input
+                  label="Price *"
+                  type="number"
+                  value={newTierPrice}
+                  onChange={(e) => setNewTierPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="e.g., 599"
+                />
+              </div>
+              <Input
+                label="Currency"
+                value={newTierCurrency}
+                onChange={(e) => setNewTierCurrency(e.target.value)}
+                placeholder="INR"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Features / Capabilities</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTierFeatures.includes("courses")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewTierFeatures([...newTierFeatures, "courses"]);
+                        } else {
+                          setNewTierFeatures(newTierFeatures.filter(f => f !== "courses"));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Access to Courses
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTierFeatures.includes("interviews")}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewTierFeatures([...newTierFeatures, "interviews"]);
+                        } else {
+                          setNewTierFeatures(newTierFeatures.filter(f => f !== "interviews"));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    Mock Interviews
+                  </label>
+                </div>
+              </div>
+            </div>
+          </Modal>
+
+          {/* Delete Confirm Dialog */}
+          <ConfirmDialog
+            isOpen={deleteTierModal.isOpen}
+            onClose={() => { deleteTierModal.close(); setTierToDelete(null); }}
+            onConfirm={handleDeleteTier}
+            title="Delete Subscription Tier"
+            message="Are you sure you want to delete this subscription tier? Users with this tier will no longer have access to its associated features."
+          />
+        </>
+      )}
+
 
       {/* Settings Tab */}
       {activeTab === "settings" && (
