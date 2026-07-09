@@ -23,6 +23,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import TestSubmissionsPage from "./pages/TestSubmissionsPage";
 import SubmissionDetailPage from "./pages/SubmissionDetailPage";
 import PublicCertificateVerifyPage from "@/pages/PublicCertificateVerifyPage";
+import StudentDetailPage from "@/pages/StudentDetailPage";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/admins" element={<AdminsPage />} />
               <Route path="/students" element={<StudentsPage />} />
+              <Route path="/students/:id" element={<StudentDetailPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/tests" element={<TestsPage />} />

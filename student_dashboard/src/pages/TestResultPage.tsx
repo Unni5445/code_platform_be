@@ -171,6 +171,24 @@ export default function TestResultPage() {
                           </span>
                         </div>
                       )}
+                      
+                      {/* Show correct answer if participant was wrong */}
+                      {!isCorrect && q.type !== "CODING" && q.correctAnswer !== undefined && (
+                        <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-100 shadow-inner">
+                          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-2">Correct Answer</span>
+                          <span className="text-sm font-bold text-emerald-900 leading-relaxed">
+                            {(() => {
+                              if (q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") {
+                                const correctIndices = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+                                return correctIndices
+                                  .map((idx: any) => q.options?.[parseInt(idx)] || idx)
+                                  .join(", ");
+                              }
+                              return Array.isArray(q.correctAnswer) ? q.correctAnswer.join(", ") : q.correctAnswer;
+                            })()}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Show code for coding questions */}
                       {q.type === "CODING" && ans.code && (

@@ -33,4 +33,10 @@ export const userService = {
 
   adminResetPassword: (id: string) =>
     api.post<ApiResponse<object>>(`/users/admin/reset-password/${id}`),
+
+  getUserStats: (id: string) =>
+    api.get<ApiResponse<any>>(`/users/${id}/stats`),
+
+  getUserContests: (id: string) =>
+    api.get<ApiResponse<any[]>>(`/users/${id}/contests`),
 };

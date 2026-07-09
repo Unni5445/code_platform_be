@@ -908,7 +908,7 @@ class StudentController {
         })
         .populate({
           path: "answers.question",
-          select: "title type difficulty points options description",
+          select: "title type difficulty points options description correctAnswer",
         });
 
       if (!submission) {

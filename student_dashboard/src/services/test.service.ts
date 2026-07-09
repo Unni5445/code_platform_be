@@ -39,6 +39,7 @@ export interface SubmissionDetail {
       points: number;
       options?: { text: string; _id: string }[];
       description?: string;
+      correctAnswer?: string | string[];
     };
     answer?: string | string[];
     code?: string;

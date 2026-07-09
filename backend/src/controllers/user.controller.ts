@@ -7,6 +7,7 @@ import createJWTToken from "../utils/createJwtToken";
 import sendEmail from "../utils/sendEmail";
 import { Types } from "mongoose";
 import StudentSubmission from "../models/studentSubmission.model";
+import ContestSubmission from "../models/contestSubmission.model";
 
 class UserController {
   // ================= CREATE USER =================
@@ -410,7 +411,7 @@ class UserController {
 
   // ================= GET STUDENT DASHBOARD STATS =================
   static getStudentStats = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!._id;
+    const userId = req.params.id || req.user!._id;
     const user = await User.findById(userId);
     if (!user) return res.status(404).json(new ApiResponse(404, {}, "User not found"));
 
@@ -443,6 +444,19 @@ class UserController {
         globalRank,
         acceptance,
       }, "Student dashboard stats fetched")
+    );
+  });
+
+  // ================= GET USER CONTESTS =================
+  static getUserContests = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.id; // Lazy require if not imported at top
+
+    const submissions = await ContestSubmission.find({ student: userId, isDeleted: false })
+      .populate("contest", "title difficulty startTime endTime")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(
+      new ApiResponse(200, submissions, "User contests fetched successfully")
     );
   });
 

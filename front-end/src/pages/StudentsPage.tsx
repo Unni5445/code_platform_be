@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { UserPlus, Edit, Trash2, Eye, Download, Upload, FileUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { organisationService, userService } from "@/services";
 import { useApi } from "@/hooks/useApi";
@@ -10,10 +10,12 @@ import { useModal } from "@/hooks";
 import type { IUser } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 8;
 
 export default function StudentsPage() {
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "ADMIN";
   const isSuperAdmin = currentUser?.role === "SUPER_ADMIN";
@@ -27,7 +29,6 @@ export default function StudentsPage() {
   const addModal = useModal();
   const editModal = useModal();
   const deleteModal = useModal();
-  const viewModal = useModal();
   const bulkUploadModal = useModal();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,7 +37,6 @@ export default function StudentsPage() {
   const [bulkErrors, setBulkErrors] = useState<string[]>([]);
   const [bulkImporting, setBulkImporting] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState("");
-
   const debouncedSearch = useDebounce(search, 300);
 
   const { data: organisations } = useApi(
@@ -350,7 +350,7 @@ export default function StudentsPage() {
                     <td className="px-6 py-4 text-right">
                       <Dropdown
                         items={[
-                          { label: "View Details", icon: <Eye className="h-4 w-4" />, onClick: () => { setSelectedUser(user); viewModal.open(); } },
+                          { label: "View Details", icon: <Eye className="h-4 w-4" />, onClick: () => navigate(`/students/${user._id}`) },
                           { label: "Edit Student", icon: <Edit className="h-4 w-4" />, onClick: () => { setSelectedUser(user); editModal.open(); } },
                           { label: "Delete Student", icon: <Trash2 className="h-4 w-4" />, onClick: () => { setUserToDelete(user); deleteModal.open(); }, danger: true },
                         ]}
@@ -380,35 +380,6 @@ export default function StudentsPage() {
       {/* Edit Student Modal */}
       <Modal isOpen={editModal.isOpen} onClose={editModal.close} title="Edit Student" size="lg">
         <UserForm user={selectedUser} onSubmit={handleEditUser} onCancel={editModal.close} forceStudentRole={true} />
-      </Modal>
-
-      {/* View Student Modal */}
-      <Modal isOpen={viewModal.isOpen} onClose={() => { viewModal.close(); setSelectedUser(null); }} title="Student Details">
-        {selectedUser && (
-          <div className="space-y-4">
-             <div className="flex items-center gap-4">
-              <Avatar name={selectedUser.name} size="lg" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{selectedUser.name}</h3>
-                <p className="text-sm text-gray-500">{selectedUser.email}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: "Status", value: selectedUser.isActive ? "Active" : "Inactive" },
-                { label: "Points", value: selectedUser.points },
-                { label: "Streak", value: `${selectedUser.streak} days` },
-                { label: "Department", value: selectedUser.department || "Not set" },
-                { label: "Passout Year", value: selectedUser.passoutYear || "Not set" },
-              ].map((item) => (
-                <div key={item.label} className="bg-surface-secondary rounded-lg p-3">
-                  <p className="text-xs text-gray-500">{item.label}</p>
-                  <p className="text-sm font-medium mt-1">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Bulk Upload Modal */}

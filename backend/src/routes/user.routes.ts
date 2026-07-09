@@ -46,6 +46,9 @@ router
     UserController.deleteUser
   );
 
+router.get("/users/:id/stats", protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.getStudentStats);
+router.get("/users/:id/contests", protect, authorize("ADMIN", "SUPER_ADMIN"), UserController.getUserContests);
+
 router.post(
   "/users/admin/reset-password/:id",
   protect,
