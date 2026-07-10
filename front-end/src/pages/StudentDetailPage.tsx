@@ -7,15 +7,12 @@ import {
   Mail, 
   Building2, 
   GraduationCap, 
-  CalendarDays, 
   Activity, 
   Award,
   TrendingUp,
   Target,
   Trophy,
   CheckCircle2,
-  XCircle,
-  Clock,
   Star
 } from "lucide-react";
 import { Button, Badge, Avatar, Spinner } from "@/components/ui";
